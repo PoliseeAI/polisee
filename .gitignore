@@ -33,6 +33,14 @@ yarn-error.log*
 # env files (can opt-in for committing if needed)
 .env*
 
+# log files
+*.log
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
 # vercel
 .vercel
 

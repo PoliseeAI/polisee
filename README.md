@@ -53,13 +53,38 @@ Polisee is a Next.js application built with TypeScript, featuring Supabase integ
 
 ### Environment Variables
 
-Create a `.env.local` file with the following variables:
+Create a `.env` file in the project root with the following variables:
 
 ```env
+# Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+
+# Congress.gov API (get from https://api.data.gov/signup/)
+CONGRESS_API_KEY=your_congress_api_key
 ```
+
+### Congress Scraper Setup
+
+1. **Get Congress.gov API Key**:
+   - Sign up at [api.data.gov](https://api.data.gov/signup/)
+   - Add your API key to `.env` file
+
+2. **Install Python dependencies**:
+   ```bash
+   npm run scraper:install
+   ```
+
+3. **Apply database migrations**:
+   - Run the SQL in `supabase_migration_manual.sql` in your Supabase dashboard
+
+4. **Test the scraper**:
+   ```bash
+   npm run scraper:test
+   ```
+
+See [CONGRESS_SCRAPER_SETUP.md](./CONGRESS_SCRAPER_SETUP.md) for detailed setup instructions.
 
 ## Available Scripts
 
@@ -87,6 +112,14 @@ SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
 - `npm run supabase:status` - Check Supabase status
 - `npm run supabase:start` - Start local Supabase
 - `npm run supabase:stop` - Stop local Supabase
+
+### Congress Scraper
+- `npm run scraper:install` - Install Python dependencies
+- `npm run scraper:test` - Quick test with 20 bills
+- `npm run scraper:stats` - Show database statistics
+- `npm run scraper:initial` - Full initial data load
+- `npm run scraper:daily` - Daily update
+- `npm run scraper:help` - Show all scraper commands
 
 ## Security
 

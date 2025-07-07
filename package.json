@@ -11,7 +11,7 @@
     "db:status": "node scripts/db-utils.js status",
     "db:list": "node scripts/db-utils.js list",
     "db:cleanup": "node scripts/db-utils.js cleanup",
-    "db:push": "supabase db push",
+    "db:migrate": "echo 'Run the SQL in supabase_migration_manual.sql in your Supabase dashboard'",
     "db:pull": "supabase db pull",
     "db:types": "supabase gen types typescript --project-id lsmiliwwucqergiigqxd --schema public > src/types/database.ts",
     "supabase:status": "supabase status",
@@ -22,7 +22,16 @@
     "security:scan-commits": "gitleaks detect --source . --log-level info",
     "security:baseline": "gitleaks detect --source . --baseline-path .gitleaks-baseline.json",
     "security:scan-ci": "gitleaks detect --source . --verbose --exit-code 2",
-    "precommit": "npm run security:scan-staged"
+    "precommit": "npm run security:scan-staged",
+    "scraper:install": "cd backend && pip install -r requirements.txt",
+    "scraper:setup": "echo 'Please add your Congress.gov API key to your root .env file'",
+    "scraper:test": "node scripts/congress-scraper.js test",
+    "scraper:initial": "node scripts/congress-scraper.js initial",
+    "scraper:daily": "node scripts/congress-scraper.js daily",
+    "scraper:scheduler": "node scripts/congress-scraper.js scheduler",
+    "scraper:search": "node scripts/congress-scraper.js search",
+    "scraper:stats": "node scripts/congress-scraper.js stats",
+    "scraper:help": "node scripts/congress-scraper.js help"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.1.1",
