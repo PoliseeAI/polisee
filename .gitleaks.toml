@@ -1,0 +1,83 @@
+# Gitleaks configuration for Polisee
+# This configuration helps detect and prevent secrets from being committed to the repository
+
+[extend]
+# Use the default gitleaks configuration as a base
+useDefault = true
+
+# Title for the gitleaks report
+title = "Polisee Secret Detection"
+
+# Custom rules specific to this project
+[[rules]]
+id = "supabase-anon-key"
+description = "Supabase anonymous key"
+regex = '''sb-[a-zA-Z0-9]{40,}'''
+keywords = ["supabase", "anon", "key"]
+
+[[rules]]
+id = "supabase-service-role-key"
+description = "Supabase service role key"
+regex = '''sb-[a-zA-Z0-9]{40,}'''
+keywords = ["supabase", "service", "role"]
+
+[[rules]]
+id = "nextauth-secret"
+description = "NextAuth secret"
+regex = '''NEXTAUTH_SECRET\s*=\s*["\']?([a-zA-Z0-9+/=]{32,})["\']?'''
+keywords = ["NEXTAUTH_SECRET"]
+
+[[rules]]
+id = "jwt-secret"
+description = "JWT secret"
+regex = '''JWT_SECRET\s*=\s*["\']?([a-zA-Z0-9+/=]{32,})["\']?'''
+keywords = ["JWT_SECRET"]
+
+# Allowlist for false positives
+[allowlist]
+description = "Allowlist for common false positives"
+paths = [
+    '''\.md$''',
+    '''\.txt$''',
+    '''LICENSE''',
+    '''\.gitignore''',
+    '''\.gitleaks\.toml''',
+    '''package\.json''',
+    '''package-lock\.json''',
+    '''tsconfig\.json''',
+    '''next\.config\.ts''',
+    '''tailwind\.config\.js''',
+    '''postcss\.config\.mjs''',
+    '''eslint\.config\.mjs''',
+    '''components\.json''',
+    '''docs/''',
+    '''public/'''
+]
+
+# Allowlist for specific patterns that are safe
+regexes = [
+    '''example\.com''',
+    '''localhost''',
+    '''127\.0\.0\.1''',
+    '''0\.0\.0\.0''',
+    '''placeholder''',
+    '''YOUR_[A-Z_]+_HERE''',
+    '''<[A-Z_]+>''',
+]
+
+# Allowlist for commits (if you need to allow specific commits)
+commits = []
+
+# Stopwords to reduce false positives
+stopwords = [
+    "client",
+    "public",
+    "demo",
+    "test",
+    "example",
+    "sample",
+    "placeholder",
+    "mock",
+    "fake",
+    "dummy"
+] 
