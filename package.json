@@ -22,6 +22,8 @@
     "security:scan-commits": "gitleaks detect --source . --log-level info",
     "security:baseline": "gitleaks detect --source . --baseline-path .gitleaks-baseline.json",
     "security:scan-ci": "gitleaks detect --source . --verbose --exit-code 2",
+    "security:trufflehog": "docker run --rm -v \"$PWD:/pwd\" trufflesecurity/trufflehog:latest git file:///pwd --only-verified",
+    "security:full": "npm run security:scan && npm run security:trufflehog",
     "precommit": "npm run security:scan-staged",
     "scraper:install": "cd backend && pip install -r requirements.txt",
     "scraper:setup": "echo 'Please add your Congress.gov API key to your root .env file'",
