@@ -1,11 +1,11 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, FileText, Calendar, User, Users, Tag, AlertCircle, Loader2, BookOpen, Bot } from 'lucide-react'
+import { ArrowLeft, FileText, User, Tag, AlertCircle, Loader2, BookOpen, Bot } from 'lucide-react'
 import { AuthGuard } from '@/components/auth'
 import Link from 'next/link'
 import { getBillById, BillWithDetails, formatBillId, getBillStatusColor, getPolicyAreaColor } from '@/lib/bills'
@@ -59,29 +59,7 @@ export default function BillDetails() {
     fetchBill()
   }, [params.billId])
 
-  // Automatically fetch AI summary when bill is loaded
-  useEffect(() => {
-    if (bill && !bill.bill_summaries.length) {
-      fetchAISummary()
-    }
-  }, [bill])
-
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return 'N/A'
-    
-    // Parse the date string correctly to avoid timezone issues
-    // The database stores dates as YYYY-MM-DD format
-    const [year, month, day] = dateString.split('-').map(Number)
-    const date = new Date(year, month - 1, day) // month is 0-indexed
-    
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    })
-  }
-
-  const fetchAISummary = async () => {
+  const fetchAISummary = useCallback(async () => {
     if (!bill?.bill_id || summaryLoading) return
     
     try {
@@ -126,6 +104,28 @@ export default function BillDetails() {
     } finally {
       setSummaryLoading(false)
     }
+  }, [bill?.bill_id, bill?.text, bill?.title])
+
+  // Automatically fetch AI summary when bill is loaded
+  useEffect(() => {
+    if (bill && !bill.bill_summaries.length) {
+      fetchAISummary()
+    }
+  }, [bill, fetchAISummary])
+
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A'
+    
+    // Parse the date string correctly to avoid timezone issues
+    // The database stores dates as YYYY-MM-DD format
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day) // month is 0-indexed
+    
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
   }
 
   if (loading) {

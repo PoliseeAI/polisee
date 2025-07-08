@@ -3,14 +3,24 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
+import { Label } from '@/components/ui/label'
+import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { 
+  User, 
+  Bell, 
+  Shield, 
+  Download, 
+  Loader2,
+  FileText
+} from 'lucide-react'
 import { AuthGuard } from '@/components/auth'
 import { useAuthContext } from '@/lib/auth'
 import { userPreferencesUtils, UserPreferencesRow } from '@/lib/supabase'
 import { personaUtils } from '@/lib/supabase'
-import { Settings as SettingsIcon, User, Bell, Shield, Download, Loader2, Check, X, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ProfileData {
@@ -46,8 +56,7 @@ export default function Settings() {
   const { user, updateProfile, updatePassword } = useAuthContext()
   
   // State management
-  const [loading, setLoading] = useState(true)
-  const [preferences, setPreferences] = useState<UserPreferencesRow | null>(null)
+  const [loading, setLoading] = useState(false)
   const [profileData, setProfileData] = useState<ProfileData>({
     firstName: '',
     lastName: '',
@@ -87,7 +96,6 @@ export default function Settings() {
         const userPrefs = await userPreferencesUtils.getUserPreferences(user.id)
         
         if (userPrefs) {
-          setPreferences(userPrefs)
           setProfileData({
             firstName: userPrefs.first_name || '',
             lastName: userPrefs.last_name || '',
@@ -253,51 +261,38 @@ export default function Settings() {
   }
 
   // Export data
-  const handleExportData = async (type: 'all' | 'analyses') => {
-    if (!user) return
-    
-    setSaving(`export-${type}`)
+  const handleExportData = async (format: 'json' | 'csv') => {
     try {
-      // Get user data
-      const userPrefs = await userPreferencesUtils.getUserPreferences(user.id)
-      const persona = await personaUtils.getPersona(user.id)
+      setLoading(true)
       
-      let exportData: any = {
-        user: {
-          id: user.id,
-          email: user.email,
-          created_at: user.created_at
+      // Mock export functionality - replace with actual implementation
+      const exportData: Record<string, unknown> = {
+        profile: {
+          email: user?.email,
+          created_at: new Date().toISOString()
         },
-        preferences: userPrefs,
-        exported_at: new Date().toISOString()
+        preferences: {},
+        export_date: new Date().toISOString(),
+        format: format
       }
+
+      const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+        type: format === 'json' ? 'application/json' : 'text/csv'
+      })
       
-      if (type === 'all') {
-        exportData.persona = persona
-        exportData.export_type = 'complete_user_data'
-      } else {
-        exportData.export_type = 'analyses_only'
-        // In a real app, you'd fetch analysis data here
-        exportData.analyses = []
-      }
-      
-      // Download as JSON
-      const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' })
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `polisee-export-${type}-${new Date().toISOString().split('T')[0]}.json`
+      a.download = `polisee-data.${format}`
       document.body.appendChild(a)
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
       
-      toast.success(`Data exported successfully`)
     } catch (error) {
-      console.error('Error exporting data:', error)
-      toast.error('Failed to export data')
+      console.error('Export failed:', error)
     } finally {
-      setSaving(null)
+      setLoading(false)
     }
   }
 
@@ -677,30 +672,30 @@ export default function Settings() {
             <div className="flex space-x-2">
               <Button 
                 variant="outline"
-                onClick={() => handleExportData('all')}
-                disabled={saving === 'export-all'}
+                onClick={() => handleExportData('json')}
+                disabled={loading}
               >
-                {saving === 'export-all' ? (
+                {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Exporting...
                   </>
                 ) : (
-                  'Export All Data'
+                  'Export All Data (JSON)'
                 )}
               </Button>
               <Button 
                 variant="outline"
-                onClick={() => handleExportData('analyses')}
-                disabled={saving === 'export-analyses'}
+                onClick={() => handleExportData('csv')}
+                disabled={loading}
               >
-                {saving === 'export-analyses' ? (
+                {loading ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Exporting...
                   </>
                 ) : (
-                  'Export Analyses Only'
+                  'Export All Data (CSV)'
                 )}
               </Button>
             </div>

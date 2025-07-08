@@ -27,7 +27,7 @@ const STEPS = [
 function PersonaWizardContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const { persona, savePersona, validateCurrentStep, loadExistingPersona } = usePersona()
+  const { savePersona, validateCurrentStep, loadExistingPersona } = usePersona()
   const router = useRouter()
 
   // Load existing persona when component mounts

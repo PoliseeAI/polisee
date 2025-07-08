@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
     try {
       const analysisResult: AIAnalysisResponse = JSON.parse(content)
       return NextResponse.json(analysisResult)
-    } catch (parseError) {
+    } catch (error) {
       console.error('Failed to parse AI response:', content)
       return NextResponse.json(
         { error: 'Invalid JSON response from AI' },

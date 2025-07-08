@@ -1,8 +1,9 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle, MapPin, Calendar, Briefcase, Users, DollarSign, Building, Heart, Shield, GraduationCap, School, AlertCircle } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { CheckCircle, User, MapPin, Users, Building, Heart, GraduationCap, School } from 'lucide-react'
 import { usePersona } from '../PersonaContext'
 
 export function ReviewStep() {

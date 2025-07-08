@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Mail, Phone, ExternalLink, User, MapPin, Calendar, Sparkles, Clock, Globe2 } from 'lucide-react';
+import { Phone, Mail, ExternalLink, MapPin, User, Calendar, Globe, Loader2, Clock } from 'lucide-react';
 
 interface EnhancedRepresentative {
   id: string;
@@ -46,57 +45,63 @@ interface EnhancedRepresentative {
   updated_at: string;
 }
 
-export default function RepresentativesPage() {
-  const [representatives, setRepresentatives] = useState<EnhancedRepresentative[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [location, setLocation] = useState('CO, Denver');
-  const [expandedRep, setExpandedRep] = useState<string | null>(null);
-  const [lastUpdated, setLastUpdated] = useState<string | null>(null);
+export default function Representatives() {
+  const [location, setLocation] = useState('')
+  const [representatives, setRepresentatives] = useState<EnhancedRepresentative[]>([])
+  const [loading, setLoading] = useState(false)
+  const [expandedRep, setExpandedRep] = useState<string | null>(null)
+  const [lastUpdated, setLastUpdated] = useState<string | null>(null)
 
-  const loadRepresentatives = async () => {
-    setLoading(true);
+  const loadRepresentatives = useCallback(async () => {
+    if (!location.trim()) {
+      setRepresentatives([])
+      setLastUpdated(null)
+      return
+    }
+
+    setLoading(true)
+
     try {
-      console.log('🚀 Loading representatives for:', location);
+      console.log('Fetching representatives for location:', location)
       
       const response = await fetch('/api/representatives-ai', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ location }),
-      });
+        body: JSON.stringify({
+          location: location.trim()
+        })
+      })
 
-      console.log('📡 API Response status:', response.status);
+      const data = await response.json()
+      console.log('API Response:', data)
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-      console.log('📊 API Response data:', data);
-      
       if (data.success && data.representatives) {
-        setRepresentatives(data.representatives);
-        setLastUpdated(new Date().toLocaleString());
-        console.log('✅ Successfully loaded', data.representatives.length, 'representatives');
+        setRepresentatives(data.representatives)
+        setLastUpdated(new Date().toLocaleString())
+        if (data.representatives.length === 0) {
+          // Handle no representatives found case
+        }
       } else {
-        console.error('❌ API returned error:', data.error);
-        setRepresentatives([]);
-        // Show user-friendly message instead of alert
-        console.log('No representatives found for this location, showing empty state');
+        console.error('Failed to fetch representatives:', data.error)
+        setRepresentatives([])
+        setLastUpdated(null)
       }
     } catch (error) {
-      console.error('💥 Error loading representatives:', error);
-      alert('Error loading representatives. Please try again.');
+      console.error('Error fetching representatives:', error)
+      setRepresentatives([])
+      setLastUpdated(null)
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }, [location])
 
   useEffect(() => {
-    // Auto-load on page mount
-    loadRepresentatives();
-  }, []);
+    if (location.trim()) {
+      loadRepresentatives()
+    }
+  }, [location, loadRepresentatives])
 
   const getPartyColor = (party: string) => {
     switch (party) {
@@ -156,7 +161,7 @@ export default function RepresentativesPage() {
                   disabled={loading}
                   className="flex items-center gap-2"
                 >
-                  <Sparkles className="h-4 w-4" />
+                  <Loader2 className="h-4 w-4" />
                   {loading ? 'Loading...' : 'Find Representatives'}
                 </Button>
               </div>
@@ -173,7 +178,7 @@ export default function RepresentativesPage() {
             <Card className="mb-8">
               <CardContent className="py-12">
                 <div className="text-center">
-                  <Sparkles className="h-12 w-12 mx-auto mb-4 text-blue-500 animate-spin" />
+                  <Loader2 className="h-12 w-12 mx-auto mb-4 text-blue-500 animate-spin" />
                   <h3 className="text-lg font-semibold mb-2">Analyzing your location...</h3>
                   <p className="text-gray-600">This may take 30-60 seconds</p>
                 </div>
@@ -190,7 +195,7 @@ export default function RepresentativesPage() {
                 </h2>
                 <div className="flex items-center gap-3">
                   <Badge variant="secondary" className="flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
+                    <Globe className="h-3 w-3" />
                     AI-Powered
                   </Badge>
                   <div className="text-xs text-gray-500">

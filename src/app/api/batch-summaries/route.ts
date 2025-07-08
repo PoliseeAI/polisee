@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/supabase-admin'
-import { Database } from '@/types/database'
 import { createHash } from 'crypto'
 
 interface BatchSummaryRequest {
@@ -23,10 +22,6 @@ interface BatchSummaryResponse {
   }
 }
 
-type BillRow = Database['public']['Tables']['bills']['Row']
-type AISummaryRow = Database['public']['Tables']['ai_bill_summaries']['Row']
-
-// Simplified bill type for batch processing (only what we need)
 interface BillForSummary {
   id: number
   bill_id: string
@@ -183,7 +178,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function generateBillSummary(bill: BillForSummary, apiKey: string, supabaseAdmin: any): Promise<boolean> {
+async function generateBillSummary(bill: BillForSummary, apiKey: string, supabaseAdmin: ReturnType<typeof getSupabaseAdmin>): Promise<boolean> {
   try {
     if (!bill.text || !bill.title) {
       console.error(`Bill ${bill.bill_id} missing text or title`)
@@ -314,7 +309,7 @@ IMPORTANT:
 `
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     // Get admin Supabase client
     const supabaseAdmin = getSupabaseAdmin()

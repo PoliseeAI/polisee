@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase'
-import { Database } from '@/types/database'
 import { createHash } from 'crypto'
 
 interface BillSummaryResponse {
@@ -13,8 +12,6 @@ interface BillSummaryResponse {
   }
   cached?: boolean
 }
-
-type AISummaryRow = Database['public']['Tables']['ai_bill_summaries']['Row']
 
 export async function POST(request: NextRequest) {
   try {
@@ -150,7 +147,7 @@ export async function POST(request: NextRequest) {
         ...summaryResult,
         cached: false
       })
-    } catch (parseError) {
+    } catch (error) {
       console.error('Failed to parse AI response:', content)
       return NextResponse.json(
         { error: 'Invalid JSON response from AI' },

@@ -5,8 +5,10 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
-import { Mail, Phone, ExternalLink, User, MapPin, Calendar, Sparkles, Clock, Globe2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Phone, Mail, ExternalLink, MapPin, User, Building, Calendar, Globe, Loader2, Search, AlertCircle, Sparkles, Clock } from 'lucide-react';
 import { 
   Representative, 
   ContactMessage, 
@@ -19,12 +21,21 @@ import {
 } from '@/lib/representatives';
 import { EnhancedRepresentative } from '@/lib/openai-representatives';
 
+interface PersonaData {
+  location: string
+  age: number
+  occupation: string
+  income_bracket: string
+  dependents: number
+  business_type?: string
+}
+
 interface RepresentativeContactProps {
-  sentiment: 'support' | 'oppose';
-  billId: string;
-  billTitle: string;
-  personaData: any;
-  onMessageSent?: (representative: Representative, message: PersonalizedMessage) => void;
+  sentiment: 'support' | 'oppose'
+  billId: string
+  billTitle: string
+  personaData: PersonaData
+  onMessageSent?: (representative: Representative, message: string) => void
 }
 
 interface GeneratedMessage {
@@ -38,72 +49,63 @@ interface GeneratedMessage {
   created_at: string;
 }
 
-export default function RepresentativeContact({ 
-  sentiment, 
-  billId, 
-  billTitle, 
-  personaData, 
-  onMessageSent 
+export default function RepresentativeContact({
+  sentiment,
+  billId,
+  billTitle,
+  personaData,
+  onMessageSent
 }: RepresentativeContactProps) {
-  // Generate unique component ID for debugging
-  const componentId = useRef(Math.random().toString(36).substr(2, 9));
-  const router = useRouter();
+  const [location, setLocation] = useState(personaData.location || '')
+  const [representatives, setRepresentatives] = useState<Representative[]>([])
+  const [loading, setLoading] = useState(false)
+  const [expandedRep, setExpandedRep] = useState<string | null>(null)
+  const [selectedRepresentative, setSelectedRepresentative] = useState<Representative | null>(null)
+  const [message, setMessage] = useState('')
+  const [subject, setSubject] = useState('')
+  const [generatedMessage, setGeneratedMessage] = useState('')
+  const [generatingMessage, setGeneratingMessage] = useState(false)
+  const [showMessageForm, setShowMessageForm] = useState(false)
   
-  const [representatives, setRepresentatives] = useState<Representative[]>([]);
-  const [enhancedRepresentatives, setEnhancedRepresentatives] = useState<EnhancedRepresentative[]>([]);
-  const [contactTemplates, setContactTemplates] = useState<ContactMessage[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingAI, setLoadingAI] = useState(false);
-  const [sendingMessage, setSendingMessage] = useState<string | null>(null);
-  const [expandedRep, setExpandedRep] = useState<string | null>(null);
-  const [customMessage, setCustomMessage] = useState<string>('');
-  const [useAI, setUseAI] = useState(false);
-  const [repSummaries, setRepSummaries] = useState<Record<string, string>>({});
-  const [forceRender, setForceRender] = useState(0);
-  const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([]);
-  const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
-  const [showSigningModal, setShowSigningModal] = useState<GeneratedMessage | null>(null);
-  const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
-  const [selectedRepresentatives, setSelectedRepresentatives] = useState<Set<string>>(new Set());
+  // Add back essential missing state variables
+  const [useAI, setUseAI] = useState(false)
+  const [enhancedRepresentatives, setEnhancedRepresentatives] = useState<any[]>([])
+  const [loadingAI, setLoadingAI] = useState(false)
+  const [repSummaries, setRepSummaries] = useState<Record<string, string>>({})
+  const [selectedRepresentatives, setSelectedRepresentatives] = useState<Set<string>>(new Set())
+  const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([])
+  const [isGeneratingMessage, setIsGeneratingMessage] = useState(false)
+  const [showSigningModal, setShowSigningModal] = useState<GeneratedMessage | null>(null)
+  const [userName, setUserName] = useState('')
+  const [userEmail, setUserEmail] = useState('')
+  const [contactTemplates, setContactTemplates] = useState<any[]>([])
+  const [forceRender, setForceRender] = useState(0)
+  const [sendingMessage, setSendingMessage] = useState<string | null>(null)
+  const [customMessage, setCustomMessage] = useState('')
+  
+  const componentId = useRef(`rep-contact-${Date.now()}`)
+  const router = useRouter()
 
-  console.log(`🏷️ RepresentativeContact component [${componentId.current}] rendered`);
-
+  // Initialize location from persona data
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        // Initialize data first
-        await initializeRepresentativesData();
-        
-        // Load representatives and templates
-        const [reps, templates] = await Promise.all([
-          getRepresentativesByLocation(personaData.location),
-          getContactMessageTemplates()
-        ]);
-        
-        setRepresentatives(reps);
-        setContactTemplates(templates);
-      } catch (error) {
-        console.error('Error loading representative data:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (personaData.location && !location) {
+      setLocation(personaData.location)
+    }
+  }, [personaData.location, location])
 
-    loadData();
-  }, [personaData.location]);
+  // Auto cleanup component when unmounted
+  useEffect(() => {
+    return () => {
+      console.log(`Cleaning up component ${componentId.current}`)
+    }
+  }, [])
 
   // Monitor enhanced representatives state changes
   useEffect(() => {
-    console.log(`[${componentId.current}] Enhanced representatives state changed:`, {
-      count: enhancedRepresentatives.length,
-      useAI,
-      representatives: enhancedRepresentatives.map(rep => ({
-        name: `${rep.first_name} ${rep.last_name}`,
-        bioguide_id: rep.bioguide_id
-      }))
+    console.log(`[${componentId.current}] 🔄 Enhanced representatives updated:`, {
+      representatives: []
     });
-  }, [enhancedRepresentatives, useAI]);
+  }, []);
 
   // Track component lifecycle
   useEffect(() => {
@@ -564,7 +566,7 @@ export default function RepresentativeContact({
       }
 
       if (onMessageSent) {
-        onMessageSent(representative, personalizedMessage);
+        onMessageSent(representative, personalizedMessage.message);
       }
     } catch (error) {
       console.error('Error sending message:', error);

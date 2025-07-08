@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Upload, User, FileText, ArrowRight, CheckCircle, Edit, MapPin, Calendar, Briefcase } from 'lucide-react'
+import { User, FileText, ArrowRight, CheckCircle, Edit, MapPin, Calendar, Briefcase } from 'lucide-react'
 import { AuthGuard } from '@/components/auth'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -38,20 +38,15 @@ export default function Analyze() {
     checkPersona()
   }, [user])
 
-  const getIncomeDisplay = (bracket: string) => {
-    const incomeMap: Record<string, string> = {
-      'under_25k': 'Under $25,000',
-      '25k_50k': '$25,000 - $50,000',
-      '50k_75k': '$50,000 - $75,000',
-      '75k_100k': '$75,000 - $100,000',
-      '100k_150k': '$100,000 - $150,000',
-      '150k_200k': '$150,000 - $200,000',
-      '200k_250k': '$200,000 - $250,000',
-      '250k_500k': '$250,000 - $500,000',
-      'over_500k': 'Over $500,000',
-      'prefer_not_to_say': 'Prefer not to say'
-    }
-    return incomeMap[bracket] || bracket
+  const formatDate = (dateString: string | null) => {
+    if (!dateString) return 'N/A'
+    
+    // Parse the date string correctly to avoid timezone issues
+    // The database stores dates as YYYY-MM-DD format
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day) // month is 0-indexed
+    
+    return date.toLocaleDateString()
   }
 
   if (loading) {
@@ -179,8 +174,11 @@ export default function Analyze() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
-              Browse bills uploaded by our team and see AI-generated analysis
+            <p className="text-gray-600 mb-4">
+              We&apos;re working hard to bring you personalized bill analysis. This feature will help you understand how proposed legislation affects your specific situation.
+            </p>
+            <p className="text-gray-600 mb-6">
+              Once we&apos;ve processed more bills in our database, you&apos;ll be able to get AI-powered insights tailored to your demographics, occupation, and interests.
             </p>
             <Button className="w-full" variant="outline" asChild>
               <Link href="/bills">

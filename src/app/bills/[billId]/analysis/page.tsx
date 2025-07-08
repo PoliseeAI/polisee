@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Users, GraduationCap, Heart, Building, Zap, Loader2, FileText, BookOpen } from 'lucide-react'
+import { ArrowLeft, TrendingUp, AlertTriangle, Loader2, FileText, BookOpen } from 'lucide-react'
 import { AuthGuard } from '@/components/auth'
 import Link from 'next/link'
 import { getBillById, BillWithDetails, formatBillId } from '@/lib/bills'
@@ -17,18 +17,7 @@ import { getBillPDFUrl, getBillSourceReferences, getBillSections } from '@/lib/p
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { EnhancedImpactCard, PersonalImpact } from '@/components/ui/enhanced-impact-card'
 import { generatePersonalizedImpacts } from '@/lib/analysis-engine'
-import { SentimentFeedback } from '@/components/feedback/SentimentFeedback'
 import RepresentativeContact from '@/components/feedback/RepresentativeContact'
-
-interface PersonalImpact {
-  category: string
-  impact: 'positive' | 'negative' | 'neutral'
-  severity: 'low' | 'medium' | 'high'
-  title: string
-  description: string
-  details: string[]
-  icon: any
-}
 
 
 export default function BillAnalysis() {

@@ -7,7 +7,7 @@ import { Heart, Shield, Users } from 'lucide-react'
 import { usePersona } from '../PersonaContext'
 
 export function HealthStep() {
-  const { persona, updatePersona, errors } = usePersona()
+  const { persona, updatePersona } = usePersona()
 
   return (
     <div className="space-y-6">
@@ -27,8 +27,8 @@ export function HealthStep() {
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <Label htmlFor="has_health_insurance">Health Insurance</Label>
-                <p className="text-sm text-gray-600">
-                  Do you currently have health insurance coverage?
+                <p className="text-sm text-gray-500">
+                  Health insurance status helps us identify healthcare policies, insurance regulations, and medical tax provisions that affect you.
                 </p>
               </div>
               <Switch
@@ -60,8 +60,8 @@ export function HealthStep() {
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <Label htmlFor="has_medicare">Medicare</Label>
-                <p className="text-sm text-gray-600">
-                  Are you enrolled in Medicare?
+                <p className="text-sm text-gray-500">
+                  Medicare enrollment affects how healthcare legislation impacts you, including prescription drug costs and benefit changes.
                 </p>
               </div>
               <Switch
@@ -85,8 +85,8 @@ export function HealthStep() {
             <div className="flex items-center justify-between">
               <div className="space-y-2">
                 <Label htmlFor="has_social_security">Social Security</Label>
-                <p className="text-sm text-gray-600">
-                  Do you currently receive Social Security benefits?
+                <p className="text-sm text-gray-500">
+                  Social Security status helps us identify retirement, disability, and benefit policies that affect you.
                 </p>
               </div>
               <Switch

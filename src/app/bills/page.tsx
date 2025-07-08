@@ -328,55 +328,7 @@ export default function Bills() {
           </>
         )}
 
-        {/* Development Info */}
-        <Card className="border-blue-200 bg-blue-50">
-          <CardHeader>
-            <CardTitle className="text-blue-800">Development Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <p className="text-blue-700">
-                <strong>Currently showing:</strong> Sample bill data for testing and development
-              </p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <h4 className="font-medium text-blue-800 mb-2">✅ Implemented</h4>
-                  <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Bill listing and search</li>
-                    <li>• Bill summaries and subjects</li>
-                    <li>• Policy area categorization</li>
-                    <li>• Sponsor information</li>
-                    <li>• Mock data for testing</li>
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="font-medium text-blue-800 mb-2">🔄 Coming Next</h4>
-                  <ul className="text-sm text-blue-700 space-y-1">
-                    <li>• Real Supabase data integration</li>
-                    <li>• Personalized impact analysis</li>
-                    <li>• Bill details page</li>
-                    <li>• Sentiment feedback system</li>
-                    <li>• Advanced filtering options</li>
-                  </ul>
-                </div>
-              </div>
-              <div className="pt-2 border-t border-blue-200">
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <Button asChild variant="outline" size="sm">
-                    <Link href="/persona/create">
-                      Create Persona for Analysis
-                    </Link>
-                  </Button>
-                  <Button asChild variant="outline" size="sm">
-                    <Link href="/analyze">
-                      Back to Analyze
-                    </Link>
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
       </div>
     </AuthGuard>
   )

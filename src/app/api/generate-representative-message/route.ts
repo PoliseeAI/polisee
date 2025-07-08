@@ -5,12 +5,30 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || 'dummy-key',
 })
 
+interface Representative {
+  title: string
+  first_name: string
+  last_name: string
+  party: string
+  state: string
+}
+
+interface PersonaData {
+  location: string
+  age: number
+  occupation: string
+  income_bracket: string
+  education_level?: string
+  dependents: number
+  business_type?: string
+}
+
 export async function POST(request: NextRequest) {
-  let representative: any = null
+  let representative: Representative | null = null
   let sentiment: string = ''
   let billId: string = ''
   let billTitle: string = ''
-  let personaData: any = null
+  let personaData: PersonaData | null = null
   
   try {
     const requestData = await request.json()
@@ -121,7 +139,6 @@ Sincerely,
     }
 
     // Parse the response to extract subject and message
-    const lines = response.split('\n').filter(line => line.trim())
     let subject = `${sentiment === 'support' ? 'Support for' : 'Opposition to'} ${billTitle}`
     let message = response
 

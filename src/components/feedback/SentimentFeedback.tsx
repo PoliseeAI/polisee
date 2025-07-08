@@ -6,21 +6,17 @@ import { ThumbsUp, ThumbsDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface SentimentFeedbackProps {
-  billId: string
-  sectionId: string
-  sectionTitle: string
+  onFeedbackSubmit: (sentiment: 'positive' | 'negative' | 'neutral', comment?: string) => void
+  className?: string
   userId?: string
   onFeedbackChange?: (sentiment: 'positive' | 'negative' | null) => void
-  className?: string
 }
 
-export function SentimentFeedback({
-  billId,
-  sectionId,
-  sectionTitle,
+export function SentimentFeedback({ 
+  onFeedbackSubmit, 
+  className,
   userId,
-  onFeedbackChange,
-  className
+  onFeedbackChange 
 }: SentimentFeedbackProps) {
   const [sentiment, setSentiment] = useState<'positive' | 'negative' | null>(null)
   const [loading, setLoading] = useState(false)

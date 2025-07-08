@@ -10,7 +10,21 @@ import { PDFViewer } from '@/components/ui/pdf-viewer';
 import { getBills, BillWithDetails, formatBillId } from '@/lib/bills';
 import { getBillPDFUrl } from '@/lib/pdf-storage';
 import { AuthGuard } from '@/components/auth';
-import { FileText, Eye, Download, Search, Bot, CheckCircle } from 'lucide-react';
+import { 
+  PlayCircle, 
+  StopCircle, 
+  RefreshCw, 
+  Clock, 
+  Database, 
+  Search, 
+  Settings, 
+  Activity,
+  AlertCircle,
+  Loader2,
+  FileText,
+  Eye,
+  Bot
+} from 'lucide-react'
 
 interface ScraperResponse {
   success: boolean;

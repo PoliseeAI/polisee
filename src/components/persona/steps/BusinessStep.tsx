@@ -1,10 +1,9 @@
 'use client'
 
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Building, Users } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Building } from 'lucide-react'
 import { usePersona } from '../PersonaContext'
 
 export function BusinessStep() {
@@ -18,9 +17,9 @@ export function BusinessStep() {
             <Building className="w-5 h-5 mr-2" />
             Business & Employment
           </CardTitle>
-          <CardDescription>
-            Information about your business or employment situation. This helps us identify workplace regulations and business-related impacts.
-          </CardDescription>
+          <p className="text-sm text-gray-500">
+            Tell us about your business so we can identify relevant tax credits, regulations, and policies that affect you.
+          </p>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Business Type */}
@@ -55,8 +54,8 @@ export function BusinessStep() {
               </SelectContent>
             </Select>
             <p className="text-sm text-gray-600">
-              If you own or run a business, this helps us identify relevant business regulations and tax policies.
-            </p>
+                      Business owners may be affected by tax incentives, regulatory changes, and policies targeting different business sizes. We&apos;ll use this information to highlight relevant provisions.
+                    </p>
           </div>
 
           {/* Employee Count */}
@@ -85,8 +84,8 @@ export function BusinessStep() {
               {errors.employee_count && (
                 <p className="text-sm text-red-600">{errors.employee_count}</p>
               )}
-              <p className="text-sm text-gray-600">
-                Many business regulations have different requirements based on company size.
+              <p className="text-sm text-gray-500">
+                Employee count helps us identify small business tax credits, regulatory requirements, and policies that apply to businesses of your size. Many policies have different rules for businesses with fewer than 50 employees, 10 employees, etc.
               </p>
             </div>
           )}
