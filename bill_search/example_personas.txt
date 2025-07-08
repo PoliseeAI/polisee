@@ -1,0 +1,9 @@
+I'm a small business owner in the tech industry with about 15 employees.
+I'm a parent of two young children, and my spouse and I both work.
+I'm a farmer in the Midwest concerned about water rights and international trade.
+I'm a recent college graduate with student loans, looking for my first job.
+I am a military veteran transitioning to civilian life.
+I'm a senior citizen living on a fixed income.
+deno task start "I'm a farmer in the Midwest concerned about water rights and international trade."
+deno task start "As a small business owner, what new regulations on data privacy should I be aware of?"
+deno task start "I'm a retiree concerned about my Social Security benefits and how they are affected by my old government job."
