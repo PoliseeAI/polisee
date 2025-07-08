@@ -27,6 +27,17 @@ interface RepresentativeContactProps {
   onMessageSent?: (representative: Representative, message: PersonalizedMessage) => void;
 }
 
+interface GeneratedMessage {
+  id: string;
+  message: string;
+  subject: string;
+  representative: Representative | EnhancedRepresentative;
+  sentiment: 'support' | 'oppose';
+  signatures: string[];
+  isSignedByUser: boolean;
+  created_at: string;
+}
+
 export default function RepresentativeContact({ 
   sentiment, 
   billId, 
@@ -49,6 +60,12 @@ export default function RepresentativeContact({
   const [useAI, setUseAI] = useState(false);
   const [repSummaries, setRepSummaries] = useState<Record<string, string>>({});
   const [forceRender, setForceRender] = useState(0);
+  const [generatedMessages, setGeneratedMessages] = useState<GeneratedMessage[]>([]);
+  const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
+  const [showSigningModal, setShowSigningModal] = useState<GeneratedMessage | null>(null);
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+  const [selectedRepresentatives, setSelectedRepresentatives] = useState<Set<string>>(new Set());
 
   console.log(`🏷️ RepresentativeContact component [${componentId.current}] rendered`);
 
@@ -139,6 +156,7 @@ export default function RepresentativeContact({
       
       if (data.success) {
         setEnhancedRepresentatives(data.representatives);
+        setUseAI(true); // Make sure to set useAI to true
         
         // Set summaries from server response
         const summaries: Record<string, string> = {};
@@ -154,9 +172,6 @@ export default function RepresentativeContact({
           console.log(`[${componentId.current}] Successfully loaded`, data.representatives.length, 'AI representatives');
           console.log(`[${componentId.current}] Enhanced representatives state updated:`, data.representatives);
           console.log(`[${componentId.current}] Rep summaries updated:`, summaries);
-          
-          // Alert to confirm data was loaded
-          alert(`✅ Successfully loaded ${data.representatives.length} representatives:\n${data.representatives.map((rep: any) => `• ${rep.first_name} ${rep.last_name} (${rep.party})`).join('\n')}`);
           
           // Force a re-render to ensure UI updates
           setTimeout(() => {
@@ -187,6 +202,329 @@ export default function RepresentativeContact({
       }
     } finally {
       setLoadingAI(false);
+    }
+  };
+
+  const handleRepresentativeSelection = (repKey: string, isSelected: boolean) => {
+    setSelectedRepresentatives(prev => {
+      const newSet = new Set(prev);
+      if (isSelected) {
+        newSet.add(repKey);
+      } else {
+        newSet.delete(repKey);
+      }
+      return newSet;
+    });
+  };
+
+  const generateAIMessageForRepresentative = async (representative: Representative | EnhancedRepresentative) => {
+    setIsGeneratingMessage(true);
+    
+    try {
+      console.log(`Generating message for ${representative.first_name} ${representative.last_name}...`);
+      
+      const response = await fetch('/api/generate-representative-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          representative,
+          sentiment,
+          billId,
+          billTitle,
+          personaData
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to generate message for ${representative.first_name} ${representative.last_name}:`, response.status);
+        throw new Error(`Failed to generate message for ${representative.first_name} ${representative.last_name}`);
+      }
+
+      const data = await response.json();
+      console.log(`Response for ${representative.first_name} ${representative.last_name}:`, data);
+      
+      if (data.success && data.message && data.subject) {
+        const newMessage = {
+          id: `${representative.bioguide_id || (representative as Representative).id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          message: data.message,
+          subject: data.subject,
+          representative,
+          sentiment,
+          signatures: [],
+          isSignedByUser: false,
+          created_at: new Date().toISOString()
+        };
+        
+        setGeneratedMessages(prev => [...prev, newMessage]);
+        console.log(`Successfully created message for ${representative.first_name} ${representative.last_name}`);
+      } else {
+        console.error(`Invalid response data for ${representative.first_name} ${representative.last_name}:`, data);
+        throw new Error(`Invalid response data for ${representative.first_name} ${representative.last_name}`);
+      }
+    } catch (error) {
+      console.error('Error generating AI message:', error);
+      alert(`Error generating AI message for ${representative.first_name} ${representative.last_name}. Please try again.`);
+    } finally {
+      setIsGeneratingMessage(false);
+    }
+  };
+
+  const generateAIMessage = async () => {
+    setIsGeneratingMessage(true);
+    
+    try {
+      // First, try to load representatives using the same logic as the representatives page
+      let targetRepresentatives = currentRepresentatives.length > 0 ? currentRepresentatives : representatives;
+      
+      if (targetRepresentatives.length === 0) {
+        console.log('No representatives found, loading from AI...');
+        
+        // Use the same representative loading logic as the representatives page
+        const repResponse = await fetch('/api/representatives-ai', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ location: personaData.location }),
+        });
+
+        if (repResponse.ok) {
+          const repData = await repResponse.json();
+          if (repData.success && repData.representatives && repData.representatives.length > 0) {
+            targetRepresentatives = repData.representatives;
+            setEnhancedRepresentatives(repData.representatives);
+            setUseAI(true);
+            console.log('Successfully loaded representatives from AI:', repData.representatives.length);
+          }
+        }
+      }
+      
+      // If still no representatives, create mock ones for testing
+      if (targetRepresentatives.length === 0) {
+        console.log('No representatives available, using mock representatives for testing');
+        targetRepresentatives = [
+          {
+            id: 'mock-rep-1',
+            bioguide_id: 'MOCK001',
+            first_name: 'John',
+            last_name: 'Smith',
+            middle_name: null,
+            title: 'Sen.',
+            party: 'D',
+            state: 'CO',
+            district: null,
+            chamber: 'senate',
+            office: 'Denver Office',
+            phone: '555-0123',
+            email: 'john.smith@senate.gov',
+            contact_form: 'https://example.com/contact',
+            website: 'https://example.com',
+            facebook: null,
+            twitter: null,
+            youtube: null,
+            image_url: null,
+            in_office: true,
+            next_election: null,
+            term_start: '2021-01-03',
+            term_end: '2027-01-03',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          },
+          {
+            id: 'mock-rep-2',
+            bioguide_id: 'MOCK002',
+            first_name: 'Jane',
+            last_name: 'Johnson',
+            middle_name: null,
+            title: 'Rep.',
+            party: 'R',
+            state: 'CO',
+            district: '1',
+            chamber: 'house',
+            office: 'Denver Office',
+            phone: '555-0124',
+            email: 'jane.johnson@house.gov',
+            contact_form: 'https://example.com/contact',
+            website: 'https://example.com',
+            facebook: null,
+            twitter: null,
+            youtube: null,
+            image_url: null,
+            in_office: true,
+            next_election: null,
+            term_start: '2023-01-03',
+            term_end: '2025-01-03',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          }
+        ];
+      }
+
+      // Filter to only generate messages for selected representatives
+      const selectedReps = targetRepresentatives.filter(rep => {
+        const repKey = 'bioguide_id' in rep ? rep.bioguide_id : (rep as Representative).id;
+        return selectedRepresentatives.has(repKey);
+      });
+
+      if (selectedReps.length === 0) {
+        alert('Please select at least one representative to generate AI messages for.');
+        return;
+      }
+
+      // Generate AI message for each selected representative
+      const messages: GeneratedMessage[] = [];
+      
+      console.log('Generating AI messages for', selectedReps.length, 'selected representatives');
+      
+      for (const rep of selectedReps) {
+        console.log(`Generating message for ${rep.first_name} ${rep.last_name}...`);
+        
+        const response = await fetch('/api/generate-representative-message', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            representative: rep,
+            sentiment,
+            billId,
+            billTitle,
+            personaData
+          }),
+        });
+
+        if (!response.ok) {
+          console.error(`Failed to generate message for ${rep.first_name} ${rep.last_name}:`, response.status);
+          continue; // Skip this representative but continue with others
+        }
+
+        const data = await response.json();
+        console.log(`Response for ${rep.first_name} ${rep.last_name}:`, data);
+        
+        if (data.success && data.message && data.subject) {
+          const newMessage = {
+            id: `${rep.bioguide_id || rep.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            message: data.message,
+            subject: data.subject,
+            representative: rep,
+            sentiment,
+            signatures: [],
+            isSignedByUser: false,
+            created_at: new Date().toISOString()
+          };
+          
+          messages.push(newMessage);
+          console.log(`Successfully created message for ${rep.first_name} ${rep.last_name}`);
+        } else {
+          console.error(`Invalid response data for ${rep.first_name} ${rep.last_name}:`, data);
+        }
+      }
+
+      console.log('Generated messages:', messages.length);
+      setGeneratedMessages(messages);
+      
+      if (messages.length > 0) {
+        console.log('✅ Successfully generated', messages.length, 'AI messages!');
+      } else {
+        console.error('❌ No messages were generated');
+        alert('No AI messages were generated. Please check the console for details and try again.');
+      }
+    } catch (error) {
+      console.error('Error generating AI message:', error);
+      alert('Error generating AI message. Please try again.');
+    } finally {
+      setIsGeneratingMessage(false);
+    }
+  };
+
+  const handleSignMessage = (message: GeneratedMessage) => {
+    setShowSigningModal(message);
+  };
+
+  const submitSignature = async () => {
+    if (!showSigningModal || !userName.trim()) {
+      alert('Please enter your name to sign the message');
+      return;
+    }
+
+    try {
+      const response = await fetch('/api/sign-representative-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messageId: showSigningModal.id,
+          userName: userName.trim(),
+          userEmail: userEmail.trim()
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to sign message');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        // Update the message with signature
+        setGeneratedMessages(prev => 
+          prev.map(msg => 
+            msg.id === showSigningModal.id 
+              ? { 
+                  ...msg, 
+                  signatures: [...msg.signatures, userName.trim()],
+                  isSignedByUser: true
+                }
+              : msg
+          )
+        );
+        
+        setShowSigningModal(null);
+        setUserName('');
+        setUserEmail('');
+        
+        alert('✅ Message signed successfully! It will be sent to your representative once enough signatures are collected.');
+      }
+    } catch (error) {
+      console.error('Error signing message:', error);
+      alert('Error signing message. Please try again.');
+    }
+  };
+
+  const sendMessage = async (message: GeneratedMessage) => {
+    try {
+      const response = await fetch('/api/send-representative-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          messageId: message.id,
+          representative: message.representative,
+          subject: message.subject,
+          messageContent: message.message,
+          signatures: message.signatures
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to send message');
+      }
+
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('✅ Message sent successfully to your representative!');
+        
+        // Remove the message from the list since it's been sent
+        setGeneratedMessages(prev => prev.filter(msg => msg.id !== message.id));
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      alert('Error sending message. Please try again.');
     }
   };
 
@@ -275,7 +613,7 @@ export default function RepresentativeContact({
     loadingAI
   });
 
-  if (!useAI && representatives.length === 0) {
+  if (!useAI && representatives.length === 0 && enhancedRepresentatives.length === 0) {
     return (
       <Card>
         <CardHeader>
@@ -287,15 +625,36 @@ export default function RepresentativeContact({
         <CardContent>
           <div className="space-y-4">
             <p className="text-gray-600">
-              No representatives found for your location in our database. Try using AI to get current representatives:
+              Based on your sentiment feedback, send a personalized message to your representatives about how you feel about this legislation.
             </p>
-            <Button 
-              onClick={() => router.push('/representatives')}
-              className="flex items-center gap-2"
-            >
-              <Sparkles className="h-4 w-4" />
-              Get Current Representatives with AI
-            </Button>
+            
+            <div className="space-y-4">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <h4 className="font-medium mb-2">
+                  If you {sentiment === 'support' ? 'Support' : 'Oppose'} this bill:
+                </h4>
+                <p className="text-sm text-gray-600 mb-3">
+                  We'll find your representatives for your location: <strong>{personaData.location}</strong>
+                </p>
+                <Button 
+                  onClick={loadAIRepresentatives}
+                  disabled={loadingAI}
+                  className="flex items-center gap-2"
+                >
+                  <Sparkles className="h-4 w-4" />
+                  {loadingAI ? 'Finding Representatives...' : 'Find My Representatives'}
+                </Button>
+                
+                {loadingAI && (
+                  <div className="mt-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                      This may take 30-60 seconds while we find your representatives...
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -359,6 +718,150 @@ export default function RepresentativeContact({
 
   return (
     <div className="space-y-6">
+      {/* Generated Messages Section */}
+      {generatedMessages.length > 0 && (
+        <Card className="border-green-200 bg-green-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-green-600" />
+              AI-Generated Messages Ready for Signing
+            </CardTitle>
+            <p className="text-sm text-gray-600">
+              Review and sign these AI-generated messages to send to your representatives
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {generatedMessages.map((message) => (
+                <Card key={message.id} className="border-l-4 border-l-green-500">
+                  <CardContent className="pt-4">
+                    <div className="space-y-3">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <h4 className="font-medium">
+                            To: {message.representative.title} {message.representative.first_name} {message.representative.last_name}
+                          </h4>
+                          <p className="text-sm text-gray-600">
+                            {message.representative.state} • {getPartyName(message.representative.party)}
+                          </p>
+                        </div>
+                        <Badge className={message.sentiment === 'support' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                          {message.sentiment === 'support' ? 'Support' : 'Oppose'}
+                        </Badge>
+                      </div>
+                      
+                      <div className="p-3 bg-white rounded border">
+                        <div className="text-sm mb-2">
+                          <strong>Subject:</strong> {message.subject}
+                        </div>
+                        <div className="text-sm">
+                          <strong>Message:</strong>
+                          <div className="mt-1 text-gray-700 whitespace-pre-wrap">
+                            {message.message}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center justify-between">
+                        <div className="text-sm text-gray-600">
+                          {message.signatures.length > 0 && (
+                            <span>{message.signatures.length} signature(s) collected</span>
+                          )}
+                        </div>
+                        
+                        <div className="flex gap-2">
+                          {!message.isSignedByUser && (
+                            <Button
+                              onClick={() => handleSignMessage(message)}
+                              variant="outline"
+                              size="sm"
+                              className="flex items-center gap-1"
+                            >
+                              <User className="h-4 w-4" />
+                              Sign Message
+                            </Button>
+                          )}
+                          
+                          {message.isSignedByUser && (
+                            <Button
+                              onClick={() => sendMessage(message)}
+                              size="sm"
+                              className="flex items-center gap-1"
+                            >
+                              <Mail className="h-4 w-4" />
+                              Send to Representative
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Signing Modal */}
+      {showSigningModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <Card className="w-full max-w-md mx-4">
+            <CardHeader>
+              <CardTitle>Sign Your Message</CardTitle>
+              <p className="text-sm text-gray-600">
+                Add your signature to this message to {showSigningModal.representative.title} {showSigningModal.representative.first_name} {showSigningModal.representative.last_name}
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Your Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={userName}
+                    onChange={(e) => setUserName(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Email Address (Optional)
+                  </label>
+                  <input
+                    type="email"
+                    value={userEmail}
+                    onChange={(e) => setUserEmail(e.target.value)}
+                    className="w-full px-3 py-2 border rounded-md"
+                    placeholder="Enter your email address"
+                  />
+                </div>
+                
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowSigningModal(null)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={submitSignature}
+                    disabled={!userName.trim()}
+                  >
+                    Sign Message
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Original Representatives Section */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -388,139 +891,39 @@ export default function RepresentativeContact({
               <Button
                 variant={useAI ? "default" : "outline"}
                 size="sm"
-                onClick={async () => {
-                  // Always load AI representatives when this button is clicked
-                  console.log(`[${componentId.current}] 🚀 AI Current button clicked!`);
-                  if (!loadingAI) {
-                    console.log(`[${componentId.current}] 🔄 Setting AI mode and clearing existing data...`);
-                    setUseAI(true); // Set AI mode first
-                    // Clear existing data to show loading state
-                    setEnhancedRepresentatives([]);
-                    setRepSummaries({});
-                    console.log(`[${componentId.current}] 📡 Starting AI representatives request...`);
-                    await loadAIRepresentatives(); // Then load the data
-                    console.log(`[${componentId.current}] ✅ AI representatives request completed!`);
-                  }
-                }}
+                onClick={loadAIRepresentatives}
                 disabled={loadingAI}
                 className="flex items-center gap-1"
               >
                 <Sparkles className="h-3 w-3" />
-                {loadingAI ? 'Analyzing with AI... (may take 30-60s)' : 'AI Current'}
-              </Button>
-              
-              {/* Debug test button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  console.log(`[${componentId.current}] 🧪 TEST: Current state:`, {
-                    useAI,
-                    enhancedRepsLength: enhancedRepresentatives.length,
-                    enhancedRepsData: enhancedRepresentatives,
-                    currentRepsLength: currentRepresentatives.length,
-                    currentRepsData: currentRepresentatives
-                  });
-                  alert(`TEST STATE:\nuseAI: ${useAI}\nenhancedReps: ${enhancedRepresentatives.length}\ncurrentReps: ${currentRepresentatives.length}\n\nCheck console for full data.`);
-                }}
-                className="text-xs"
-              >
-                🧪 Test State
-              </Button>
-              
-              {/* Manual override button */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  console.log(`[${componentId.current}] 🔧 Manual override: Setting fake data...`);
-                  setUseAI(true);
-                  setEnhancedRepresentatives([
-                    {
-                      id: 'test-1',
-                      bioguide_id: 'TEST001',
-                      first_name: 'Test',
-                      last_name: 'Representative',
-                      middle_name: null,
-                      title: 'Sen.',
-                      party: 'D',
-                      state: 'CO',
-                      district: null,
-                      chamber: 'senate',
-                      office: 'Test Office',
-                      phone: '555-0123',
-                      email: null,
-                      contact_form: null,
-                      website: 'https://test.gov',
-                      facebook: null,
-                      twitter: null,
-                      youtube: null,
-                      image_url: null,
-                      photo_url: undefined,
-                      years_served: 5,
-                      current_term_start: '2021-01-03',
-                      current_term_end: '2027-01-03',
-                      biography: 'This is a test representative.',
-                      committees: ['Test Committee'],
-                      in_office: true,
-                      next_election: null,
-                      term_start: '2021-01-03',
-                      term_end: '2027-01-03',
-                      created_at: new Date().toISOString(),
-                      updated_at: new Date().toISOString()
-                    }
-                  ] as EnhancedRepresentative[]);
-                  console.log(`[${componentId.current}] 🔧 Manual override complete!`);
-                }}
-                className="text-xs"
-              >
-                🔧 Force Test
+                {loadingAI ? 'Loading...' : 'Load Current Representatives'}
               </Button>
             </div>
           </div>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {/* Debug info */}
-            {useAI && (
-              <div className="text-xs text-gray-500 p-2 bg-gray-100 rounded">
-                Debug: useAI={useAI.toString()}, enhancedReps={enhancedRepresentatives.length}, currentReps={currentRepresentatives.length}, loadingAI={loadingAI.toString()}
-                
-                {/* Raw data display */}
-                {enhancedRepresentatives.length > 0 && (
-                  <div className="mt-2 p-2 bg-white rounded text-xs">
-                    <strong>Raw Enhanced Reps Data:</strong>
-                    <pre className="mt-1 text-xs overflow-auto max-h-32">
-                      {JSON.stringify(enhancedRepresentatives.map(rep => ({
-                        name: `${rep.first_name} ${rep.last_name}`,
-                        party: rep.party,
-                        state: rep.state,
-                        bioguide_id: rep.bioguide_id
-                      })), null, 2)}
-                    </pre>
-                  </div>
-                )}
-              </div>
-            )}
-            
-            {currentRepresentatives.length === 0 && useAI && !loadingAI && (
+            {/* Show message if no representatives available */}
+            {currentRepresentatives.length === 0 && !loadingAI && (
               <div className="text-center py-8">
-                <p className="text-gray-600 mb-4">🤔 AI mode is active but no representatives are showing.</p>
-                <p className="text-sm text-gray-500">This might be a state management issue. Check the browser console for logs.</p>
+                <p className="text-gray-600 mb-4">
+                  {useAI 
+                    ? 'No AI representatives loaded yet' 
+                    : 'No representatives found in database'
+                  }
+                </p>
                 <Button 
-                  onClick={async () => {
-                    console.log('🔄 Retry button clicked, forcing reload...');
-                    setEnhancedRepresentatives([]);
-                    setRepSummaries({});
-                    await loadAIRepresentatives();
-                  }}
-                  className="mt-2"
+                  onClick={loadAIRepresentatives}
+                  disabled={loadingAI}
+                  className="flex items-center gap-2"
                 >
-                  🔄 Retry Loading AI Representatives
+                  <Sparkles className="h-4 w-4" />
+                  {loadingAI ? 'Loading Representatives...' : 'Load Current Representatives'}
                 </Button>
               </div>
             )}
-            
+
+            {/* Rest of the original representatives display code */}
             {currentRepresentatives.map((rep) => {
               const repKey = 'bioguide_id' in rep ? rep.bioguide_id : (rep as Representative).id;
               const isEnhanced = 'years_served' in rep;
@@ -664,56 +1067,40 @@ export default function RepresentativeContact({
                         {sentiment === 'support' ? 'Support' : 'Oppose'} {billTitle}
                       </h4>
                       <p className="text-sm text-gray-600 mb-3">
-                        Send a pre-written message expressing your {sentiment} for this legislation:
+                        Generate an AI-powered message expressing your {sentiment} for this legislation:
                       </p>
                       
-                      {relevantTemplate && (
-                        <div className="space-y-3">
-                          <div className="text-sm">
-                            <strong>Subject:</strong> {relevantTemplate.subject.replace('{bill_title}', billTitle)}
-                          </div>
-                          
-                          <div className="text-sm">
-                            <strong>Message Preview:</strong>
-                            <div className="mt-1 p-2 bg-white rounded border text-xs max-h-20 overflow-y-auto">
-                              {generatePersonalizedMessage(
-                                rep,
-                                relevantTemplate,
-                                sentiment,
-                                billTitle,
-                                personaData
-                              ).message.substring(0, 200)}...
-                            </div>
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <label className="text-sm font-medium">
-                              Add your personal message (optional):
-                            </label>
-                            <Textarea
-                              value={customMessage}
-                              onChange={(e) => setCustomMessage(e.target.value)}
-                              placeholder="Add any additional personal thoughts..."
-                              className="h-20"
-                            />
-                          </div>
-                          
-                          <Button
-                            onClick={() => handleSendMessage(rep as Representative, relevantTemplate)}
-                            disabled={sendingMessage === repKey}
-                            className="w-full"
-                          >
-                            <Mail className="h-4 w-4 mr-2" />
-                            {sendingMessage === repKey ? 'Sending...' : 'Send Message'}
-                          </Button>
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={`select-${repKey}`}
+                            checked={selectedRepresentatives.has(repKey)}
+                            onChange={(e) => handleRepresentativeSelection(repKey, e.target.checked)}
+                            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                          />
+                          <label htmlFor={`select-${repKey}`} className="text-sm font-medium text-gray-700">
+                            Enable AI message generation for this representative
+                          </label>
                         </div>
-                      )}
+                        
+                        <Button
+                          onClick={() => generateAIMessageForRepresentative(rep)}
+                          disabled={isGeneratingMessage || !selectedRepresentatives.has(repKey)}
+                          className="w-full flex items-center gap-2"
+                        >
+                          <Sparkles className="h-4 w-4" />
+                          {isGeneratingMessage ? 'Generating AI Message...' : 'Generate AI Message'}
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
               );
             })}
+            
+
           </div>
         </CardContent>
       </Card>
