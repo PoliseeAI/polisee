@@ -34,53 +34,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      ai_bill_summaries: {
-        Row: {
-          bill_id: string
-          bill_text_hash: string
-          fiscal_impact: string
-          generated_at: string | null
-          id: number
-          key_changes: string[]
-          model_used: string
-          timeline: string
-          what_it_does: string
-          who_it_affects: string[]
-        }
-        Insert: {
-          bill_id: string
-          bill_text_hash: string
-          fiscal_impact: string
-          generated_at?: string | null
-          id?: number
-          key_changes: string[]
-          model_used?: string
-          timeline: string
-          what_it_does: string
-          who_it_affects: string[]
-        }
-        Update: {
-          bill_id?: string
-          bill_text_hash?: string
-          fiscal_impact?: string
-          generated_at?: string | null
-          id?: number
-          key_changes?: string[]
-          model_used?: string
-          timeline?: string
-          what_it_does?: string
-          who_it_affects?: string[]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_bill_summaries_bill_id_fkey"
-            columns: ["bill_id"]
-            isOneToOne: false
-            referencedRelation: "bills"
-            referencedColumns: ["bill_id"]
-          },
-        ]
-      }
       bill_actions: {
         Row: {
           action_code: string | null
@@ -341,7 +294,6 @@ export type Database = {
           sponsor_name: string | null
           sponsor_party: string | null
           sponsor_state: string | null
-          text: string | null
           title: string | null
           type: string
           update_date: string | null
@@ -365,7 +317,6 @@ export type Database = {
           sponsor_name?: string | null
           sponsor_party?: string | null
           sponsor_state?: string | null
-          text?: string | null
           title?: string | null
           type: string
           update_date?: string | null
@@ -389,7 +340,6 @@ export type Database = {
           sponsor_name?: string | null
           sponsor_party?: string | null
           sponsor_state?: string | null
-          text?: string | null
           title?: string | null
           type?: string
           update_date?: string | null
@@ -607,123 +557,6 @@ export type Database = {
           },
         ]
       }
-      representative_contact_messages: {
-        Row: {
-          bill_type: string | null
-          category: string
-          created_at: string | null
-          id: string
-          message_template: string
-          subject: string
-          title: string
-          updated_at: string | null
-        }
-        Insert: {
-          bill_type?: string | null
-          category: string
-          created_at?: string | null
-          id?: string
-          message_template: string
-          subject: string
-          title: string
-          updated_at?: string | null
-        }
-        Update: {
-          bill_type?: string | null
-          category?: string
-          created_at?: string | null
-          id?: string
-          message_template?: string
-          subject?: string
-          title?: string
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
-      representatives: {
-        Row: {
-          bioguide_id: string
-          chamber: string
-          contact_form: string | null
-          created_at: string | null
-          district: string | null
-          email: string | null
-          facebook: string | null
-          first_name: string
-          id: string
-          image_url: string | null
-          in_office: boolean | null
-          last_name: string
-          middle_name: string | null
-          next_election: string | null
-          office: string | null
-          party: string
-          phone: string | null
-          state: string
-          term_end: string | null
-          term_start: string | null
-          title: string
-          twitter: string | null
-          updated_at: string | null
-          website: string | null
-          youtube: string | null
-        }
-        Insert: {
-          bioguide_id: string
-          chamber: string
-          contact_form?: string | null
-          created_at?: string | null
-          district?: string | null
-          email?: string | null
-          facebook?: string | null
-          first_name: string
-          id?: string
-          image_url?: string | null
-          in_office?: boolean | null
-          last_name: string
-          middle_name?: string | null
-          next_election?: string | null
-          office?: string | null
-          party: string
-          phone?: string | null
-          state: string
-          term_end?: string | null
-          term_start?: string | null
-          title: string
-          twitter?: string | null
-          updated_at?: string | null
-          website?: string | null
-          youtube?: string | null
-        }
-        Update: {
-          bioguide_id?: string
-          chamber?: string
-          contact_form?: string | null
-          created_at?: string | null
-          district?: string | null
-          email?: string | null
-          facebook?: string | null
-          first_name?: string
-          id?: string
-          image_url?: string | null
-          in_office?: boolean | null
-          last_name?: string
-          middle_name?: string | null
-          next_election?: string | null
-          office?: string | null
-          party?: string
-          phone?: string | null
-          state?: string
-          term_end?: string | null
-          term_start?: string | null
-          title?: string
-          twitter?: string | null
-          updated_at?: string | null
-          website?: string | null
-          youtube?: string | null
-        }
-        Relationships: []
-      }
       usage_analytics: {
         Row: {
           created_at: string | null
@@ -845,70 +678,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_representative_contacts: {
-        Row: {
-          bill_id: string | null
-          contact_method: string | null
-          contacted_at: string | null
-          created_at: string | null
-          custom_message: string | null
-          id: string
-          message_id: string | null
-          representative_id: string | null
-          sentiment: string
-          session_id: string | null
-          user_id: string | null
-        }
-        Insert: {
-          bill_id?: string | null
-          contact_method?: string | null
-          contacted_at?: string | null
-          created_at?: string | null
-          custom_message?: string | null
-          id?: string
-          message_id?: string | null
-          representative_id?: string | null
-          sentiment: string
-          session_id?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          bill_id?: string | null
-          contact_method?: string | null
-          contacted_at?: string | null
-          created_at?: string | null
-          custom_message?: string | null
-          id?: string
-          message_id?: string | null
-          representative_id?: string | null
-          sentiment?: string
-          session_id?: string | null
-          user_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_representative_contacts_message_id_fkey"
-            columns: ["message_id"]
-            isOneToOne: false
-            referencedRelation: "representative_contact_messages"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_representative_contacts_representative_id_fkey"
-            columns: ["representative_id"]
-            isOneToOne: false
-            referencedRelation: "representatives"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_representative_contacts_session_id_fkey"
-            columns: ["session_id"]
-            isOneToOne: false
-            referencedRelation: "user_sessions"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       user_sessions: {
         Row: {
           created_at: string | null
@@ -930,75 +699,6 @@ export type Database = {
           id?: string
           session_token?: string
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      members: {
-        Row: {
-          birth_year: number | null
-          chamber: string
-          congress: number
-          created_at: string | null
-          death_year: number | null
-          district: number | null
-          first_name: string | null
-          full_name: string | null
-          id: number
-          last_name: string | null
-          leadership_role: string | null
-          member_id: string
-          middle_name: string | null
-          nickname: string | null
-          party: string | null
-          state: string | null
-          suffix: string | null
-          terms: Json | null
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          birth_year?: number | null
-          chamber: string
-          congress: number
-          created_at?: string | null
-          death_year?: number | null
-          district?: number | null
-          first_name?: string | null
-          full_name?: string | null
-          id?: number
-          last_name?: string | null
-          leadership_role?: string | null
-          member_id: string
-          middle_name?: string | null
-          nickname?: string | null
-          party?: string | null
-          state?: string | null
-          suffix?: string | null
-          terms?: Json | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          birth_year?: number | null
-          chamber?: string
-          congress?: number
-          created_at?: string | null
-          death_year?: number | null
-          district?: number | null
-          first_name?: string | null
-          full_name?: string | null
-          id?: number
-          last_name?: string | null
-          leadership_role?: string | null
-          member_id?: string
-          middle_name?: string | null
-          nickname?: string | null
-          party?: string | null
-          state?: string | null
-          suffix?: string | null
-          terms?: Json | null
-          title?: string | null
-          updated_at?: string | null
         }
         Relationships: []
       }

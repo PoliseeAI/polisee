@@ -1,5 +1,17 @@
 // Date utilities
 export const formatDate = (date: string | Date): string => {
+  if (date instanceof Date) {
+    return date.toLocaleDateString();
+  }
+  
+  // Handle string dates - check if it's in YYYY-MM-DD format
+  if (typeof date === 'string' && date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+    const [year, month, day] = date.split('-').map(Number);
+    const dateObj = new Date(year, month - 1, day); // month is 0-indexed
+    return dateObj.toLocaleDateString();
+  }
+  
+  // Fallback for other date formats
   return new Date(date).toLocaleDateString();
 };
 
