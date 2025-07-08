@@ -8,7 +8,7 @@
 ---
 
 ### 1. Executive Summary
-Polisee transforms lengthy legislative texts into personalized, verifiable impact reports for citizens. By combining Retrieval-Augmented Generation (RAG), a structured persona intake, and an interactive dashboard of "Impact Cards," Polisee answers "How does this bill affect me?" within minutes.
+Polisee transforms lengthy legislative texts into personalized, verifiable impact reports for citizens. **Administrators upload and manage bills**, while users create detailed personas and view AI-generated analysis results. Users can then provide sentiment feedback on specific bill sections that affect them. By combining Retrieval-Augmented Generation (RAG), a structured persona intake, and an interactive dashboard of "Impact Cards," Polisee answers "How does this bill affect me?" within minutes.
 
 ### 2. Background & Problem Statement
 - **Legislative Complexity:** Omnibus bills often exceed 1,000 pages, making manual review infeasible.
@@ -39,28 +39,32 @@ Polisee transforms lengthy legislative texts into personalized, verifiable impac
 ### 7. User Needs & Use Cases
 | Persona           | Need                                                 | Use Case                                                      |
 |-------------------|------------------------------------------------------|---------------------------------------------------------------|
-| Teacher Teresa    | Find K–12 funding changes for CA                     | Upload persona → view "Education" cards → drill into Section 401(b).
-| Small-Business Sam| Identify eligibility for small biz tax credits       | Select "Business" tab → summary + source link for Section 502.
-| Retiree Rita      | Understand Social Security adjustments               | Choose "Health \u0026 Seniors" → impact card on Part D.
-| Advocate Alex     | Download full text snippets for citation             | Filter by keyword → export highlighted PDF excerpts.
+| Teacher Teresa    | Find K–12 funding changes for CA                     | Create persona → view available bills → see "Education" impact analysis → provide feedback on relevant sections.
+| Small-Business Sam| Identify eligibility for small biz tax credits       | Create persona → browse bill analysis → view "Business" impact summary → give sentiment feedback on tax provisions.
+| Retiree Rita      | Understand Social Security adjustments               | Create persona → view health-related bill impacts → provide feedback on "Health \u0026 Seniors" sections.
+| Advocate Alex     | Download full text snippets for citation             | Review analysis across multiple bills → export highlighted PDF excerpts → provide detailed feedback.
 
 ### 8. Functional Requirements
 1. **Persona Intake Form**
    - Multi-step wizard with validation and tooltips.
-2. **Pre-Processing Pipeline**
+2. **Admin Bill Management**
+   - Admin-only bill upload, metadata management, and processing coordination.
+3. **Pre-Processing Pipeline**
    - PDF ingestion, semantic chunking (with overlap), embedding generation, vector index.
-3. **Query Planner Agent**
-   - Translate persona data into 5–7 semantic search queries.
-4. **Retrieval & Summarization**
+4. **Query Planner Agent**
+   - Translate persona data into 5–7 semantic search queries for each bill.
+5. **Retrieval & Summarization**
    - Hybrid retrieval (vector + BM25); summary generation with provenance metadata.
-5. **Dashboard & Impact Cards**
-   - Category grouping; expandable drill-down; source-text modal with highlighting.
-6. **Fallback Exploration**
-   - Topic cloud when no matches; confidence scoring display.
-7. **User Feedback**
-   - Flag summaries; collect satisfaction ratings.
-8. **Export & Share**
-   - PDF download of report; link-sharing for public view.
+6. **Analysis Results Dashboard**
+   - Display personalized analysis for all available bills; category grouping; expandable drill-down; source-text modal with highlighting.
+7. **Sentiment Feedback System**
+   - User feedback on specific bill sections; positive/negative/neutral sentiment; detailed comments.
+8. **Fallback Exploration**
+   - "No Analysis Available" state; confidence scoring display.
+9. **User Feedback Analytics**
+   - Admin dashboard for feedback trends; sentiment analysis aggregation.
+10. **Export & Share**
+    - PDF download of report; link-sharing for public view.
 
 ### 9. Non-Functional Requirements
 - **Performance:** ≤ 30s end-to-end latency under moderate load (500 requests/day).
@@ -78,9 +82,9 @@ Polisee transforms lengthy legislative texts into personalized, verifiable impac
 6. **Monitoring:** Prometheus + Grafana; error tracking with Sentry.
 
 ### 11. Data Requirements
-- **Input:** Bill PDF (up to 10MB), persona form data.
-- **Derived:** Chunk embeddings, retrieval logs, summary metadata.
-- **Retention:** Session data stored for 24 hours; anonymized usage analytics retained 2 years.
+- **Input:** Bill PDF (up to 10MB, admin-uploaded), persona form data, sentiment feedback.
+- **Derived:** Chunk embeddings, retrieval logs, summary metadata, analysis results, feedback analytics.
+- **Retention:** Session data stored for 24 hours; bill analysis results retained indefinitely; anonymized usage analytics retained 2 years; sentiment feedback retained for research purposes.
 
 ### 12. Security & Compliance
 - **Data Encryption:** At-rest (AES-256) and in-transit (HTTPS/TLS).

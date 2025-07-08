@@ -30,6 +30,58 @@ export type PersonaRow = Database['public']['Tables']['personas']['Row']
 export type PersonaInsert = Database['public']['Tables']['personas']['Insert']
 export type PersonaUpdate = Database['public']['Tables']['personas']['Update']
 
+// Persona utility functions
+export const personaUtils = {
+  // Check if user has an existing persona
+  async hasPersona(userId: string): Promise<boolean> {
+    const { data, error } = await supabase
+      .from('personas')
+      .select('id')
+      .eq('user_id', userId)
+      .limit(1)
+    
+    if (error) {
+      console.error('Error checking for persona:', error)
+      return false
+    }
+    
+    return data && data.length > 0
+  },
+
+  // Get user's persona
+  async getPersona(userId: string): Promise<PersonaRow | null> {
+    const { data, error } = await supabase
+      .from('personas')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single()
+    
+    if (error) {
+      console.error('Error fetching persona:', error)
+      return null
+    }
+    
+    return data
+  },
+
+  // Delete user's persona
+  async deletePersona(userId: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('personas')
+      .delete()
+      .eq('user_id', userId)
+    
+    if (error) {
+      console.error('Error deleting persona:', error)
+      return false
+    }
+    
+    return true
+  }
+}
+
 export type UserSessionRow = Database['public']['Tables']['user_sessions']['Row']
 export type UserSessionInsert = Database['public']['Tables']['user_sessions']['Insert']
 export type UserSessionUpdate = Database['public']['Tables']['user_sessions']['Update']

@@ -11,11 +11,7 @@ import {
   ChevronDown,
   ChevronRight,
   BarChart3,
-  History,
   HelpCircle,
-  Star,
-  Folder,
-  Upload,
   LogOut
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -38,20 +34,9 @@ const navigation: NavigationItem[] = [
     href: '/analyze', 
     icon: FileText,
     children: [
-      { name: 'Upload Bill', href: '/analyze/upload', icon: Upload },
-      { name: 'Persona Setup', href: '/analyze/persona', icon: User },
+      { name: 'Create Persona', href: '/persona/create', icon: User },
+      { name: 'View Bills', href: '/bills', icon: FileText },
       { name: 'Analysis Results', href: '/analyze/results', icon: BarChart3 },
-    ]
-  },
-  { 
-    name: 'Dashboard', 
-    href: '/dashboard', 
-    icon: User,
-    children: [
-      { name: 'Overview', href: '/dashboard/overview', icon: BarChart3 },
-      { name: 'Saved Analyses', href: '/dashboard/saved', icon: Star },
-      { name: 'History', href: '/dashboard/history', icon: History },
-      { name: 'My Personas', href: '/dashboard/personas', icon: Folder },
     ]
   },
   { name: 'Settings', href: '/settings', icon: Settings },

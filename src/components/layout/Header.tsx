@@ -20,7 +20,6 @@ import {
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Analyze', href: '/analyze', icon: FileText },
-  { name: 'Dashboard', href: '/dashboard', icon: User },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
@@ -44,30 +43,28 @@ export function Header() {
           <span className="text-xl font-bold">Polisee</span>
         </Link>
 
-        {/* Desktop Navigation - Only show when user is signed in or not on homepage */}
-        {(user || (pathname !== '/' && !loading)) && (
-          <nav className="hidden md:flex items-center space-x-1">
-            {navigation.map((item) => {
-              const Icon = item.icon
-              const isActive = pathname === item.href
-              return (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className={cn(
-                    'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-blue-50 text-blue-600'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  )}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span>{item.name}</span>
-                </Link>
-              )
-            })}
-          </nav>
-        )}
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-1">
+          {navigation.map((item) => {
+            const Icon = item.icon
+            const isActive = pathname === item.href || (item.href === '/analyze' && pathname.startsWith('/persona'))
+            return (
+              <Link
+                key={item.name}
+                href={item.href}
+                className={cn(
+                  'flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium transition-colors',
+                  isActive
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                )}
+              >
+                <Icon className="h-4 w-4" />
+                <span>{item.name}</span>
+              </Link>
+            )
+          })}
+        </nav>
 
         {/* User Actions */}
         <div className="flex items-center space-x-2">
@@ -93,12 +90,6 @@ export function Header() {
                 <DropdownMenuContent align="end" className="w-56">
                   <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard" className="flex items-center">
-                      <User className="mr-2 h-4 w-4" />
-                      Dashboard
-                    </Link>
-                  </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link href="/settings" className="flex items-center">
                       <Settings className="mr-2 h-4 w-4" />
@@ -148,35 +139,28 @@ export function Header() {
       {mobileMenuOpen && (
         <div className="md:hidden">
           <div className="px-2 pt-2 pb-3 space-y-1 bg-white border-t">
-            {/* Navigation Links - Only show when user is signed in or not on homepage */}
-            {(user || (pathname !== '/' && !loading)) && (
-              <>
-                {navigation.map((item) => {
-                  const Icon = item.icon
-                  const isActive = pathname === item.href
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      className={cn(
-                        'flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-colors',
-                        isActive
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                      )}
-                      onClick={() => setMobileMenuOpen(false)}
-                    >
-                      <Icon className="h-5 w-5" />
-                      <span>{item.name}</span>
-                    </Link>
-                  )
-                })}
-              </>
-            )}
-            <div className={cn(
-              "pt-4 pb-2", 
-              (user || (pathname !== '/' && !loading)) && "border-t"
-            )}>
+            {/* Navigation Links */}
+            {navigation.map((item) => {
+              const Icon = item.icon
+              const isActive = pathname === item.href || (item.href === '/analyze' && pathname.startsWith('/persona'))
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={cn(
+                    'flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium transition-colors',
+                    isActive
+                      ? 'bg-blue-50 text-blue-600'
+                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  )}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <Icon className="h-5 w-5" />
+                  <span>{item.name}</span>
+                </Link>
+              )
+            })}
+            <div className="pt-4 pb-2 border-t">
               <div className="px-3 space-y-2">
                 {loading ? (
                   <div className="space-y-2">
