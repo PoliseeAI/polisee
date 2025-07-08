@@ -2,23 +2,19 @@ import { createClient } from '@supabase/supabase-js'
 import { Database } from '@/types/database'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-if (!supabaseUrl || !supabaseServiceRoleKey) {
+if (!supabaseUrl || !supabaseServiceKey) {
   throw new Error('Missing Supabase environment variables for admin client')
 }
 
-// Server-side admin client - DO NOT use on client side
-export const supabaseAdmin = createClient<Database>(
-  supabaseUrl,
-  supabaseServiceRoleKey,
-  {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false
-    }
+// Server-side Supabase client with service role key (bypasses RLS)
+export const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
   }
-)
+})
 
 // Helper function to check if we're on the server
 export const isServer = typeof window === 'undefined'

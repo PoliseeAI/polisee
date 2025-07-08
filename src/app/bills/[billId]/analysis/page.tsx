@@ -12,6 +12,7 @@ import { getBillById, BillWithDetails, formatBillId } from '@/lib/bills'
 import { personaUtils, PersonaRow } from '@/lib/supabase'
 import { useAuthContext } from '@/lib/auth'
 import { SentimentFeedback } from '@/components/feedback/SentimentFeedback'
+import RepresentativeContact from '@/components/feedback/RepresentativeContact'
 
 interface PersonalImpact {
   category: string
@@ -644,6 +645,42 @@ export default function BillAnalysis() {
               })}
             </div>
           )}
+        </div>
+
+        {/* Representative Contact */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">Contact Your Representatives</h2>
+          <p className="text-gray-600">
+            Based on your sentiment feedback, send a personalized message to your representatives about how you feel about this legislation.
+          </p>
+          
+          {/* Support Contact */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-green-700">If you Support this bill:</h3>
+            <RepresentativeContact
+              sentiment="support"
+              billId={bill.bill_id || ''}
+              billTitle={bill.title || 'Unknown Bill'}
+              personaData={persona}
+              onMessageSent={(rep, message) => {
+                console.log(`Message sent to ${rep.first_name} ${rep.last_name}:`, message)
+              }}
+            />
+          </div>
+          
+          {/* Oppose Contact */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-red-700">If you Oppose this bill:</h3>
+            <RepresentativeContact
+              sentiment="oppose"
+              billId={bill.bill_id || ''}
+              billTitle={bill.title || 'Unknown Bill'}
+              personaData={persona}
+              onMessageSent={(rep, message) => {
+                console.log(`Message sent to ${rep.first_name} ${rep.last_name}:`, message)
+              }}
+            />
+          </div>
         </div>
 
         {/* Actions */}
