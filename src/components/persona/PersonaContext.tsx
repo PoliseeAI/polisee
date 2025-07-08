@@ -166,7 +166,7 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
         .select('id')
         .eq('user_id', user.id)
         .limit(1)
-        .single()
+        .maybeSingle()
 
       let error
       if (existingPersona) {
@@ -205,7 +205,7 @@ export function PersonaProvider({ children }: { children: ReactNode }) {
         .eq('user_id', user.id)
         .order('created_at', { ascending: false })
         .limit(1)
-        .single()
+        .maybeSingle()
 
       if (error) {
         console.error('Error loading persona:', error)
