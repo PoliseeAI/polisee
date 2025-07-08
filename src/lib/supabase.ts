@@ -56,7 +56,7 @@ export const personaUtils = {
       .eq('user_id', userId)
       .order('created_at', { ascending: false })
       .limit(1)
-      .single()
+      .maybeSingle()
     
     if (error) {
       console.error('Error fetching persona:', error)

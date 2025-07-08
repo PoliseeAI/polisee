@@ -17,6 +17,19 @@ import { getBillPDFUrl, getBillSourceReferences, getBillSections } from '@/lib/p
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { EnhancedImpactCard, PersonalImpact } from '@/components/ui/enhanced-impact-card'
 import { generatePersonalizedImpacts } from '@/lib/analysis-engine'
+import { SentimentFeedback } from '@/components/feedback/SentimentFeedback'
+import RepresentativeContact from '@/components/feedback/RepresentativeContact'
+
+interface PersonalImpact {
+  category: string
+  impact: 'positive' | 'negative' | 'neutral'
+  severity: 'low' | 'medium' | 'high'
+  title: string
+  description: string
+  details: string[]
+  icon: any
+}
+
 
 export default function BillAnalysis() {
   const params = useParams()
@@ -297,6 +310,42 @@ export default function BillAnalysis() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Representative Contact */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold text-gray-900">Contact Your Representatives</h2>
+          <p className="text-gray-600">
+            Based on your sentiment feedback, send a personalized message to your representatives about how you feel about this legislation.
+          </p>
+          
+          {/* Support Contact */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-green-700">If you Support this bill:</h3>
+            <RepresentativeContact
+              sentiment="support"
+              billId={bill.bill_id || ''}
+              billTitle={bill.title || 'Unknown Bill'}
+              personaData={persona}
+              onMessageSent={(rep, message) => {
+                console.log(`Message sent to ${rep.first_name} ${rep.last_name}:`, message)
+              }}
+            />
+          </div>
+          
+          {/* Oppose Contact */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-medium text-red-700">If you Oppose this bill:</h3>
+            <RepresentativeContact
+              sentiment="oppose"
+              billId={bill.bill_id || ''}
+              billTitle={bill.title || 'Unknown Bill'}
+              personaData={persona}
+              onMessageSent={(rep, message) => {
+                console.log(`Message sent to ${rep.first_name} ${rep.last_name}:`, message)
+              }}
+            />
+          </div>
         </div>
 
         {/* Actions */}

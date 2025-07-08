@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, User, FileText, Settings, Home, LogOut, ChevronDown, Download } from 'lucide-react'
+import { Menu, X, User, FileText, Settings, Home, LogOut, ChevronDown, Download, Users, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuthContext } from '@/lib/auth'
@@ -20,6 +20,8 @@ import {
 const navigation = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Analyze', href: '/analyze', icon: FileText },
+  { name: 'Feed', href: '/feed', icon: MessageCircle },
+  { name: 'Representatives', href: '/representatives', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 

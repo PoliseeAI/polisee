@@ -470,6 +470,75 @@ export type Database = {
           },
         ]
       }
+      members: {
+        Row: {
+          birth_year: number | null
+          chamber: string
+          congress: number
+          created_at: string | null
+          death_year: number | null
+          district: number | null
+          first_name: string | null
+          full_name: string | null
+          id: number
+          last_name: string | null
+          leadership_role: string | null
+          member_id: string
+          middle_name: string | null
+          nickname: string | null
+          party: string | null
+          state: string | null
+          suffix: string | null
+          terms: Json | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          birth_year?: number | null
+          chamber: string
+          congress: number
+          created_at?: string | null
+          death_year?: number | null
+          district?: number | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: number
+          last_name?: string | null
+          leadership_role?: string | null
+          member_id: string
+          middle_name?: string | null
+          nickname?: string | null
+          party?: string | null
+          state?: string | null
+          suffix?: string | null
+          terms?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          birth_year?: number | null
+          chamber?: string
+          congress?: number
+          created_at?: string | null
+          death_year?: number | null
+          district?: number | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: number
+          last_name?: string | null
+          leadership_role?: string | null
+          member_id?: string
+          middle_name?: string | null
+          nickname?: string | null
+          party?: string | null
+          state?: string | null
+          suffix?: string | null
+          terms?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       personas: {
         Row: {
           age: number
@@ -537,6 +606,123 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      representative_contact_messages: {
+        Row: {
+          bill_type: string | null
+          category: string
+          created_at: string | null
+          id: string
+          message_template: string
+          subject: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          bill_type?: string | null
+          category: string
+          created_at?: string | null
+          id?: string
+          message_template: string
+          subject: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          bill_type?: string | null
+          category?: string
+          created_at?: string | null
+          id?: string
+          message_template?: string
+          subject?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      representatives: {
+        Row: {
+          bioguide_id: string
+          chamber: string
+          contact_form: string | null
+          created_at: string | null
+          district: string | null
+          email: string | null
+          facebook: string | null
+          first_name: string
+          id: string
+          image_url: string | null
+          in_office: boolean | null
+          last_name: string
+          middle_name: string | null
+          next_election: string | null
+          office: string | null
+          party: string
+          phone: string | null
+          state: string
+          term_end: string | null
+          term_start: string | null
+          title: string
+          twitter: string | null
+          updated_at: string | null
+          website: string | null
+          youtube: string | null
+        }
+        Insert: {
+          bioguide_id: string
+          chamber: string
+          contact_form?: string | null
+          created_at?: string | null
+          district?: string | null
+          email?: string | null
+          facebook?: string | null
+          first_name: string
+          id?: string
+          image_url?: string | null
+          in_office?: boolean | null
+          last_name: string
+          middle_name?: string | null
+          next_election?: string | null
+          office?: string | null
+          party: string
+          phone?: string | null
+          state: string
+          term_end?: string | null
+          term_start?: string | null
+          title: string
+          twitter?: string | null
+          updated_at?: string | null
+          website?: string | null
+          youtube?: string | null
+        }
+        Update: {
+          bioguide_id?: string
+          chamber?: string
+          contact_form?: string | null
+          created_at?: string | null
+          district?: string | null
+          email?: string | null
+          facebook?: string | null
+          first_name?: string
+          id?: string
+          image_url?: string | null
+          in_office?: boolean | null
+          last_name?: string
+          middle_name?: string | null
+          next_election?: string | null
+          office?: string | null
+          party?: string
+          phone?: string | null
+          state?: string
+          term_end?: string | null
+          term_start?: string | null
+          title?: string
+          twitter?: string | null
+          updated_at?: string | null
+          website?: string | null
+          youtube?: string | null
+        }
+        Relationships: []
       }
       usage_analytics: {
         Row: {
@@ -659,6 +845,70 @@ export type Database = {
         }
         Relationships: []
       }
+      user_representative_contacts: {
+        Row: {
+          bill_id: string | null
+          contact_method: string | null
+          contacted_at: string | null
+          created_at: string | null
+          custom_message: string | null
+          id: string
+          message_id: string | null
+          representative_id: string | null
+          sentiment: string
+          session_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          bill_id?: string | null
+          contact_method?: string | null
+          contacted_at?: string | null
+          created_at?: string | null
+          custom_message?: string | null
+          id?: string
+          message_id?: string | null
+          representative_id?: string | null
+          sentiment: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          bill_id?: string | null
+          contact_method?: string | null
+          contacted_at?: string | null
+          created_at?: string | null
+          custom_message?: string | null
+          id?: string
+          message_id?: string | null
+          representative_id?: string | null
+          sentiment?: string
+          session_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_representative_contacts_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "representative_contact_messages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_representative_contacts_representative_id_fkey"
+            columns: ["representative_id"]
+            isOneToOne: false
+            referencedRelation: "representatives"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_representative_contacts_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_sessions: {
         Row: {
           created_at: string | null
@@ -757,6 +1007,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       cleanup_expired_personas: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -778,6 +1032,58 @@ export type Database = {
           depth: number
         }[]
       }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
       search_bill_chunks: {
         Args: {
           query_embedding: string
@@ -792,6 +1098,42 @@ export type Database = {
           metadata: Json
           similarity: number
         }[]
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {
@@ -909,7 +1251,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

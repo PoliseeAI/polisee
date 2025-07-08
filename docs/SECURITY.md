@@ -1,161 +1,105 @@
-# Security Guidelines for Polisee
+# Security Documentation
 
-## Overview
+## Secret Detection
 
-This document outlines the security practices and tools implemented in the Polisee project to protect against secrets leakage and maintain code security.
+We use multiple tools to detect secrets and sensitive information in our codebase:
 
-## Gitleaks Integration
+### 1. TruffleHog (Primary - Free)
+- **What it does**: Detects secrets using entropy analysis and regex patterns
+- **Why we use it**: Free, no license required, very effective
+- **Runs on**: Every push and pull request via GitHub Actions
 
-Gitleaks is integrated into our development workflow to detect and prevent secrets from being committed to the repository.
+### 2. Gitleaks (Secondary - Local Development)
+- **What it does**: Detects secrets using configurable rules
+- **Configuration**: `.gitleaks.toml` in the root directory
+- **Usage**: Primarily for local development
 
-### Setup
+## GitHub Actions Security Scan
 
-1. **Install Gitleaks**:
-   ```bash
-   # Run the setup script
-   ./scripts/setup-gitleaks.sh
-   
-   # Or install manually on macOS
-   brew install gitleaks
-   ```
+Our security workflow (`.github/workflows/security.yml`) includes:
 
-2. **Configuration**: 
-   - Main config: `.gitleaks.toml`
-   - Baseline: `.gitleaks-baseline.json` (if created)
+1. **Secret Detection** - Uses TruffleHog + local gitleaks
+2. **Dependency Scanning** - Uses npm audit for vulnerability checking
+3. **SARIF Upload** - Results are uploaded to GitHub Security tab
 
-### Usage
+## Local Development
 
-#### Development Commands
+### Running Security Scans
 
 ```bash
-# Scan entire repository
+# Run gitleaks scan
 npm run security:scan
 
-# Scan only staged files (recommended before commit)
+# Run TruffleHog scan (requires Docker)
+npm run security:trufflehog
+
+# Run both scans
+npm run security:full
+
+# Scan only staged files (good for pre-commit)
 npm run security:scan-staged
 
-# Scan commit history
-npm run security:scan-commits
+# Create baseline file to ignore existing findings
+npm run security:baseline
+```
 
-# Run pre-commit security check
+### Pre-commit Hook
+
+The `precommit` script runs automatically before commits to check staged files:
+
+```bash
 npm run precommit
 ```
 
-#### Creating a Baseline
+## Configuration
 
-If you have existing secrets that cannot be removed immediately:
+### Gitleaks Configuration (`.gitleaks.toml`)
 
-```bash
-# Create a baseline to ignore existing secrets
-npm run security:baseline
+Our configuration includes:
+- Custom rules for Supabase keys
+- NextAuth and JWT secret detection
+- Allowlist for false positives
+- Stopwords to reduce noise
 
-# Commit the baseline file
-git add .gitleaks-baseline.json
-git commit -m "Add gitleaks baseline"
-```
+### TruffleHog Configuration
 
-### CI/CD Integration
+TruffleHog runs with:
+- `--only-verified` flag to reduce false positives
+- `--debug` for detailed output in CI
 
-Gitleaks runs automatically on:
-- Pull requests to `main` or `develop` branches
-- Pushes to `main` or `develop` branches
+## Common Issues
 
-The GitHub Actions workflow (`.github/workflows/security.yml`) includes:
-- Secret detection with gitleaks
-- Dependency vulnerability scanning with npm audit
-- SARIF file upload for GitHub Security tab
+### 1. False Positives
+- Add patterns to the allowlist in `.gitleaks.toml`
+- Use the baseline file for persistent ignores
 
-### Configuration Details
+### 2. Gitleaks License Error
+- **Solution**: We've switched to TruffleHog for CI/CD
+- **Local use**: Gitleaks is still free for local development
 
-#### Custom Rules
+### 3. Missing Dependencies
+- **TruffleHog**: Requires Docker for local usage
+- **Gitleaks**: Install via `brew install gitleaks` or run setup script
 
-Our `.gitleaks.toml` includes specific rules for:
-- Supabase API keys
-- NextAuth secrets
-- JWT secrets
-- General API keys and tokens
+## Best Practices
 
-#### Allowlisted Patterns
+1. **Never commit secrets** - Use environment variables
+2. **Use .env.local** for local development secrets
+3. **Run security scans** before committing
+4. **Review scan results** carefully
+5. **Update configurations** as needed
 
-The following are allowlisted to reduce false positives:
-- Documentation files (`.md`, `.txt`)
-- Configuration files (`package.json`, `tsconfig.json`, etc.)
-- Public directories
-- Test/example/placeholder values
+## Emergency Response
 
-### Best Practices
+If secrets are accidentally committed:
 
-1. **Pre-commit Scanning**: Always run `npm run security:scan-staged` before committing
-2. **Environment Variables**: Use `.env.local` for local secrets (already in `.gitignore`)
-3. **Supabase Keys**: 
-   - Use environment variables for API keys
-   - Never commit service role keys
-   - Use Row Level Security (RLS) for database access
-4. **Regular Scanning**: Run `npm run security:scan` periodically
+1. **Immediately rotate** the compromised credentials
+2. **Remove from git history** using `git filter-branch` or BFG
+3. **Update baseline** if needed
+4. **Notify team** about the incident
 
-### Handling Detected Secrets
+## Resources
 
-If gitleaks detects a secret:
-
-1. **Before Commit**: Remove the secret and use environment variables
-2. **After Commit**: 
-   - Remove the secret from code
-   - Rotate/revoke the compromised secret
-   - Use `git filter-branch` or BFG Repo-Cleaner to remove from history
-   - Update the baseline if necessary
-
-### Environment Variables
-
-Store secrets in environment variables:
-
-```bash
-# .env.local (not tracked by git)
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-NEXTAUTH_SECRET=your_nextauth_secret
-```
-
-### Troubleshooting
-
-#### False Positives
-
-If gitleaks flags a false positive:
-1. Add the pattern to the allowlist in `.gitleaks.toml`
-2. Or add specific file paths to the allowlist
-
-#### Updating Rules
-
-To modify detection rules:
-1. Edit `.gitleaks.toml`
-2. Test with `npm run security:scan`
-3. Commit the updated configuration
-
-### Resources
-
-- [Gitleaks Documentation](https://github.com/gitleaks/gitleaks)
-- [Gitleaks Configuration](https://github.com/gitleaks/gitleaks/blob/master/config/gitleaks.toml)
-- [OWASP Secrets Management](https://owasp.org/www-project-secrets-management-cheat-sheet/)
-
-## Additional Security Measures
-
-### Dependency Scanning
-
-- `npm audit` runs in CI to detect vulnerable dependencies
-- Regular dependency updates recommended
-
-### Supabase Security
-
-- Row Level Security (RLS) enabled on all tables
-- Service role key used only server-side
-- Anonymous key used for client-side operations
-
-### Code Review
-
-- All pull requests require review
-- Security-focused code review guidelines
-- Automated security checks must pass
-
----
-
-For security issues or questions, please contact the development team. 
+- [TruffleHog Documentation](https://trufflesecurity.com/trufflehog)
+- [Gitleaks Documentation](https://gitleaks.io/)
+- [GitHub Security Features](https://docs.github.com/en/code-security) 
