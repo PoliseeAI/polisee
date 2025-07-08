@@ -1,19 +1,20 @@
--- Make sure you have the pgvector extension installed
 CREATE EXTENSION IF NOT EXISTS vector;
 
-CREATE TABLE bill_sections (
-    id VARCHAR(255) PRIMARY KEY,
+-- This schema is the same as before, but its usage is now more sophisticated.
+CREATE TABLE bill_chunks (
+    chunk_id SERIAL PRIMARY KEY,
+    section_id VARCHAR(255) NOT NULL,
+    chunk_type VARCHAR(50) NOT NULL, -- e.g., 'section_summary', 'subsection_text'
+    content TEXT,
+    embedding vector(1536),
     bill_title TEXT,
     bill_number VARCHAR(50),
     section_number VARCHAR(50),
     section_header TEXT,
     committee TEXT,
     subtitle TEXT,
-    full_context_text TEXT, -- The synthesized text for the LLM
-    embedding vector(1536), -- Assuming OpenAI's text-embedding-ada-002 dimension
-    metadata JSONB -- For storing other useful info like cross-references
+    metadata JSONB
 );
 
--- Create an index for efficient vector similarity search
-CREATE INDEX ON bill_sections
-USING HNSW (embedding vector_l2_ops); -- Or use IVFFLAT depending on your specific needs
+CREATE INDEX ON bill_chunks USING HNSW (embedding vector_l2_ops);
+CREATE INDEX ON bill_chunks (section_id);

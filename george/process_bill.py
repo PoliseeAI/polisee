@@ -71,16 +71,10 @@ def fetch_usc_content(cite: str) -> str:
                 response = requests.get(url, timeout=20)
                 time.sleep(REQUEST_DELAY_SECONDS) # Be polite
                 if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    # Find the main content area for US Code sections
-                    content_area = soup.find('div', class_='content-area')
-                    if content_area:
-                        text = content_area.get_text(separator='\n', strip=True)
-                        usc_content_cache[cite] = text
-                        return text
-                    else:
-                        usc_content_cache[cite] = "[Content not found on page]"
-                        return "[Content not found on page]"
+                    text = extract_usc_text_from_html(response.text)
+                    usc_content_cache[cite] = text
+                    print(f"    Text found")
+                    return text
                 else:
                     print(f"    Attempt {attempt + 1}: Failed to fetch {cite}. Status code: {response.status_code}")
 
@@ -95,6 +89,16 @@ def fetch_usc_content(cite: str) -> str:
     except Exception as e:
         print(f"    Error processing cite {cite}: {e}")
         return f"[Error processing cite: {cite}]"
+
+def extract_usc_text_from_html(document):
+    start_marker = "<!-- field-start:statute -->"
+    end_marker = "<!-- field-end:statute -->"
+    start = document.index(start_marker) + len(start_marker)
+    end = document.index(end_marker)
+
+    soup = BeautifulSoup(document[start:end].strip(), 'html.parser')
+    return soup.get_text(separator='\n', strip=True)
+
 
 def generate_embedding(text: str):
     """Generates a vector embedding for the given text using OpenAI's API."""
