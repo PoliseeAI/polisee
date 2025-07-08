@@ -4,14 +4,12 @@ import * as React from 'react'
 import { usePathname } from 'next/navigation'
 import { Header } from './Header'
 import { Footer } from './Footer'
-import { Sidebar } from './Sidebar'
 import { Breadcrumbs } from './Breadcrumbs'
 import { cn } from '@/lib/utils'
 import { useAuthContext } from '@/lib/auth'
 
 interface MainLayoutProps {
   children: React.ReactNode
-  showSidebar?: boolean
   showBreadcrumbs?: boolean
   showFooter?: boolean
   className?: string
@@ -19,30 +17,19 @@ interface MainLayoutProps {
 
 export function MainLayout({ 
   children, 
-  showSidebar = true,
   showBreadcrumbs = true,
   showFooter = true,
   className 
 }: MainLayoutProps) {
-  const [sidebarOpen, setSidebarOpen] = React.useState(false)
   const pathname = usePathname()
   const { user, loading } = useAuthContext()
 
-  // Close sidebar on route change (mobile)
-  React.useEffect(() => {
-    setSidebarOpen(false)
-  }, [pathname])
+  // Use header consistently throughout the app
+  const shouldShowHeader = true
 
-  // Define protected routes
-  const protectedRoutes = ['/dashboard', '/analyze', '/settings']
+  // Define protected routes that require authentication
+  const protectedRoutes = ['/analyze', '/settings', '/persona']
   const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route))
-  
-  // Determine if we should show sidebar based on route
-  const shouldShowSidebar = showSidebar && (
-    pathname.startsWith('/dashboard') || 
-    pathname.startsWith('/analyze') ||
-    pathname.startsWith('/settings')
-  )
 
   // For protected routes, check if user is authenticated
   const shouldShowLayout = !isProtectedRoute || user || loading
@@ -56,67 +43,40 @@ export function MainLayout({
     )
   }
 
-  // Full layout for authenticated users and public routes
+  // Consistent header layout throughout the app
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      {/* Header Navigation */}
+      {shouldShowHeader && <Header />}
       
-      <div className="flex">
-        {/* Sidebar */}
-        {shouldShowSidebar && (
-          <>
-            {/* Desktop Sidebar */}
-            <div className="hidden lg:flex lg:flex-shrink-0">
-              <Sidebar />
+      {/* Main Content */}
+      <div className="flex flex-col min-h-screen">
+        <main className={cn('flex-1', className)}>
+          {/* Breadcrumbs */}
+          {showBreadcrumbs && pathname !== '/' && (
+            <div className="bg-white border-b">
+              <div className="container mx-auto py-4">
+                <Breadcrumbs />
+              </div>
             </div>
-            
-            {/* Mobile Sidebar */}
-            <div className="lg:hidden">
-              <Sidebar 
-                isOpen={sidebarOpen} 
-                onClose={() => setSidebarOpen(false)} 
-              />
+          )}
+          
+          {/* Page Content */}
+          {pathname === '/' ? (
+            // Full-width homepage
+            <div>
+              {children}
             </div>
-            
-            {/* Mobile Sidebar Overlay */}
-            {sidebarOpen && (
-              <div 
-                className="fixed inset-0 z-40 bg-black bg-opacity-50 lg:hidden"
-                onClick={() => setSidebarOpen(false)}
-              />
-            )}
-          </>
-        )}
+          ) : (
+            // Container-wrapped pages
+            <div className="container mx-auto px-4 py-6">
+              {children}
+            </div>
+          )}
+        </main>
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col">
-          <main className={cn('flex-1', className)}>
-            {/* Breadcrumbs */}
-            {showBreadcrumbs && pathname !== '/' && (
-              <div className="bg-white border-b">
-                <div className="container mx-auto py-4">
-                  <Breadcrumbs />
-                </div>
-              </div>
-            )}
-            
-            {/* Page Content */}
-            {pathname === '/' ? (
-              // Full-width homepage
-              <div>
-                {children}
-              </div>
-            ) : (
-              // Container-wrapped pages
-              <div className="container mx-auto px-4 py-6">
-                {children}
-              </div>
-            )}
-          </main>
-
-          {/* Footer */}
-          {showFooter && <Footer />}
-        </div>
+        {/* Footer */}
+        {showFooter && <Footer />}
       </div>
     </div>
   )
