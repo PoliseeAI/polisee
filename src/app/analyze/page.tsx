@@ -1,53 +1,192 @@
+'use client'
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Upload, User, FileText, ArrowRight } from 'lucide-react'
+import { Upload, User, FileText, ArrowRight, CheckCircle, Edit, MapPin, Calendar, Briefcase } from 'lucide-react'
 import { AuthGuard } from '@/components/auth'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import { useAuthContext } from '@/lib/auth'
+import { personaUtils, PersonaRow } from '@/lib/supabase'
 
 export default function Analyze() {
+  const { user } = useAuthContext()
+  const [hasPersona, setHasPersona] = useState<boolean | null>(null)
+  const [persona, setPersona] = useState<PersonaRow | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const checkPersona = async () => {
+      if (!user) return
+      
+      setLoading(true)
+      try {
+        const personaExists = await personaUtils.hasPersona(user.id)
+        setHasPersona(personaExists)
+        
+        if (personaExists) {
+          const personaData = await personaUtils.getPersona(user.id)
+          setPersona(personaData)
+        }
+      } catch (error) {
+        console.error('Error checking persona:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    checkPersona()
+  }, [user])
+
+  const getIncomeDisplay = (bracket: string) => {
+    const incomeMap: Record<string, string> = {
+      'under_25k': 'Under $25,000',
+      '25k_50k': '$25,000 - $50,000',
+      '50k_75k': '$50,000 - $75,000',
+      '75k_100k': '$75,000 - $100,000',
+      '100k_150k': '$100,000 - $150,000',
+      '150k_200k': '$150,000 - $200,000',
+      '200k_250k': '$200,000 - $250,000',
+      '250k_500k': '$250,000 - $500,000',
+      'over_500k': 'Over $500,000',
+      'prefer_not_to_say': 'Prefer not to say'
+    }
+    return incomeMap[bracket] || bracket
+  }
+
+  if (loading) {
+    return (
+      <AuthGuard>
+        <div className="space-y-6">
+          <div className="text-center">
+            <h1 className="text-3xl font-bold text-gray-900">Analyze Legislation</h1>
+            <p className="text-gray-600 mt-2">Loading your profile...</p>
+          </div>
+        </div>
+      </AuthGuard>
+    )
+  }
+
   return (
     <AuthGuard>
       <div className="space-y-6">
       <div className="text-center">
         <h1 className="text-3xl font-bold text-gray-900">Analyze Legislation</h1>
         <p className="text-gray-600 mt-2">
-          Upload a bill and create a persona to get personalized impact analysis
+          {hasPersona 
+            ? "Your persona is ready! View personalized analysis of available bills" 
+            : "Create your persona and view personalized analysis of available bills"
+          }
         </p>
       </div>
 
-      {/* Process Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Persona Status */}
+      {hasPersona && persona ? (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Upload className="h-5 w-5 mr-2" />
-              Step 1: Upload Bill
+            <CardTitle className="flex items-center justify-between">
+              <span className="flex items-center">
+                <CheckCircle className="h-5 w-5 mr-2 text-green-600" />
+                Your Persona
+              </span>
+              <Button variant="outline" size="sm" asChild>
+                <Link href="/persona/create">
+                  <Edit className="h-4 w-4 mr-2" />
+                  Edit
+                </Link>
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
-              Upload a PDF of the legislation you want to analyze
-            </p>
-            <Button className="w-full">
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Bill
-            </Button>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="flex items-center space-x-3">
+                <div className="bg-blue-100 p-2 rounded-full">
+                  <MapPin className="h-4 w-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Location</p>
+                  <p className="text-sm text-gray-600">{persona.location}</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="bg-green-100 p-2 rounded-full">
+                  <Calendar className="h-4 w-4 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Age</p>
+                  <p className="text-sm text-gray-600">{persona.age} years old</p>
+                </div>
+              </div>
+              <div className="flex items-center space-x-3">
+                <div className="bg-purple-100 p-2 rounded-full">
+                  <Briefcase className="h-4 w-4 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Occupation</p>
+                  <p className="text-sm text-gray-600">{persona.occupation}</p>
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 p-4 bg-green-50 rounded-lg">
+              <p className="text-sm text-green-800">
+                <strong>Ready for Analysis:</strong> Your persona is set up and ready to receive personalized legislative impact analysis.
+              </p>
+            </div>
           </CardContent>
         </Card>
-
+      ) : (
+        /* No Persona - Show Creation Steps */
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
               <User className="h-5 w-5 mr-2" />
-              Step 2: Create Persona
+              Create Your Persona
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                To get started with personalized bill analysis, you'll need to create a persona that tells us about your circumstances and interests.
+              </p>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">What we'll ask you:</h4>
+                <ul className="text-sm text-blue-800 space-y-1">
+                  <li>• Basic demographics (location, age, occupation)</li>
+                  <li>• Family and household information</li>
+                  <li>• Business and employment details</li>
+                  <li>• Health and benefits status</li>
+                  <li>• Education and community connections</li>
+                </ul>
+              </div>
+              <Button size="lg" className="w-full md:w-auto" asChild>
+                <Link href="/persona/create">
+                  <User className="h-4 w-4 mr-2" />
+                  Create Persona (5-10 minutes)
+                </Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Next Steps */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center">
+              <FileText className="h-5 w-5 mr-2" />
+              View Available Bills
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-4">
-              Tell us about yourself to get personalized impact analysis
+              Browse bills uploaded by our team and see AI-generated analysis
             </p>
-            <Button className="w-full" variant="outline">
-              <User className="h-4 w-4 mr-2" />
-              Create Persona
+            <Button className="w-full" variant="outline" asChild>
+              <Link href="/bills">
+                <FileText className="h-4 w-4 mr-2" />
+                Browse Bills
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -55,31 +194,33 @@ export default function Analyze() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
-              <FileText className="h-5 w-5 mr-2" />
-              Step 3: Get Analysis
+              <ArrowRight className="h-5 w-5 mr-2" />
+              How It Works
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-4">
-              Receive your personalized impact report with key insights
+              Learn more about how our AI analyzes bills for you
             </p>
-            <Button className="w-full" variant="outline" disabled>
-              <FileText className="h-4 w-4 mr-2" />
-              Generate Report
+            <Button className="w-full" variant="outline" asChild>
+              <Link href="/#how-it-works">
+                <ArrowRight className="h-4 w-4 mr-2" />
+                Learn More
+              </Link>
             </Button>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick Start */}
+      {/* Process Overview */}
       <Card>
         <CardHeader>
-          <CardTitle>🚀 Quick Start</CardTitle>
+          <CardTitle>🚀 How It Works</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <p className="text-gray-600">
-              Ready to analyze your first bill? Follow these steps:
+              Get personalized bill analysis in four simple steps:
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="flex items-center space-x-3">
@@ -87,8 +228,8 @@ export default function Analyze() {
                   <span className="text-sm font-medium text-blue-600">1</span>
                 </div>
                 <div>
-                  <p className="font-medium">Choose your bill</p>
-                  <p className="text-sm text-gray-600">PDF format, max 10MB</p>
+                  <p className="font-medium">Create your persona</p>
+                  <p className="text-sm text-gray-600">Takes 5-10 minutes</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -96,8 +237,8 @@ export default function Analyze() {
                   <span className="text-sm font-medium text-green-600">2</span>
                 </div>
                 <div>
-                  <p className="font-medium">Set up your persona</p>
-                  <p className="text-sm text-gray-600">Takes 5-10 minutes</p>
+                  <p className="font-medium">View available bills</p>
+                  <p className="text-sm text-gray-600">Browse bills uploaded by our team</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -105,8 +246,8 @@ export default function Analyze() {
                   <span className="text-sm font-medium text-purple-600">3</span>
                 </div>
                 <div>
-                  <p className="font-medium">Get your analysis</p>
-                  <p className="text-sm text-gray-600">Usually ready in 30 seconds</p>
+                  <p className="font-medium">Get personalized analysis</p>
+                  <p className="text-sm text-gray-600">AI analyzes each bill for you</p>
                 </div>
               </div>
               <div className="flex items-center space-x-3">
@@ -114,46 +255,21 @@ export default function Analyze() {
                   <span className="text-sm font-medium text-orange-600">4</span>
                 </div>
                 <div>
-                  <p className="font-medium">Export & share</p>
-                  <p className="text-sm text-gray-600">PDF, CSV, or web link</p>
+                  <p className="font-medium">Provide feedback</p>
+                  <p className="text-sm text-gray-600">Share your sentiment on bill impacts</p>
                 </div>
               </div>
             </div>
-            <div className="flex justify-center pt-4">
-              <Button size="lg">
-                Start Analysis
-                <ArrowRight className="h-4 w-4 ml-2" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Navigation Demo */}
-      <Card>
-        <CardHeader>
-          <CardTitle>🧭 Navigation Features</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <h4 className="font-medium mb-2">✅ Current Page Features</h4>
-              <ul className="text-sm space-y-1 text-gray-600">
-                <li>• Sidebar shows "Analyze" section expanded</li>
-                <li>• Breadcrumb shows: Home → Analyze</li>
-                <li>• Active navigation highlighting</li>
-                <li>• Responsive design</li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-medium mb-2">🔄 Try These</h4>
-              <ul className="text-sm space-y-1 text-gray-600">
-                <li>• Click on "Upload Bill" in sidebar</li>
-                <li>• Visit Dashboard to see different layout</li>
-                <li>• Try mobile menu (resize window)</li>
-                <li>• Check breadcrumbs update</li>
-              </ul>
-            </div>
+            {!hasPersona && (
+              <div className="flex justify-center pt-4">
+                <Button size="lg" asChild>
+                  <Link href="/persona/create">
+                    Start Analysis
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Link>
+                </Button>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>

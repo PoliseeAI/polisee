@@ -34,7 +34,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button asChild size="lg" className="text-lg px-8">
-                <Link href="/dashboard">
+                <Link href="/persona/create">
                   Get Started <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>
@@ -108,9 +108,9 @@ export default function Home() {
                     <span className="text-blue-600 font-bold">2</span>
                   </div>
                   <div>
-                    <h3 className="text-xl font-semibold mb-2">Upload a Bill</h3>
+                    <h3 className="text-xl font-semibold mb-2">View Available Bills</h3>
                     <p className="text-gray-600">
-                      Upload any legislative bill PDF and let our AI analyze it against your profile.
+                      Browse bills uploaded by our team and see AI-generated analysis tailored to your profile.
                     </p>
                   </div>
                 </div>
@@ -317,7 +317,7 @@ export default function Home() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="secondary" asChild className="text-lg px-8">
-                <Link href="/dashboard">
+                <Link href="/persona/create">
                   Start Analyzing Bills <ArrowRight className="ml-2 h-5 w-5" />
                 </Link>
               </Button>

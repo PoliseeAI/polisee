@@ -21,7 +21,6 @@ interface BreadcrumbsProps {
 const routeNames: Record<string, string> = {
   '/': 'Home',
   '/analyze': 'Analyze',
-  '/dashboard': 'Dashboard',
   '/settings': 'Settings',
   '/profile': 'Profile',
   '/help': 'Help',
