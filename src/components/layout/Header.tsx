@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, User, FileText, Settings, Home, LogOut, ChevronDown } from 'lucide-react'
+import { Menu, X, User, FileText, Settings, Home, LogOut, ChevronDown, Download } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuthContext } from '@/lib/auth'
@@ -64,6 +64,13 @@ export function Header() {
               </Link>
             )
           })}
+          <Link 
+            href="/scraper" 
+            className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors"
+          >
+            <Download className="h-4 w-4" />
+            <span>Scraper</span>
+          </Link>
         </nav>
 
         {/* User Actions */}

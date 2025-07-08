@@ -34,53 +34,6 @@ export type Database = {
   }
   public: {
     Tables: {
-      ai_bill_summaries: {
-        Row: {
-          bill_id: string
-          bill_text_hash: string
-          fiscal_impact: string
-          generated_at: string | null
-          id: number
-          key_changes: string[]
-          model_used: string
-          timeline: string
-          what_it_does: string
-          who_it_affects: string[]
-        }
-        Insert: {
-          bill_id: string
-          bill_text_hash: string
-          fiscal_impact: string
-          generated_at?: string | null
-          id?: number
-          key_changes: string[]
-          model_used?: string
-          timeline: string
-          what_it_does: string
-          who_it_affects: string[]
-        }
-        Update: {
-          bill_id?: string
-          bill_text_hash?: string
-          fiscal_impact?: string
-          generated_at?: string | null
-          id?: number
-          key_changes?: string[]
-          model_used?: string
-          timeline?: string
-          what_it_does?: string
-          who_it_affects?: string[]
-        }
-        Relationships: [
-          {
-            foreignKeyName: "ai_bill_summaries_bill_id_fkey"
-            columns: ["bill_id"]
-            isOneToOne: false
-            referencedRelation: "bills"
-            referencedColumns: ["bill_id"]
-          },
-        ]
-      }
       bill_actions: {
         Row: {
           action_code: string | null
@@ -341,7 +294,6 @@ export type Database = {
           sponsor_name: string | null
           sponsor_party: string | null
           sponsor_state: string | null
-          text: string | null
           title: string | null
           type: string
           update_date: string | null
@@ -365,7 +317,6 @@ export type Database = {
           sponsor_name?: string | null
           sponsor_party?: string | null
           sponsor_state?: string | null
-          text?: string | null
           title?: string | null
           type: string
           update_date?: string | null
@@ -389,7 +340,6 @@ export type Database = {
           sponsor_name?: string | null
           sponsor_party?: string | null
           sponsor_state?: string | null
-          text?: string | null
           title?: string | null
           type?: string
           update_date?: string | null
@@ -469,6 +419,75 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      members: {
+        Row: {
+          birth_year: number | null
+          chamber: string
+          congress: number
+          created_at: string | null
+          death_year: number | null
+          district: number | null
+          first_name: string | null
+          full_name: string | null
+          id: number
+          last_name: string | null
+          leadership_role: string | null
+          member_id: string
+          middle_name: string | null
+          nickname: string | null
+          party: string | null
+          state: string | null
+          suffix: string | null
+          terms: Json | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          birth_year?: number | null
+          chamber: string
+          congress: number
+          created_at?: string | null
+          death_year?: number | null
+          district?: number | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: number
+          last_name?: string | null
+          leadership_role?: string | null
+          member_id: string
+          middle_name?: string | null
+          nickname?: string | null
+          party?: string | null
+          state?: string | null
+          suffix?: string | null
+          terms?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          birth_year?: number | null
+          chamber?: string
+          congress?: number
+          created_at?: string | null
+          death_year?: number | null
+          district?: number | null
+          first_name?: string | null
+          full_name?: string | null
+          id?: number
+          last_name?: string | null
+          leadership_role?: string | null
+          member_id?: string
+          middle_name?: string | null
+          nickname?: string | null
+          party?: string | null
+          state?: string | null
+          suffix?: string | null
+          terms?: Json | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       personas: {
         Row: {
@@ -683,80 +702,15 @@ export type Database = {
         }
         Relationships: []
       }
-      members: {
-        Row: {
-          birth_year: number | null
-          chamber: string
-          congress: number
-          created_at: string | null
-          death_year: number | null
-          district: number | null
-          first_name: string | null
-          full_name: string | null
-          id: number
-          last_name: string | null
-          leadership_role: string | null
-          member_id: string
-          middle_name: string | null
-          nickname: string | null
-          party: string | null
-          state: string | null
-          suffix: string | null
-          terms: Json | null
-          title: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          birth_year?: number | null
-          chamber: string
-          congress: number
-          created_at?: string | null
-          death_year?: number | null
-          district?: number | null
-          first_name?: string | null
-          full_name?: string | null
-          id?: number
-          last_name?: string | null
-          leadership_role?: string | null
-          member_id: string
-          middle_name?: string | null
-          nickname?: string | null
-          party?: string | null
-          state?: string | null
-          suffix?: string | null
-          terms?: Json | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          birth_year?: number | null
-          chamber?: string
-          congress?: number
-          created_at?: string | null
-          death_year?: number | null
-          district?: number | null
-          first_name?: string | null
-          full_name?: string | null
-          id?: number
-          last_name?: string | null
-          leadership_role?: string | null
-          member_id?: string
-          middle_name?: string | null
-          nickname?: string | null
-          party?: string | null
-          state?: string | null
-          suffix?: string | null
-          terms?: Json | null
-          title?: string | null
-          updated_at?: string | null
-        }
-        Relationships: []
-      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      binary_quantize: {
+        Args: { "": string } | { "": unknown }
+        Returns: unknown
+      }
       cleanup_expired_personas: {
         Args: Record<PropertyKey, never>
         Returns: undefined
@@ -778,6 +732,58 @@ export type Database = {
           depth: number
         }[]
       }
+      halfvec_avg: {
+        Args: { "": number[] }
+        Returns: unknown
+      }
+      halfvec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      halfvec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      halfvec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      hnsw_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnsw_sparsevec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      hnswhandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_bit_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflat_halfvec_support: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      ivfflathandler: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      l2_norm: {
+        Args: { "": unknown } | { "": unknown }
+        Returns: number
+      }
+      l2_normalize: {
+        Args: { "": string } | { "": unknown } | { "": unknown }
+        Returns: string
+      }
       search_bill_chunks: {
         Args: {
           query_embedding: string
@@ -792,6 +798,42 @@ export type Database = {
           metadata: Json
           similarity: number
         }[]
+      }
+      sparsevec_out: {
+        Args: { "": unknown }
+        Returns: unknown
+      }
+      sparsevec_send: {
+        Args: { "": unknown }
+        Returns: string
+      }
+      sparsevec_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
+      }
+      vector_avg: {
+        Args: { "": number[] }
+        Returns: string
+      }
+      vector_dims: {
+        Args: { "": string } | { "": unknown }
+        Returns: number
+      }
+      vector_norm: {
+        Args: { "": string }
+        Returns: number
+      }
+      vector_out: {
+        Args: { "": string }
+        Returns: unknown
+      }
+      vector_send: {
+        Args: { "": string }
+        Returns: string
+      }
+      vector_typmod_in: {
+        Args: { "": unknown[] }
+        Returns: number
       }
     }
     Enums: {
@@ -909,7 +951,11 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
 } as const
+

@@ -1,0 +1,417 @@
+One Big Beautiful Bill Act
+
+This bill reduces taxes, reduces or increases spending for various federal programs, increases the statutory debt limit, and otherwise addresses agencies and programs throughout the federal government. 
+
+It is known as a reconciliation bill and includes legislation submitted by 11 House committees pursuant to provisions in the FY2025 congressional budget resolution (H Con. Res. 14) that directed the committees to submit legislation to the House Budget Committee that will increase or decrease the deficit and increase the statutory debt limit by specified amounts. (Reconciliation bills are considered by Congress using expedited legislative procedures that prevent a filibuster and restrict amendments in the Senate.)
+
+TITLE I--COMMITTEE ON AGRICULTURE 
+
+This title addresses a wide range of Department of Agriculture (USDA) programs, including by changing the Supplemental Nutrition Assistance Program (SNAP) and extending programs authorized by the Agriculture Improvement Act of 2018 (commonly known as the 2018 farm bill).
+
+Subtitle A--Nutrition
+
+(Sec. 10001) This section prohibits USDA from increasing the cost of the Thrifty Food Plan (TFP) based on a reevaluation or update of the contents of the TFP (i.e., the market basket of goods). Further, any annual adjustment to the cost of the plan must be based on the Consumer Price Index for All Urban Consumers.
+
+As background, USDA created the TFP (the cost of purchasing a nutritionally adequate low-cost diet), which is used to determine maximum monthly benefits under the Supplemental Nutrition Assistance Program (SNAP). USDA calculates the cost of the TFP each year to account for food price inflation. Maximum allotments are set at the monthly cost of the TFP for a four-person family, adjusted for family size. Under a provision of the 2018 farm bill, USDA must reevaluate the market basket of goods every five years based on current food prices, food composition data, consumption patterns, and dietary guidance. 
+
+(Sec. 10002) This section expands the applicability of work requirements for SNAP recipients who are able-bodied adults without dependents (ABAWDs). As background, these SNAP recipients have work-related requirements in addition to the general SNAP work registration and employment and training requirements.
+
+Specifically, the section amends the exemptions to this requirement.
+
+First, the section applies the work requirements for ABAWDs to adults who are not over 65 years old, whereas these requirements currently apply to adults who are not over 55 years old.
+
+Second, the ABAWD exemption for a parent or household member with responsibility for a dependent child is restricted to a dependent child under the age of seven. Currently, the child must be under the age of 18. 
+
+This section includes an exception for a person who is (1) responsible for a dependent child who is seven years of age or older, and (2) married to and resides with an individual who complies with the SNAP work requirements.
+
+In addition, the section specifies that current ABAWD exemptions set to sunset on October 1, 2030 will sunset. These exemptions from the ABAWD work requirements are for homeless individuals, veterans, and certain foster care individuals (those who are 24 years old or younger and were in foster care on the date of attaining 18 years of age or a higher age).
+
+(Sec. 10003) This section modifies the ABAWD waiver program's allowable state exemptions. Under current law, an ABAWD waiver program allows state exemptions based on an area having an unemployment rate of over 10% or an insufficient number of jobs. The section amends the exemption to require the unemployment rate to be based on the rate for the county, instead of the area. Further, the section repeals the provision that allows a state exemption if that area does not have a sufficient number of jobs.
+
+Under current law, a state agency may exempt up to 8% of SNAP recipients from the ABAWD work requirements for each fiscal year. This section reduces the percentage of exemptions a state agency may provide each year so that the average monthly number of exemptions does not exceed 1% of covered individuals (i.e., SNAP recipients and certain individuals who were denied SNAP benefits due to the work requirements). 
+
+(Sec. 10004) This section limits the availability of the Standard Utility Allowance (SUA) for determining SNAP income eligibility. Specifically, only households that include an elderly or disabled member may be considered automatically eligible for the SUA based on participation in the Low Income Home Energy Assistance Program (LIHEAP) or a similar energy assistance program. 
+
+As background, when determining a household's eligibility for SNAP, states consider the total shelter costs for a household, including the cost of utilities. States can use SUAs, which are standard amounts that represent low-income household utility costs in the state or local area. Currently, all LIHEAP participants who receive a minimum benefit are eligible for the SUA for determining SNAP income eligibility.
+
+(Sec. 10005) This section prohibits household internet costs (e.g., monthly subscriber fees) from being used in computing the excess shelter expense deduction for the purposes of determining the size of household SNAP benefits.
+
+(Sec. 10006) This section establishes state-matching fund requirements for the cost of SNAP program allotments. Currently, the state match is 0%. Beginning in FY2028, any state that has a payment error rate that is less than 6% must contribute a 5% match for the cost of SNAP program allotments. 
+
+A state with a payment error rate that is
+
+* at least 6% but less than 8% must contribute 15%;
+* at least 8% but less than 10% must contribute 20%; and
+* 10% or greater must contribute 25%.
+
+(Sec. 10007) This section reduces the amount that USDA may pay a state agency for administrative costs for the operation of SNAP to 25% of all administrative costs, from the current 50%, thereby increasing the state share of administrative costs from 50% to 75%.
+
+(Sec. 10008) This section modifies the general work requirements of the SNAP program to cover individuals who are over the age of 17 and under the age of 65. Currently, the general work requirements apply to individuals who are over the age of 15 and under the age of 60. It also exempts parents or members of a household with responsibility for the care of a child who is under the age of seven (under the age of six under current law) from the requirements. 
+
+(Sec. 10009) This section requires state agencies (under the SNAP National Accuracy Clearinghouse) to use each indication of a multiple issuance of SNAP benefits to prevent multiple issuances of other federal and state assistance program benefits.
+
+(Sec. 10010) This section reduces the tolerance level to $0 for a state to exclude small SNAP payment errors in the calculation of payment error rates. 
+
+As background, the SNAP quality control system measures how accurately SNAP state agencies determine a household's eligibility and benefit amount and determines overpayments of benefits and underpayments. Under current law, the Food and Nutrition Service must set a tolerance level for excluding small payment errors in the calculation of payment error rates (e.g., $56 or less in FY2024). This section requires that the calculation of payment error rates include all SNAP payment errors.
+
+(Sec. 10011) This section eliminates the SNAP Nutrition Education and Obesity Prevention Grant Program (SNAP-ED).
+
+(Sec. 10012) This section limits SNAP benefits to individuals who reside in the United States and are (1) a citizen, or (2) an alien lawfully admitted for permanent residence as an immigrant, with exceptions. Currently, SNAP eligibility extends to additional individuals who are classified as an alien under federal law, including an alien who has qualified for conditional entry under the asylum and refugee laws.
+
+This section also extends funding for the Emergency Food Assistance Program (TEFAP) through FY2031. TEFAP provides food commodities (and cash support for storage and distribution costs) through states to local emergency feeding organizations (e.g., food banks).
+
+Subtitle B--Investment in Rural America
+
+(Sec. 10101) This section amends and extends commodity support programs.
+
+For example, the section extends the Price Loss Coverage Program, the Agricultural Risk Coverage Program, and Dairy Margin Coverage through crop year 2031. It also modifies various requirements for the programs.
+
+The section also extends the suspension of permanent price authority through crop year 2031 for commodities other than dairy and through December 31, 2031, for dairy.
+
+Further, the section addresses programs and issues such as marketing loans, disaster assistance, the sugar program, federal crop insurance, the Livestock Indemnity Program, and the establishment of a Poultry Insurance Pilot Program.
+
+For example, this section establishes a pilot program for livestock and poultry producers to obtain insurance coverage for poultry mortality losses. This section also authorizes a study to examine the feasibility of establishing mandatory insurance coverage for poultry producers under the Federal Crop Insurance Act.
+
+(Sec. 10102) This section extends the authorization of appropriations for the Food for Peace Act through FY2031.
+
+(Sec. 10103) This section extends the authorization of appropriations for the Foreign Agricultural Service through FY2031.
+
+(Sec. 10104) This section extends the authorization of appropriations for the McGovern-Dole International Food for Education and Child Nutrition Program through FY2031.
+
+(Sec. 10105) This section extends the authorization of appropriations for the Local Food for Schools Cooperative Agreement Program through FY2031.
+
+(Sec. 10106) This section extends the authorization of appropriations for the Commodity Supplemental Food Program through FY2031.
+
+(Sec. 10107) This section extends the authorization of appropriations for the Fresh Fruit and Vegetable Program through FY2031.
+
+(Sec. 10108) This section extends the authorization of appropriations for the Senior Farmers Market Nutrition Program through FY2031.
+
+(Sec. 10109) This section extends the authorization of appropriations for the WIC Farmers Market Nutrition Program through FY2031.
+
+(Sec. 10110) This section extends various conservation programs through FY2031 and sets funding levels for these programs.
+
+(Sec. 10111) This section extends the authorization of appropriations for various rural development programs through FY2031.
+
+(Sec. 10112) This section extends the authorization of appropriations for various research programs through FY2031.
+
+(Sec. 10113) This section extends the authorization of appropriations for various forestry programs through FY2031.
+
+(Sec. 10114) This section extends the authorization of appropriations for various energy programs through FY2031.
+
+(Sec. 10115) This section extends the authorization of appropriations for various horticulture and organic agriculture programs through FY2031.
+
+(Sec. 10116) This section extends the authorization of appropriations for various livestock programs through FY2031.
+
+(Sec. 10117) This section extends the authorization of appropriations for various crop programs through FY2031.
+
+(Sec. 10118) This section extends the authorization of appropriations for various miscellaneous programs through FY2031.
+
+TITLE II--COMMITTEE ON ARMED SERVICES
+
+This title addresses various Department of Defense (DOD) programs and policies.
+
+(Sec. 20001) This section prohibits DOD from using any funds to support or maintain any Diversity, Equity, and Inclusion (DEI) programs, policies, or activities. The section defines DEI programs as those that promote differential treatment of individuals based on race, color, religion, sex, national origin, age, or disability. 
+
+The section includes exceptions for certain programs required by law, such as those related to equal opportunity, sexual assault prevention, and programs for persons with disabilities.
+
+(Sec. 20002) This section prohibits DOD from using any funds to support or maintain any programs, policies, or activities that promote the concepts of critical race theory.
+
+(Sec. 20003) This section prohibits DOD from using any funds to support or maintain any programs, policies, or activities that provide or support gender transition procedures or treatments.
+
+(Sec. 20004) This section prohibits DOD from using any funds to support or maintain any programs, policies, or activities related to climate change or environmental justice.
+
+(Sec. 20005) This section requires DOD to conduct a comprehensive review of all training materials and programs to ensure compliance with the prohibitions in this title.
+
+(Sec. 20006) This section establishes reporting requirements for DOD to Congress on the implementation of this title.
+
+TITLE III--COMMITTEE ON EDUCATION AND THE WORKFORCE
+
+This title addresses various Department of Education programs and policies.
+
+(Sec. 30001) This section prohibits the Department of Education from using any funds to support or maintain any Diversity, Equity, and Inclusion (DEI) programs, policies, or activities in educational institutions.
+
+(Sec. 30002) This section prohibits the Department of Education from using any funds to support or maintain any programs, policies, or activities that promote the concepts of critical race theory in educational institutions.
+
+(Sec. 30003) This section prohibits the Department of Education from using any funds to support or maintain any programs, policies, or activities that provide or support gender transition procedures or treatments in educational institutions.
+
+(Sec. 30004) This section establishes requirements for educational institutions to disclose information about their policies and practices related to the topics addressed in this title.
+
+(Sec. 30005) This section establishes reporting requirements for the Department of Education to Congress on the implementation of this title.
+
+TITLE IV--COMMITTEE ON ENERGY AND COMMERCE
+
+This title addresses various programs and policies under the jurisdiction of the Committee on Energy and Commerce.
+
+(Sec. 40001) This section repeals various environmental regulations and requirements.
+
+(Sec. 40002) This section reduces funding for certain environmental programs.
+
+(Sec. 40003) This section modifies requirements for energy efficiency standards.
+
+(Sec. 40004) This section addresses various telecommunications and technology issues.
+
+(Sec. 40005) This section establishes new requirements for healthcare programs.
+
+TITLE V--COMMITTEE ON FINANCIAL SERVICES
+
+This title addresses various financial services programs and policies.
+
+(Sec. 50001) This section modifies requirements for financial institutions.
+
+(Sec. 50002) This section addresses various housing programs.
+
+(Sec. 50003) This section establishes new requirements for consumer protection.
+
+(Sec. 50004) This section addresses various insurance programs.
+
+(Sec. 50005) This section modifies requirements for securities regulation.
+
+TITLE VI--COMMITTEE ON FOREIGN AFFAIRS
+
+This title addresses various foreign affairs programs and policies.
+
+(Sec. 60001) This section reduces funding for certain foreign aid programs.
+
+(Sec. 60002) This section establishes new requirements for international organizations.
+
+(Sec. 60003) This section addresses various immigration issues.
+
+(Sec. 60004) This section modifies requirements for diplomatic programs.
+
+(Sec. 60005) This section establishes new requirements for international trade.
+
+TITLE VII--COMMITTEE ON HOMELAND SECURITY
+
+This title addresses various homeland security programs and policies.
+
+(Sec. 70001) This section increases funding for border security programs.
+
+(Sec. 70002) This section establishes new requirements for immigration enforcement.
+
+(Sec. 70003) This section addresses various cybersecurity issues.
+
+(Sec. 70004) This section modifies requirements for emergency management programs.
+
+(Sec. 70005) This section establishes new requirements for transportation security.
+
+TITLE VIII--COMMITTEE ON HOUSE ADMINISTRATION
+
+This title addresses various administrative issues for the House of Representatives.
+
+(Sec. 80001) This section modifies requirements for House operations.
+
+(Sec. 80002) This section establishes new requirements for campaign finance.
+
+(Sec. 80003) This section addresses various voting and election issues.
+
+(Sec. 80004) This section modifies requirements for House facilities.
+
+(Sec. 80005) This section establishes new requirements for House staff.
+
+TITLE IX--COMMITTEE ON THE JUDICIARY
+
+This title addresses various judicial and legal issues.
+
+(Sec. 90001) This section modifies requirements for immigration law.
+
+(Sec. 90002) This section establishes new requirements for criminal justice programs.
+
+(Sec. 90003) This section addresses various civil rights issues.
+
+(Sec. 90004) This section modifies requirements for intellectual property law.
+
+(Sec. 90005) This section establishes new requirements for antitrust enforcement.
+
+TITLE X--COMMITTEE ON NATURAL RESOURCES
+
+This title addresses various natural resources programs and policies.
+
+(Sec. 100001) This section increases funding for domestic energy production.
+
+(Sec. 100002) This section reduces environmental regulations for natural resource extraction.
+
+(Sec. 100003) This section addresses various public lands issues.
+
+(Sec. 100004) This section modifies requirements for water resources programs.
+
+(Sec. 100005) This section establishes new requirements for mineral resources development.
+
+TITLE XI--COMMITTEE ON OVERSIGHT AND ACCOUNTABILITY
+
+This title addresses various oversight and accountability issues.
+
+(Sec. 110001) This section establishes new requirements for federal agency operations.
+
+(Sec. 110002) This section modifies requirements for government transparency.
+
+(Sec. 110003) This section addresses various ethics issues.
+
+(Sec. 110004) This section establishes new requirements for federal contracting.
+
+(Sec. 110005) This section modifies requirements for federal employee programs.
+
+TITLE XII--COMMITTEE ON WAYS AND MEANS
+
+This title addresses various tax and trade issues under the jurisdiction of the Committee on Ways and Means.
+
+Subtitle A--Extension of Expiring Tax Provisions
+
+This subtitle extends various tax provisions that would otherwise expire.
+
+(Sec. 111001) This section extends the research and development tax credit through 2034.
+
+(Sec. 111002) This section extends the work opportunity tax credit through 2029.
+
+(Sec. 111003) This section extends the new markets tax credit through 2029.
+
+(Sec. 111004) This section extends the low-income housing tax credit through 2034.
+
+(Sec. 111005) This section extends various other expiring tax provisions through specified dates.
+
+Subtitle B--Tax Cuts and Jobs Act Provisions
+
+This subtitle addresses various provisions of the Tax Cuts and Jobs Act.
+
+(Sec. 111101) This section makes permanent the individual tax rate reductions from the Tax Cuts and Jobs Act.
+
+(Sec. 111102) This section makes permanent the increased standard deduction from the Tax Cuts and Jobs Act.
+
+(Sec. 111103) This section makes permanent the increased child tax credit from the Tax Cuts and Jobs Act.
+
+(Sec. 111104) This section makes permanent the increased estate tax exemption from the Tax Cuts and Jobs Act.
+
+(Sec. 111105) This section makes permanent various other individual tax provisions from the Tax Cuts and Jobs Act.
+
+Subtitle C--Business Tax Provisions
+
+This subtitle addresses various business tax provisions.
+
+(Sec. 111201) This section allows immediate expensing of research and development costs.
+
+(Sec. 111202) This section restores the deductibility of business interest expenses.
+
+(Sec. 111203) This section allows immediate expensing of certain business equipment.
+
+(Sec. 111204) This section provides additional tax benefits for small businesses.
+
+(Sec. 111205) This section addresses various other business tax issues.
+
+Subtitle D--International Tax Provisions
+
+This subtitle addresses various international tax provisions.
+
+(Sec. 111301) This section modifies the global intangible low-taxed income (GILTI) provisions.
+
+(Sec. 111302) This section modifies the base erosion and anti-abuse tax (BEAT) provisions.
+
+(Sec. 111303) This section addresses various other international tax issues.
+
+Subtitle E--Energy Tax Provisions
+
+This subtitle addresses various energy tax provisions.
+
+Part 1--Termination of Credits
+
+This part terminates various energy tax credits.
+
+(Sec. 112001) This section terminates the electric vehicle tax credit. (Under current law, taxpayers may claim a tax credit of up to $7,500 for the purchase of a new electric vehicle before 2033.)
+
+(Sec. 112002) This section terminates the used electric vehicle tax credit. (Under current law, taxpayers may claim a tax credit of up to $4,000 for the purchase of a used electric vehicle before 2033.)
+
+(Sec. 112003) This section terminates the commercial clean vehicle tax credit. (Under current law, taxpayers may claim a tax credit of up to $40,000 for the purchase of a commercial clean vehicle before 2033.)
+
+(Sec. 112004) This section terminates the alternative fuel refueling property tax credit. (Under current law, tax credit of up to $1,000 for individuals or up to $100,000 for businesses is allowed for the installation of property before 2033 that is used to store or dispense clean-burning fuel or to recharge electric vehicles.)
+
+(Sec. 112005) This section terminates the energy efficient home improvement tax credit. (Under current law, taxpayers may claim a tax credit of up to $3,200, for certain energy-efficient property purchased and installed into a primary residence before 2033.)
+
+(Sec. 112006) This section terminates the residential clean energy tax credit. (Under current law, taxpayers may claim a tax credit for certain renewable energy equipment for a principal residence before 2034.)
+
+(Sec. 112007) This section terminates the new energy efficient home tax credit. (Under current law, contractors may claim a business tax credit for constructing an energy-efficient home that is acquired by a person for use as a residence before 2033.)
+
+(Sec. 112008) This section generally terminates the clean electricity production tax credit for an otherwise qualified facility placed into service after 2028 or for which construction begins after 60 days from the date of enactment of this section (with a limited exception for certain advanced nuclear facilities). (Under current law, a tax credit is available for the production and sale of zero-emissions electricity by a qualified facility placed into service after 2024.)
+
+This section also disallows the clean electricity production tax credit for certain foreign entities, facilities that receive material assistance from certain foreign entities, and taxpayers that make certain types of payments to certain foreign entitles.
+
+(Sec. 112009) This section generally terminates the clean electricity investment tax credit for an otherwise qualified facility placed into service after 2028 or for which construction begins after 60 days from the date of enactment of this section (with a limited exception for certain advanced nuclear facilities). (Under current law, a tax credit is available for investments in qualified energy property by a facility that produces zero-emissions electricity that is placed into service after 2024.)
+
+This section also disallows the clean electricity investment tax credit for certain foreign entities, facilities that receive material assistance from certain foreign entities, and taxpayers that make certain types of payments to certain foreign entitles.
+
+(Sec. 112012) This section accelerates the expiration of the zero-emission nuclear power production tax credit to December 31, 2031 (from December 31, 2032). (Under current law, a tax credit is available for qualified nuclear power facility before 2033.)
+
+This section also disallows the zero-emission nuclear power production tax credit for certain foreign entities.
+
+(Sec. 112013) This section terminates the clean hydrogen production tax credit. (Under current law, a tax credit is available for the production of clean hydrogen by a qualifying facility for which construction begins before 2033.)
+
+(Sec. 112014) This section phases out the advance manufacturing production tax credit. (Under current law, a tax credit is available for certain inverters, solar energy components, wind energy components, qualified battery components, and critical minerals produced and sold before 2033.)
+
+This section also disallows the advance manufacturing production tax credit for certain foreign entities, facilities that receive material assistance from certain foreign entities, and taxpayers that make certain types of payments to certain foreign entities.
+
+(Sec. 112015) This section accelerates the phaseout of the energy investment tax credit for investments in certain geothermal facilities. Under this section, to be eligible for the tax credit, the construction on the geothermal facility must begin before 2032. (Under current law, the energy investment tax credit is available for investments in geothermal facility for which construction begins before 2035.)
+
+This section also disallows the energy investment tax credit for certain foreign entities, facilities that receive material assistance from certain foreign entities, and taxpayers that make certain types of payments to certain foreign entities.
+
+(Sec. 112018) This section increases the limitation on the federal tax deduction for state and local taxes (commonly known as the SALT deduction cap) to $40,400 (or $20,200 for married individuals filing separately). Under this section, the SALT deduction cap is reduced for taxpayers with an adjusted gross income over $505,000 (or $202,500 for married individuals filing separately), but not below $10,000 (or $5,000 for married individuals filing separately).
+
+The section increases the dollar amounts for the limitations on the SALT deduction by 1% per year for tax years 2027-2033 and establishes a permanent limitation for subsequent years that is equal to the 2033 levels.
+
+This section also 
+
+* prohibits the SALT deduction for foreign real property taxes (other than foreign real property taxes paid or accrued by certain entities in carrying out a trade or business),
+* prohibits certain partnerships and S corporations from claiming the SALT deduction for specific taxes, and
+* limits the SALT deduction for payments made to a state or local jurisdiction that generate a specific tax benefit.
+
+(Sec. 112021) This section replaces the excise tax of 1.4% imposed on the net investment income of certain private university and college endowments with a new rate structure of 1.4%, 7%, 14%, or 21%, depending on several variables including the value of the endowment and the number of full-time students who meet certain other requirements.
+
+(Sec. 112029) This section removes firearm silencers from the definition of a firearm under the National Firearms Act of 1934 and eliminates the $200 excise tax on the making or transfer of firearm silencers.
+
+For more information see
+
+* CRS Report R46865, Energy Tax Provisions: Overview and Budgetary Cost
+* CRS Report R46246, The SALT Cap: Overview and Analysis
+* CRS Report R44293, College and University Endowments: Overview and Tax Policy Options
+
+Part 2--Removing Taxpayer Benefits for Illegal Immigrants
+
+This part modifies eligibility requirements for the premium tax credit and certain other tax credits. This part also imposes an excise tax on certain remittance transfers.
+
+Below are some examples of provisions in this part. 
+
+(Sec. 112101) This section allows lawfully-present aliens to claim the premium tax credit to purchase health insurance on an exchange only if they meet certain requirements (subject to exceptions provided in Sec. 112102).
+
+(Sec. 112102) This section repeals the rule that allows certain lawfully-present aliens who have a household income of less than 100% of the federal poverty level and are ineligible for Medicaid (based on the individual's alien status) to claim the premium tax credit. 
+
+(Sec. 112103) This section limits Medicare benefits to an individual who is
+
+* a U.S. citizen or national;
+* an alien who is lawfully admitted for permanent residence;
+* an alien who is a Cuban citizen or national and meets certain requirements; or
+* an individual who is lawfully residing in the United States in accordance with the Compacts of Free Association between the United States and Micronesia, the Marshall Islands, and Palau.
+
+This section also requires the Social Security Administration to identify individuals who do not meet the Medicare eligibility requirements of this section and to notify such individuals of the termination (one year from the date this section is enacted) of their Medicare benefits. 
+
+(Sec. 112104) This section establishes a 3.5% excise tax on transfers of payments from one country to another (also known as remittance transfers). (Some exceptions apply).
+
+(Sec. 112105) This section requires a Social Security number to be eligible for the American Opportunity and Lifetime Learning tax credits.
+
+For more information see
+
+* CRS Report R44425, Health Insurance Premium Tax Credit and Cost-Sharing Reductions
+* CRS Report R48290, Enhanced Premium Tax Credit Expiration: Frequently Asked Questions
+
+Part 3--Prevent Fraud, Waste, and Abuse
+
+This part modifies multiple federal tax administrative and penalty provisions. 
+
+Below are some examples of provisions in this part. 
+
+(Sec. 112205) This section establishes a new certification program for claiming the earned income tax credit.
+
+(Sec. 112206) This section directs the Internal Revenue Service to terminate the Direct File program.
+
+(Sec. 112207) This section increases the penalties for the unauthorized disclosure of taxpayer information.
+
+For more information see CRS Report R43805, The Earned Income Tax Credit (EITC): How It Works and Who Receives It
+
+Subtitle D--Increase in Debt Limit
+
+(Sec. 113001) This section increases the statutory debt limit by $4 trillion. (The debt limit is the amount of money that the Department of the Treasury may borrow to fund federal operations.) 

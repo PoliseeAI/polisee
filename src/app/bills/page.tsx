@@ -14,12 +14,16 @@ export default function Bills() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [selectedPolicyArea, setSelectedPolicyArea] = useState<string | null>(null)
+  const [selectedSubject, setSelectedSubject] = useState<string | null>(null)
 
   useEffect(() => {
     const fetchBills = async () => {
       try {
         setLoading(true)
         const fetchedBills = await getBills()
+        console.log('Fetched bills:', fetchedBills)
+        console.log('First bill policy area:', fetchedBills[0]?.policy_area)
         setBills(fetchedBills)
       } catch (err) {
         setError('Failed to fetch bills')
@@ -32,21 +36,56 @@ export default function Bills() {
     fetchBills()
   }, [])
 
-  const filteredBills = bills.filter(bill => 
-    bill.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.policy_area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    bill.sponsor_name?.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const filteredBills = bills.filter(bill => {
+    // Text search filter
+    const matchesSearch = !searchTerm || 
+      bill.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.policy_area?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      bill.sponsor_name?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    // Policy area filter
+    const matchesPolicyArea = !selectedPolicyArea || 
+      (selectedPolicyArea === 'Uncategorized' && !bill.policy_area) ||
+      (bill.policy_area && bill.policy_area === selectedPolicyArea)
+    
+    // Subject filter
+    const matchesSubject = !selectedSubject || 
+      bill.bill_subjects.some(subject => subject.subject_name === selectedSubject)
+    
+    return matchesSearch && matchesPolicyArea && matchesSubject
+  })
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'N/A'
-    return new Date(dateString).toLocaleDateString()
+    
+    // Parse the date string correctly to avoid timezone issues
+    // The database stores dates as YYYY-MM-DD format
+    const [year, month, day] = dateString.split('-').map(Number)
+    const date = new Date(year, month - 1, day) // month is 0-indexed
+    
+    return date.toLocaleDateString()
   }
 
   const truncateText = (text: string | null, maxLength: number) => {
     if (!text) return ''
     return text.length > maxLength ? text.substring(0, maxLength) + '...' : text
   }
+
+  const handlePolicyAreaClick = (policyArea: string) => {
+    setSelectedPolicyArea(selectedPolicyArea === policyArea ? null : policyArea)
+  }
+
+  const handleSubjectClick = (subject: string) => {
+    setSelectedSubject(selectedSubject === subject ? null : subject)
+  }
+
+  const clearFilters = () => {
+    setSearchTerm('')
+    setSelectedPolicyArea(null)
+    setSelectedSubject(null)
+  }
+
+  const hasActiveFilters = searchTerm || selectedPolicyArea || selectedSubject
 
   return (
     <AuthGuard>
@@ -67,6 +106,17 @@ export default function Bills() {
                 onChange={(e) => setSearchTerm(e.target.value)}
               />
             </div>
+            {hasActiveFilters && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+                className="text-gray-600 hover:text-gray-800"
+              >
+                <Filter className="h-4 w-4 mr-1" />
+                Clear Filters
+              </Button>
+            )}
           </div>
         </div>
 
@@ -93,7 +143,18 @@ export default function Bills() {
             <CardContent className="pt-6">
               <div className="text-center py-8">
                 <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">No bills found matching your search.</p>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No bills found</h3>
+                <p className="text-gray-600 mb-4">
+                  {hasActiveFilters 
+                    ? 'No bills match your current filters. Try adjusting your search or clearing filters.' 
+                    : 'No bills found matching your search.'
+                  }
+                </p>
+                {hasActiveFilters && (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear All Filters
+                  </Button>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -101,10 +162,35 @@ export default function Bills() {
 
         {!loading && !error && filteredBills.length > 0 && (
           <>
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-600">
-                Showing {filteredBills.length} of {bills.length} bills
-              </p>
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <p className="text-sm text-gray-600">
+                  Showing {filteredBills.length} of {bills.length} bills
+                </p>
+                {hasActiveFilters && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500">Filters:</span>
+                    {selectedPolicyArea && (
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-blue-100 text-blue-800 cursor-pointer hover:bg-blue-200"
+                        onClick={() => setSelectedPolicyArea(null)}
+                      >
+                        {selectedPolicyArea} ×
+                      </Badge>
+                    )}
+                    {selectedSubject && (
+                      <Badge 
+                        variant="secondary" 
+                        className="bg-purple-100 text-purple-800 cursor-pointer hover:bg-purple-200"
+                        onClick={() => setSelectedSubject(null)}
+                      >
+                        {selectedSubject} ×
+                      </Badge>
+                    )}
+                  </div>
+                )}
+              </div>
               <Badge variant="secondary" className="bg-blue-100 text-blue-800">
                 Sample Data
               </Badge>
@@ -120,12 +206,33 @@ export default function Bills() {
                           <Badge variant="outline" className="font-mono">
                             {formatBillId(bill)}
                           </Badge>
-                          <Badge 
-                            className={getPolicyAreaColor(bill.policy_area || '')}
-                            variant="secondary"
-                          >
-                            {bill.policy_area}
-                          </Badge>
+                          {bill.policy_area ? (
+                            <Badge 
+                              className={`${getPolicyAreaColor(bill.policy_area)} cursor-pointer hover:opacity-80 transition-opacity ${
+                                selectedPolicyArea === bill.policy_area ? 'ring-2 ring-blue-500' : ''
+                              }`}
+                              variant="secondary"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                if (bill.policy_area) handlePolicyAreaClick(bill.policy_area)
+                              }}
+                            >
+                              {bill.policy_area}
+                            </Badge>
+                          ) : (
+                            <Badge 
+                              className="bg-gray-100 text-gray-600 cursor-pointer hover:opacity-80 transition-opacity"
+                              variant="secondary"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                handlePolicyAreaClick('Uncategorized')
+                              }}
+                            >
+                              Uncategorized
+                            </Badge>
+                          )}
                         </div>
                         <CardTitle className="text-lg leading-tight">
                           {bill.title}
@@ -135,8 +242,9 @@ export default function Bills() {
                          <Badge 
                            className={getBillStatusColor(bill)}
                            variant="secondary"
+                           title={bill.latest_action || 'Status Unknown'}
                          >
-                           In Committee
+                           {truncateText(bill.latest_action, 30) || 'Status Unknown'}
                          </Badge>
                         <div className="flex items-center text-sm text-gray-500">
                           <Calendar className="h-4 w-4 mr-1" />
@@ -171,7 +279,14 @@ export default function Bills() {
                               <Badge 
                                 key={subject.id} 
                                 variant="outline" 
-                                className="text-xs"
+                                className={`text-xs cursor-pointer hover:bg-gray-100 transition-colors ${
+                                  selectedSubject === subject.subject_name ? 'ring-2 ring-purple-500 bg-purple-50' : ''
+                                }`}
+                                onClick={(e) => {
+                                  e.preventDefault()
+                                  e.stopPropagation()
+                                  handleSubjectClick(subject.subject_name)
+                                }}
                               >
                                 {subject.subject_name}
                               </Badge>
@@ -185,9 +300,12 @@ export default function Bills() {
                         </div>
                       )}
 
-                                             <div className="flex items-center justify-between pt-4">
-                         <div className="text-sm text-gray-500">
-                           Latest Action: {formatDate(bill.latest_action_date)}
+                                             <div className="space-y-2 pt-4">
+                         <div className="text-sm text-gray-600">
+                           <span className="font-medium">Latest Action:</span> {bill.latest_action || 'No action recorded'}
+                         </div>
+                         <div className="text-xs text-gray-500">
+                           Action Date: {formatDate(bill.latest_action_date)}
                          </div>
                          <div className="flex gap-2">
                            <Button variant="outline" size="sm" asChild>

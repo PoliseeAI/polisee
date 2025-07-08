@@ -170,7 +170,7 @@ export default function Analyze() {
       )}
 
       {/* Next Steps */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center">
@@ -186,26 +186,6 @@ export default function Analyze() {
               <Link href="/bills">
                 <FileText className="h-4 w-4 mr-2" />
                 Browse Bills
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <ArrowRight className="h-5 w-5 mr-2" />
-              How It Works
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-gray-600 mb-4">
-              Learn more about how our AI analyzes bills for you
-            </p>
-            <Button className="w-full" variant="outline" asChild>
-              <Link href="/#how-it-works">
-                <ArrowRight className="h-4 w-4 mr-2" />
-                Learn More
               </Link>
             </Button>
           </CardContent>
