@@ -21,6 +21,7 @@
     "security:scan": "gitleaks detect --source . --verbose",
     "security:scan-staged": "gitleaks protect --source . --verbose",
     "security:scan-commits": "gitleaks detect --source . --log-level info",
+    "security:scan-commits-safe": "gitleaks protect --source . --log-level info",
     "security:baseline": "gitleaks detect --source . --baseline-path .gitleaks-baseline.json",
     "security:scan-ci": "gitleaks detect --source . --verbose --exit-code 2",
     "security:trufflehog": "docker run --rm -v \"$PWD:/pwd\" trufflesecurity/trufflehog:latest git file:///pwd --only-verified",
