@@ -1,8 +1,0 @@
-questionary==2.1.0
-rich==14.0.0
-python-dotenv
-langchain==0.3.26
-langchain-openai==0.3.27
-langchain-community==0.3.27
-faiss-cpu==1.11.0
-openai==1.93.3 

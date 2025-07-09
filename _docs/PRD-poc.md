@@ -1,96 +1,95 @@
-# PRD: Interactive Policy Generation CLI
+# PRD: Phase 1 - Local Data Ingestion & Processing Pipeline
 
--   **Feature:** PolGen Interactive Command-Line Interface (CLI)
+-   **Feature:** Core Data Pipeline for CLI Proof-of-Concept
 -   **Status:** To Do
--   **Author:** Product Manager
--   **Stakeholders:** Lead Developer
+-   **Author:** Lead Developer
+-   **Stakeholders:** Product Manager
 
 ---
 
 ### 1. Introduction/Overview
 
-This project will create the first interactive proof-of-concept for the "PolGen" application. It will take the form of a Command-Line Interface (CLI) tool that guides a user through the initial phases of creating a public policy. The tool will simulate a chatbot, asking clarifying questions, performing "analysis," and generating real documents (as Markdown files) on the user's local machine.
+This project is the foundational data backend for the "PolGen" CLI proof-of-concept. Before the CLI can answer any questions, we need a reliable way to get our source documents into a format the AI can understand. This involves extracting text from files (like PDFs), cleaning it, breaking it into small pieces ("chunks"), and storing both the text and its "meaning" (as a vector) in a local database.
 
-The problem this solves is validating the core user workflow of our product—an AI-guided, phase-based process for policy creation—without the time and expense of building a full web-based user interface.
+This feature will be a set of scripts that populates a local PostgreSQL database from a folder of source documents.
 
-**The Goal:** To build a working, interactive CLI application that demonstrates the end-to-end flow of defining a policy problem, gathering evidence, and drafting an initial document, proving the value and feel of the proposed product.
+**The Goal:** To create a simple, repeatable, local-only data pipeline that processes a curated set of documents and makes them queryable for the main CLI application.
 
 ### 2. Goals
 
-*   Develop a CLI application that a user can run with a simple `python` command.
-*   Implement a stateful, interactive conversation that guides a user through at least two distinct phases of policy creation (e.g., Definition and Evidence Gathering).
-*   Successfully generate and save at least three different Markdown files to a new, project-specific directory on the user's local file system.
-*   Integrate with an LLM (OpenAI) to generate the content for the summary and draft documents based on a small, pre-canned set of source texts.
-*   Provide a polished and user-friendly terminal experience using formatted text and interactive prompts.
+*   Successfully process a local folder containing a mix of `.txt` and `.pdf` files.
+*   Extract clean, readable text from both document types.
+*   Populate a local PostgreSQL database with structured metadata about each source document.
+*   Populate the same database with the text chunks and their corresponding vector embeddings.
+*   Ensure the entire process can be run from a single command and can be re-run to clear and re-populate the database.
 
 ### 3. User Stories
 
-*   **As a policy analyst, I want to start a new policy project from my terminal so that I can quickly begin defining a policy problem without needing to open a browser.**
-*   **As a policy analyst, I want to be guided by an interactive prompt-based system so that I can clearly scope my policy's objectives and geography.**
-*   **As a policy analyst, I want the tool to automatically perform an "analysis" and create summary documents for me so that I can save time on initial research.**
-*   **As a policy analyst, I want to view the generated summaries directly in my terminal and have the full documents saved as local files so that I can easily access and review the outputs.**
-*   **As a policy analyst, I want to command the tool to draft a policy brief based on the initial findings so that I can see the core value of the tool in generating a first draft.**
+*   **As a Developer building the CLI, I want to run a single script to 'seed' my local database with all the necessary policy documents so that I have a consistent data environment to test the AI's question-answering capabilities.**
+*   **As a Developer, I want the pipeline to automatically extract text from PDFs so that I don't have to manually copy-paste content from complex documents.**
+*   **As a Product Manager, I want to be able to add a new PDF or TXT file to a folder and re-run the script so that we can easily test the system with new source documents.**
 
 ### 4. Functional Requirements
 
-The system will be a Python script run from the command line, e.g., `python polgen_cli.py`.
+The system will be a Python script (e.g., `ingest.py`) that is run manually from the command line.
 
-**Project Management:**
-1.  On first run, the system MUST create a new, uniquely named directory on the local filesystem to store all project-related files (e.g., `policy_readmissions_seniors_<timestamp>`).
-2.  The system MUST be able to save its conversational progress (state) so a user could theoretically exit and resume later (though resume functionality is not required for the MVP).
+**Data Source & Handling:**
+1.  The script MUST read all files from a pre-defined local directory named `data/`.
+2.  The script MUST be able to process files with `.txt` and `.pdf` extensions. It should ignore all other file types.
 
-**Interactive CLI:**
-3.  The system MUST present the user with a text prompt to enter their initial policy goal.
-4.  The system MUST present the user with an interactive multiple-choice question to select the policy's geography (e.g., using arrow keys).
-5.  The system MUST present the user with a text input prompt to define the policy's success metric.
-6.  The system MUST use formatted output (e.g., colors, bold text) to distinguish between bot messages, user inputs, and system status messages.
-7.  The system MUST present the user with a confirmation prompt (y/n) before displaying large blocks of text, such as a summary.
+**Database Interaction:**
+3.  The script MUST connect to a local PostgreSQL database using credentials specified in the environment.
+4.  Before processing, the script MUST completely clear all data from the `documents` and `chunks` tables to ensure a fresh start.
+5.  For each file processed, the script MUST create one corresponding record in the `documents` table. This record must include the file's name and its type (`pdf` or `txt`).
 
-**File Generation:**
-8.  The system MUST generate and save a Markdown file containing a summary of a literature review (`LitReview_Summary.md`).
-9.  The system MUST generate and save a Markdown file containing a summary of international models (`International_Models.md`).
-10. The system MUST, upon user command, generate and save a Markdown file containing a draft policy brief (`Policy_Brief_Draft_v1.md`).
+**Text Processing:**
+6.  For `.txt` files, the system MUST read the raw text content directly.
+7.  For `.pdf` files, the system MUST use a library to extract the text content from the document.
+8.  The extracted text from each document MUST be split into smaller, overlapping text chunks (e.g., paragraphs of ~400 words with a 50-word overlap).
 
-**AI & Data Logic:**
-11. The system MUST load a small, pre-defined set of text documents (the "curated data source") from a local folder within the project.
-12. The system MUST use an LLM to generate the content for the summary documents based on information retrieved from the curated data source.
-13. The system MUST use an LLM to generate the content for the policy brief document based on the previously generated summaries.
+**Vectorization & Storage:**
+9.  For each text chunk, the system MUST use the OpenAI API to generate a vector embedding.
+10. Each chunk MUST be saved as a record in the `chunks` table. This record must include the text of the chunk, a reference back to its parent document (`document_id`), and its vector embedding.
 
 ### 5. Non-Goals (Out of Scope)
 
-*   **No Web UI:** We will not build any HTML, CSS, or browser-based components. This is strictly a CLI tool.
-*   **No User Accounts or Authentication:** The tool will run locally without any concept of users or logins.
-*   **No Persistent Database:** We will not use a database like PostgreSQL for this version. Project state can be managed in memory or through simple files (e.g., a JSON file in the project directory).
-*   **No Live Data Fetching:** The tool will NOT connect to external APIs (like GAO or PubMed) to fetch data in real-time. It will rely entirely on a small set of pre-packaged text files.
-*   **No "Resume" Functionality:** While the state should be designed to be saveable, we will not implement the feature that allows a user to exit the CLI and resume their session exactly where they left off.
-*   **No Advanced Error Handling:** The script can exit with a standard error message if something unexpected happens.
+*   **No Automated Crawlers:** This script will **NOT** fetch any data from the internet. It only processes files that are already present in the local `data/` folder.
+*   **No Cloud Services:** We will **NOT** use any cloud storage (like S3) or cloud databases. Everything runs locally.
+*   **No Complex PDF Parsing:** The initial version will use a standard library for PDF text extraction. It will **NOT** handle complex layouts, tables, images, or scanned (non-digital) PDFs. If a PDF has no extractable text, it can be skipped.
+*   **No UI:** This is a backend-only script. There is no user interface. Progress will be indicated by printing messages to the console.
+*   **No "Delta" or "Update" Logic:** The script does not need to know which files are new. It will always perform a full wipe-and-reload of the database.
 
 ### 6. Design Considerations
 
-*   **CLI Look & Feel:** The interface should feel modern and responsive. Use clear visual cues.
-    *   Bot messages should be one color (e.g., green).
-    *   User input prompts should be another (e.g., blue).
-    *   System status/progress messages should be a third (e.g., cyan).
-    *   Rendered Markdown should be formatted with clear headings, bullets, and bold text.
-*   **Example Interaction Flow:**
+*   **Console Output:** The script should provide clear feedback in the console as it runs. Example:
     ```
-    [green]Bot:[/green] Welcome! What policy do you want to develop?
-    > [user types here]
-    [green]Bot:[/green] Great. Let's scope this.
-    [blue]Select geography:[/blue]
-    » National
-      State
+    Starting data ingestion...
+    Clearing existing data from database...
+    Found 5 documents to process in 'data/' folder.
+    Processing 'doc1_zoning_code.pdf'...
+      - Extracted 15,000 characters.
+      - Split into 42 chunks.
+      - Stored document and 42 chunks in database.
+    Processing 'doc2_hud_report.txt'...
     ...
+    Ingestion complete. Database is ready.
     ```
+*   **Database Schema:** The script will populate a pre-existing schema. It will not be responsible for creating tables. The required tables are `documents` and `chunks` (as defined in the architecture plan).
 
 ### 7. Technical Considerations
 
-*   **Python Libraries:**
-    *   `questionary`: For creating the interactive prompts (select, text, confirm).
-    *   `rich`: For all formatted console output, including colors, styles, and rendering Markdown.
-    *   `langchain`: To manage the RAG pipeline, prompts, and interaction with the LLM.
-    *   `langchain-openai`: For the specific OpenAI integration.
-    *   A simple in-memory vector store library like `FAISS` is recommended.
-*   **Project Structure:** A new directory should be created for the CLI app. Inside, there should be a `data/` sub-directory containing the curated `.txt` files for the RAG process.
-*   **State Management:** A simple Python dictionary can hold the state for the current session (topic, geography, files created, etc.). This dictionary will be passed through the different functions representing the workflow phases.
-*   **API Keys:** The OpenAI API key must be loaded from a `.env` file and not be hardcoded.
+*   **Language:** Python 3.9+.
+*   **Key Libraries:**
+    *   `psycopg2-binary`: To connect to PostgreSQL.
+    *   `sqlalchemy`: To make database interactions easier (ORM).
+    *   `pgvector`: For storing vectors in PostgreSQL.
+    *   `PyMuPDF` or a similar library: For PDF text extraction.
+    *   `langchain`: To assist with document loading, text splitting, and embedding generation.
+    *   `langchain-openai`: For the OpenAI embeddings integration.
+*   **Configuration:** All sensitive information (database credentials, OpenAI API key) MUST be loaded from a `.env` file.
+*   **Idempotency:** The script must be safely re-runnable. Running it ten times should result in the same database state as running it once. This is achieved by the "clear all data" step at the beginning.
+
+### 8. Q*A
+
+*   What is the optimal `chunk_size` and `chunk_overlap` for our initial set of documents? (Answer: Start with a size of 1000 characters and an overlap of 200).
+*   Which specific OpenAI embedding model should we use? (Answer: `text-embedding-3-small` for a balance of cost and performance).
