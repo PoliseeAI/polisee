@@ -20,7 +20,7 @@ export interface BillWithAISummary extends Bill {
 // Database implementation for bills with content
 export async function getBills(): Promise<BillWithDetails[]> {
   try {
-    // Get bills that are active and have actual text content (not "[No text content available]")
+    // Get bills that are active
     const { data: billsWithContent, error: billsError } = await supabase
       .from('bills')
       .select(`
@@ -29,9 +29,6 @@ export async function getBills(): Promise<BillWithDetails[]> {
         bill_subjects(*)
       `)
       .eq('is_active', true)
-      .not('text', 'is', null)
-      .not('text', 'eq', '')
-      .not('text', 'ilike', '%[No text content available]%')
       .order('introduced_date', { ascending: false })
 
     if (billsError) {
@@ -39,7 +36,7 @@ export async function getBills(): Promise<BillWithDetails[]> {
       throw billsError
     }
 
-    console.log(`Successfully fetched ${billsWithContent?.length || 0} bills with valid text content`)
+    console.log(`Successfully fetched ${billsWithContent?.length || 0} bills`)
     return billsWithContent || []
   } catch (error) {
     console.error('Error in getBills:', error)
@@ -82,9 +79,6 @@ export async function getBillsWithAISummaries(): Promise<BillWithAISummary[]> {
         bill_subjects(*)
       `)
       .eq('is_active', true)
-      .not('text', 'is', null)
-      .not('text', 'eq', '')
-      .not('text', 'ilike', '%[No text content available]%')
       .order('introduced_date', { ascending: false })
 
     if (billsError) {
