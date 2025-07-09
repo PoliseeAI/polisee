@@ -37,7 +37,15 @@ export async function getBills(): Promise<BillWithDetails[]> {
     }
 
     console.log(`Successfully fetched ${billsWithContent?.length || 0} bills`)
-    return billsWithContent || []
+    
+    // Handle potential relationship errors by ensuring arrays are properly formed
+    const processedBills = (billsWithContent || []).map(bill => ({
+      ...bill,
+      bill_summaries: Array.isArray(bill.bill_summaries) ? bill.bill_summaries : [],
+      bill_subjects: Array.isArray(bill.bill_subjects) ? bill.bill_subjects : []
+    }))
+    
+    return processedBills
   } catch (error) {
     console.error('Error in getBills:', error)
     return []
@@ -46,7 +54,12 @@ export async function getBills(): Promise<BillWithDetails[]> {
 
 export async function getBillById(billId: string): Promise<BillWithDetails | null> {
   try {
-    const { data: bill, error } = await supabase
+    console.log('Searching for bill with ID:', billId)
+    
+    // First, try searching by bill_id (most common case)
+    console.log('Searching by bill_id for value:', billId)
+    
+    let { data: bill, error } = await supabase
       .from('bills')
       .select(`
         *,
@@ -56,12 +69,43 @@ export async function getBillById(billId: string): Promise<BillWithDetails | nul
       .eq('bill_id', billId)
       .single()
 
+    // If not found by bill_id and the input is numeric, try searching by primary key id
+    if (error && error.code === 'PGRST116' && /^\d+$/.test(billId)) {
+      console.log('Not found by bill_id, trying by numeric id:', parseInt(billId))
+      
+      const result = await supabase
+        .from('bills')
+        .select(`
+          *,
+          bill_summaries(*),
+          bill_subjects(*)
+        `)
+        .eq('id', parseInt(billId))
+        .single()
+      
+      bill = result.data
+      error = result.error
+    }
+
     if (error) {
       console.error('Error fetching bill:', error)
+      console.error('Error details:', JSON.stringify(error, null, 2))
       return null
     }
 
-    return bill
+    console.log('Found bill:', bill?.title)
+    
+    if (bill) {
+      // Handle potential relationship errors by ensuring arrays are properly formed
+      const processedBill = {
+        ...bill,
+        bill_summaries: Array.isArray(bill.bill_summaries) ? bill.bill_summaries : [],
+        bill_subjects: Array.isArray(bill.bill_subjects) ? bill.bill_subjects : []
+      }
+      return processedBill
+    }
+    
+    return null
   } catch (error) {
     console.error('Error in getBillById:', error)
     return null
@@ -87,7 +131,15 @@ export async function getBillsWithAISummaries(): Promise<BillWithAISummary[]> {
     }
 
     console.log(`Successfully fetched ${billsWithAI?.length || 0} bills with AI summaries`)
-    return billsWithAI || []
+    
+    // Handle potential relationship errors by ensuring arrays are properly formed
+    const processedBills = (billsWithAI || []).map(bill => ({
+      ...bill,
+      ai_bill_summaries: Array.isArray(bill.ai_bill_summaries) ? bill.ai_bill_summaries : [],
+      bill_subjects: Array.isArray(bill.bill_subjects) ? bill.bill_subjects : []
+    }))
+    
+    return processedBills
   } catch (error) {
     console.error('Error in getBillsWithAISummaries:', error)
     return []
@@ -97,7 +149,8 @@ export async function getBillsWithAISummaries(): Promise<BillWithAISummary[]> {
 // Get a single bill with its AI summary using the efficient foreign key
 export async function getBillWithAISummary(billId: string): Promise<BillWithAISummary | null> {
   try {
-    const { data: bill, error } = await supabase
+    // First, try searching by bill_id (most common case)
+    let { data: bill, error } = await supabase
       .from('bills')
       .select(`
         *,
@@ -107,12 +160,38 @@ export async function getBillWithAISummary(billId: string): Promise<BillWithAISu
       .eq('bill_id', billId)
       .single()
 
+    // If not found by bill_id and the input is numeric, try searching by primary key id
+    if (error && error.code === 'PGRST116' && /^\d+$/.test(billId)) {
+      const result = await supabase
+        .from('bills')
+        .select(`
+          *,
+          ai_bill_summaries(*),
+          bill_subjects(*)
+        `)
+        .eq('id', parseInt(billId))
+        .single()
+      
+      bill = result.data
+      error = result.error
+    }
+
     if (error) {
       console.error('Error fetching bill with AI summary:', error)
       return null
     }
 
-    return bill
+    if (bill) {
+      // Handle potential relationship errors by ensuring arrays are properly formed
+      const processedBill = {
+        ...bill,
+        ai_bill_summaries: Array.isArray(bill.ai_bill_summaries) ? bill.ai_bill_summaries : [],
+        bill_subjects: Array.isArray(bill.bill_subjects) ? bill.bill_subjects : []
+      }
+      return processedBill
+    }
+    
+    return null
   } catch (error) {
     console.error('Error in getBillWithAISummary:', error)
     return null

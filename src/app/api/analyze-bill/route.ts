@@ -18,12 +18,26 @@ export async function POST(request: NextRequest) {
   try {
     const { billText, billTitle, persona } = await request.json()
 
+    console.log('Analyze-bill API called for:', billTitle)
+    console.log('Bill text length:', billText?.length || 0)
+    console.log('Persona location:', persona?.location)
+
     // Validate required fields
     if (!billText || !billTitle || !persona) {
+      console.error('Missing required fields:', { 
+        hasBillText: !!billText, 
+        hasBillTitle: !!billTitle, 
+        hasPersona: !!persona 
+      })
       return NextResponse.json(
         { error: 'Missing required fields: billText, billTitle, or persona' },
         { status: 400 }
       )
+    }
+
+    // Check if bill text is too short or generic
+    if (billText.length < 100) {
+      console.warn('Bill text is very short:', billText.length, 'characters')
     }
 
     // Check if OpenAI API key is available
@@ -42,6 +56,8 @@ export async function POST(request: NextRequest) {
     
     // Create analysis prompt
     const prompt = createAnalysisPrompt(billText, billTitle, personaSummary)
+    
+    console.log('Calling OpenAI API...')
     
     // Call OpenAI API
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -81,6 +97,8 @@ export async function POST(request: NextRequest) {
     }
     
     const result = await response.json()
+    console.log('OpenAI API response received, processing...')
+    
     const content = result.choices[0]?.message?.content
     
     if (!content) {
@@ -93,9 +111,17 @@ export async function POST(request: NextRequest) {
     
     try {
       const analysisResult: AIAnalysisResponse = JSON.parse(content)
+      console.log('Analysis successful, found', analysisResult.impacts?.length || 0, 'impacts')
+      
+      // Log impact titles for debugging
+      if (analysisResult.impacts) {
+        console.log('Impact titles:', analysisResult.impacts.map(i => i.title))
+      }
+      
       return NextResponse.json(analysisResult)
     } catch (error) {
       console.error('Failed to parse AI response:', content)
+      console.error('Parse error:', error)
       return NextResponse.json(
         { error: 'Invalid JSON response from AI' },
         { status: 500 }
@@ -135,26 +161,30 @@ You are an expert policy analyst. Analyze how this bill would personally impact 
 
 BILL TITLE: ${billTitle}
 
-BILL TEXT (first 3000 characters):
-${billText.substring(0, 3000)}...
+BILL TEXT (first 4000 characters):
+${billText.substring(0, 4000)}...
 
 USER PROFILE:
 ${personaSummary}
 
-TASK: Generate 3-6 specific, personalized impacts this bill would have on this user. For each impact:
+TASK: Generate 1-4 specific, personalized impacts this bill would have on this user. Focus on quality over quantity.
 
-1. Focus on CONCRETE, SPECIFIC effects on this person's life
-2. Use CLEAR, NON-TECHNICAL language
-3. Explain WHY it affects them based on their situation
-4. Include specific dollar amounts, percentages, or quantities when mentioned in the bill
-5. Be accurate - only mention impacts that are actually in the bill text
+IMPORTANT GUIDELINES:
+1. If this is a simple bill (like naming a post office), create 1 relevant impact about community recognition
+2. For complex bills, find 2-4 specific impacts that match the user's situation
+3. Focus on CONCRETE, SPECIFIC effects on this person's life
+4. Use CLEAR, NON-TECHNICAL language
+5. Explain WHY it affects them based on their situation
+6. Include specific dollar amounts, percentages, or quantities when mentioned in the bill
+7. Be accurate - only mention impacts that are actually in the bill text
+8. If no direct impacts apply, create a general community or procedural impact
 
 For each impact, provide:
-- category: (Education, Healthcare, Business, Employment, Taxation, etc.)
+- category: (Education, Healthcare, Business, Employment, Taxation, Social Security, Community, etc.)
 - impact: (positive, negative, or neutral)
 - severity: (low, medium, high) - how much this affects them personally
-- title: Brief, clear title (max 50 chars)
-- description: One sentence explaining why this affects them (max 100 chars)
+- title: Brief, clear title (max 60 chars)
+- description: One sentence explaining why this affects them (max 120 chars)
 - details: 3-4 bullet points with specific impacts on their life
 - relevance_score: 1-10 how relevant this is to their specific situation
 
@@ -162,26 +192,27 @@ Return ONLY valid JSON in this format:
 {
   "impacts": [
     {
-      "category": "Taxation",
-      "impact": "positive",
-      "severity": "high",
-      "title": "Tax Savings for Your Income Level",
-      "description": "Your income bracket qualifies for significant tax reductions.",
+      "category": "Community",
+      "impact": "neutral",
+      "severity": "low",
+      "title": "Local Post Office Recognition",
+      "description": "This bill recognizes a community member at your local post office.",
       "details": [
-        "Save approximately $2,400 annually on federal taxes",
-        "Child tax credit increases from $2,000 to $3,000 per child",
-        "New deduction for small business owners reduces taxable income",
-        "Changes take effect for 2024 tax year"
+        "Honors local veteran or community leader",
+        "No impact on postal services or costs",
+        "Symbolic importance for local area",
+        "No direct financial impact"
       ],
-      "relevance_score": 9
+      "relevance_score": 3
     }
   ]
 }
 
 IMPORTANT: 
-- Only include impacts that are ACTUALLY in the bill text
-- Be specific about dollar amounts, dates, and eligibility criteria
-- Focus on personal impacts, not general policy effects
+- Always generate at least 1 impact, even for simple bills
+- For post office naming bills, focus on community recognition
+- For complex bills, find specific personal impacts
 - Use simple language that anyone can understand
+- Don't generate empty impacts arrays
 `
 } 

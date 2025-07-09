@@ -14,24 +14,30 @@ export async function generatePersonalizedImpacts(
   sourceReferences: SourceReference[] = []
 ): Promise<PersonalImpact[]> {
   try {
-    // Get bill with summaries
+    // Get bill data
     const { data: bill, error } = await supabase
       .from('bills')
-      .select(`
-        *,
-        bill_summaries(*)
-      `)
+      .select('*')
       .eq('bill_id', billId)
       .single()
 
-    if (error || !bill || !bill.bill_summaries || bill.bill_summaries.length === 0) {
-      console.error('Error fetching bill or no summary available:', error)
+    if (error) {
+      console.error('Error fetching bill:', error)
       return []
     }
 
-    // Use the most recent summary text for analysis
-    const mostRecentSummary = bill.bill_summaries[0]
-    const billText = mostRecentSummary.summary_text || bill.title || 'No content available'
+    if (!bill) {
+      console.error('Bill not found:', billId)
+      return []
+    }
+
+    // Use the text column from the bills table
+    const billText = bill.text || bill.title || 'No content available'
+
+    if (!billText.trim() || billText === 'No content available') {
+      console.error('No bill text available for analysis:', billId)
+      return []
+    }
 
     // Use AI to analyze the bill text and generate personalized impacts
     const impacts = await analyzeImpactsWithAI(
