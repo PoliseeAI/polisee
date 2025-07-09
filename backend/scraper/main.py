@@ -10,6 +10,7 @@ import time
 import sys
 from datetime import datetime
 from typing import List, Dict, Optional
+import asyncio
 
 try:
     from .congress_scraper import CongressScraper
@@ -333,21 +334,47 @@ class CongressScraperApp:
         """Get database statistics."""
         return self.db.get_statistics()
 
+async def cleanup_bills_without_text():
+    """Remove bills that don't have substantial text content."""
+    try:
+        db = DatabaseManager()
+        
+        # Show current stats
+        logger.info("📊 Checking for bills without text...")
+        bills_without_text = db.get_bills_without_text()
+        logger.info(f"Found {len(bills_without_text)} bills without substantial text")
+        
+        if bills_without_text:
+            for bill in bills_without_text[:5]:  # Show first 5
+                logger.info(f"  - {bill['bill_id']}: {bill['title'][:60]}...")
+            
+            # Delete them
+            deleted_count = db.delete_bills_without_text()
+            logger.info(f"✅ Deleted {deleted_count} bills without text")
+            
+            # Show updated stats
+            stats = db.get_statistics()
+            logger.info(f"📈 Updated stats: {stats['total_bills']} bills remaining")
+        else:
+            logger.info("✅ No bills without text found")
+            
+    except Exception as e:
+        logger.error(f"❌ Error during cleanup: {e}")
+        raise
+
 def main():
     """Main entry point."""
     import argparse
     
     parser = argparse.ArgumentParser(description='Congress.gov API Scraper')
-    parser.add_argument('--mode', choices=['initial', 'scheduler', 'daily', 'search', 'test'], 
-                      default='daily', help='Operation mode')
+    parser.add_argument('--mode', choices=['initial', 'scheduler', 'daily', 'search', 'test', 'cleanup'], 
+                       default='daily', help='Operation mode')
     parser.add_argument('--days', type=int, default=1, 
-                      help='Number of days to look back for bills')
-    parser.add_argument('--limit', type=int, default=20, 
-                      help='Number of bills to fetch in test mode')
+                       help='Number of days to scrape (for daily mode)')
     parser.add_argument('--query', type=str, 
-                      help='Search query for bills (use with --mode search)')
+                       help='Search query for bills (use with --mode search)')
     parser.add_argument('--stats', action='store_true', 
-                      help='Show database statistics')
+                       help='Show database statistics')
     
     args = parser.parse_args()
     
@@ -383,6 +410,9 @@ def main():
                 logger.error("Search query required when using search mode")
                 sys.exit(1)
             app.search_and_store_bills(args.query)
+
+        elif args.mode == 'cleanup':
+            asyncio.run(cleanup_bills_without_text())
         
         logger.info("Operation completed successfully")
         

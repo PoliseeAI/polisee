@@ -148,11 +148,33 @@ class DatabaseManager:
         return schemas
     
     def insert_bill(self, bill_data: Dict) -> bool:
-        """Insert a bill into the database."""
+        """Insert a bill into the database - only if it has substantial text content."""
         try:
             # Extract main bill data
             bill_url = bill_data.get('url', '')
             bill_id = bill_url.split('/')[-1] if bill_url else f"{bill_data.get('congress', '')}-{bill_data.get('type', '')}-{bill_data.get('number', '')}"
+            
+            # Extract latest summary
+            summaries = bill_data.get('summaries', [])
+            latest_summary = self._extract_latest_summary(summaries) if summaries else None
+            
+            # Extract text content - try to get full text
+            bill_text = self._extract_bill_text(bill_data)
+            
+            # VALIDATE TEXT QUALITY - Only proceed if we have substantial text
+            if not self._has_substantial_text(bill_text or ''):
+                logger.warning(f"Skipping bill {bill_id} - no substantial text content")
+                return False
+            
+            # Handle latestAction - it can be a string or a dict
+            latest_action = bill_data.get('latestAction', {})
+            if isinstance(latest_action, dict):
+                latest_action_date = latest_action.get('actionDate')
+                latest_action_text = latest_action.get('text') or 'No action recorded'
+            else:
+                # If it's a string, use it as the text and set date to None
+                latest_action_date = None
+                latest_action_text = str(latest_action) if latest_action else 'No action recorded'
             
             bill_record = {
                 'bill_id': bill_id,
@@ -161,12 +183,15 @@ class DatabaseManager:
                 'number': bill_data.get('number'),
                 'title': bill_data.get('title'),
                 'introduced_date': bill_data.get('introducedDate'),
-                'latest_action_date': bill_data.get('latestAction', {}).get('actionDate'),
-                'latest_action': bill_data.get('latestAction', {}).get('text'),
+                'latest_action_date': latest_action_date,
+                'latest_action': latest_action_text,
                 'sponsor_id': bill_data.get('sponsors', [{}])[0].get('bioguideId') if bill_data.get('sponsors') else None,
                 'sponsor_name': bill_data.get('sponsors', [{}])[0].get('fullName') if bill_data.get('sponsors') else None,
                 'sponsor_party': bill_data.get('sponsors', [{}])[0].get('party') if bill_data.get('sponsors') else None,
                 'sponsor_state': bill_data.get('sponsors', [{}])[0].get('state') if bill_data.get('sponsors') else None,
+                'summary': latest_summary,
+                'text': bill_text,
+                'jurisdiction': bill_data.get('jurisdiction', 'US'),  # Default to US (federal) bills
                 'policy_area': bill_data.get('policyArea', {}).get('name'),
                 'cboc_estimate_url': bill_data.get('cboCostEstimates', [{}])[0].get('url') if bill_data.get('cboCostEstimates') else None,
                 'constitutional_authority_text': bill_data.get('constitutionalAuthorityStatementText'),
@@ -285,6 +310,104 @@ class DatabaseManager:
                 
         except Exception as e:
             logger.error(f"Error inserting bill summaries: {e}")
+    
+    def _extract_latest_summary(self, summaries: List[Dict]) -> Optional[str]:
+        """Extract the latest summary from summaries list."""
+        if not summaries:
+            return None
+            
+        # Handle both string and dict formats
+        dict_summaries = []
+        for summary in summaries:
+            if isinstance(summary, dict):
+                dict_summaries.append(summary)
+            else:
+                # If it's a string, convert it to a dict-like structure
+                dict_summaries.append({'text': str(summary), 'updateDate': '', 'actionDate': ''})
+        
+        if not dict_summaries:
+            return None
+            
+        # Sort by date, most recent first
+        sorted_summaries = sorted(dict_summaries, key=lambda x: x.get('updateDate', x.get('actionDate', '')), reverse=True)
+        
+        # Return the text of the most recent summary
+        if sorted_summaries:
+            return sorted_summaries[0].get('text')
+        
+        return None
+    
+    def _extract_bill_text(self, bill_data: Dict) -> str:
+        """Extract bill text from various sources."""
+        # Try to get text from different sources
+        
+        # 1. Check if textVersions exist and get the latest
+        text_versions = bill_data.get('textVersions', [])
+        if text_versions:
+            # Sort by date and get the latest
+            latest_version = sorted(text_versions, key=lambda x: x.get('date', ''), reverse=True)[0]
+            if latest_version.get('formats'):
+                # Try to get text content from formats
+                for format_info in latest_version['formats']:
+                    if format_info.get('type') == 'Formatted Text':
+                        return format_info.get('url', '[Text URL available]')
+        
+        # 2. Check if there's a summary that can serve as text
+        summaries = bill_data.get('summaries', [])
+        if summaries:
+            latest_summary = self._extract_latest_summary(summaries)
+            if latest_summary and len(latest_summary) > 200:  # Substantial summary
+                return latest_summary
+        
+        # 3. Fallback to title + constitutional authority + policy area
+        text_parts = []
+        
+        if bill_data.get('title'):
+            text_parts.append(f"TITLE: {bill_data['title']}")
+        
+        if bill_data.get('constitutionalAuthorityStatementText'):
+            text_parts.append(f"CONSTITUTIONAL AUTHORITY: {bill_data['constitutionalAuthorityStatementText']}")
+        
+        if bill_data.get('policyArea', {}).get('name'):
+            text_parts.append(f"POLICY AREA: {bill_data['policyArea']['name']}")
+        
+        # Add some actions as context
+        actions = bill_data.get('actions', [])
+        if actions:
+            recent_actions = actions[:3]  # First 3 actions
+            action_texts = []
+            for action in recent_actions:
+                if action.get('text'):
+                    action_texts.append(f"- {action['text']}")
+            if action_texts:
+                text_parts.append(f"RECENT ACTIONS:\n" + '\n'.join(action_texts))
+        
+        combined_text = '\n\n'.join(text_parts)
+        
+        # If we still don't have much, return a placeholder
+        if not combined_text.strip():
+            return '[No text content available]'
+        
+        return combined_text
+    
+    def _has_substantial_text(self, text: str) -> bool:
+        """Check if bill has substantial text content."""
+        if not text or text.strip() == '':
+            return False
+        
+        # Skip placeholder text
+        if text.startswith('[No text') or text.startswith('[Text extraction'):
+            return False
+        
+        # Check if text is substantial (more than just a title)
+        if len(text.strip()) < 200:  # Lowered from 100 to be more lenient
+            return False
+        
+        # Check if it's not just a URL
+        if text.strip().startswith('http'):
+            return False
+        
+        return True
     
     def get_recent_bills(self, days: int = 30) -> List[Dict]:
         """Get bills from the last N days."""
@@ -408,3 +531,60 @@ class DatabaseManager:
         except Exception as e:
             logger.error(f"Error getting statistics: {e}")
             return {} 
+
+    def delete_bills_without_text(self) -> int:
+        """Delete bills that have NULL or empty text content."""
+        try:
+            # Get bills with NULL text or summary
+            result = self.supabase.table('bills').select('bill_id, text, summary').execute()
+            
+            bills_to_delete = []
+            for bill in result.data:
+                bill_id = bill['bill_id']
+                text = bill.get('text')
+                summary = bill.get('summary')
+                
+                # Mark for deletion if no substantial text
+                if not text or text == 'NULL' or not self._has_substantial_text(str(text)):
+                    bills_to_delete.append(bill_id)
+            
+            # Delete bills without text
+            if bills_to_delete:
+                # Delete related data first
+                self.supabase.table('bill_actions').delete().in_('bill_id', bills_to_delete).execute()
+                self.supabase.table('bill_cosponsors').delete().in_('bill_id', bills_to_delete).execute()
+                self.supabase.table('bill_subjects').delete().in_('bill_id', bills_to_delete).execute()
+                self.supabase.table('bill_summaries').delete().in_('bill_id', bills_to_delete).execute()
+                
+                # Delete the bills themselves
+                self.supabase.table('bills').delete().in_('bill_id', bills_to_delete).execute()
+                
+                logger.info(f"Deleted {len(bills_to_delete)} bills without substantial text")
+                return len(bills_to_delete)
+            else:
+                logger.info("No bills without text found to delete")
+                return 0
+                
+        except Exception as e:
+            logger.error(f"Error deleting bills without text: {e}")
+            return 0
+    
+    def get_bills_without_text(self) -> List[Dict]:
+        """Get bills that have NULL or insufficient text content."""
+        try:
+            result = self.supabase.table('bills').select('bill_id, title, text, summary').execute()
+            
+            bills_without_text = []
+            for bill in result.data:
+                text = bill.get('text')
+                summary = bill.get('summary')
+                
+                # Check if text is missing or insufficient
+                if not text or text == 'NULL' or not self._has_substantial_text(str(text)):
+                    bills_without_text.append(bill)
+            
+            return bills_without_text
+            
+        except Exception as e:
+            logger.error(f"Error getting bills without text: {e}")
+            return [] 
