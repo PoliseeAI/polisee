@@ -3,18 +3,23 @@ import psycopg2
 import psycopg2.extras
 from bs4 import BeautifulSoup
 import sys
+import os
+from dotenv import load_dotenv
+
+# Load environment variables
+load_dotenv()
 
 # --- Configuration ---
-API_KEY = "BoqcMqfrLh0zanaNNBKL6O7nDwsziAdTbcY7frfq"
+API_KEY = os.getenv('CONGRESS_API_KEY')
 BILLS_API_URL = "https://api.congress.gov/v3/bill"
 API_PARAMS = {"api_key": API_KEY, "format": "json"}
 
 # --- Database Configuration ---
-DB_NAME = "bills"
-DB_USER = "postgres"
-DB_PASSWORD = "postgres"
-DB_HOST = "localhost"
-DB_PORT = "5432"
+DB_NAME = os.getenv('DB_NAME', 'bills')
+DB_USER = os.getenv('DB_USER', 'postgres')
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', '5432')
 
 def get_db_connection():
     """Establishes and returns a connection to the PostgreSQL database."""
