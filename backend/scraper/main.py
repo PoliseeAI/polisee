@@ -15,11 +15,13 @@ try:
     from .congress_scraper import CongressScraper
     from .database_manager import DatabaseManager
     from .config import Config
+    from .notifications import NotificationManager
 except ImportError:
     # Handle direct execution without package structure
     from congress_scraper import CongressScraper
     from database_manager import DatabaseManager
     from config import Config
+    from notifications import NotificationManager
 
 # Configure logging
 logging.basicConfig(
@@ -37,6 +39,7 @@ class CongressScraperApp:
     def __init__(self):
         self.scraper = CongressScraper()
         self.db = DatabaseManager()
+        self.notifier = NotificationManager()
         
     def initial_data_load(self):
         """Perform initial data load of recent bills and members."""
@@ -192,6 +195,83 @@ class CongressScraperApp:
         except Exception as e:
             logger.error(f"Error during daily update: {e}")
     
+    def daily_update_with_notifications(self, days: int = 1, mode: str = 'daily'):
+        """Daily update job with comprehensive notification support"""
+        start_time = time.time()
+        stats = {
+            'bills_processed': 0,
+            'new_bills': 0,
+            'updated_bills': 0,
+            'api_calls': 0,
+            'errors': 0,
+            'duration_seconds': 0,
+            'mode': mode,
+            'days': days
+        }
+        
+        try:
+            # Send start notification
+            self.notifier.send_start_notification(mode, days)
+            logger.info(f"Starting {mode} scraper for last {days} days...")
+            
+            # Get recent bills
+            recent_bills = self.scraper.get_recent_bills(days=days)
+            logger.info(f"Found {len(recent_bills)} recent bills")
+            stats['api_calls'] += 1
+            
+            if not recent_bills:
+                logger.info("No recent bills found")
+                stats['duration_seconds'] = time.time() - start_time
+                self.notifier.send_success_notification(stats)
+                return stats
+            
+            # Process each bill
+            for bill in recent_bills:
+                try:
+                    # Get enriched bill data
+                    enriched_bill = self.scraper.get_enriched_bill_data(bill)
+                    stats['api_calls'] += 3  # Approximate API calls for enriched data
+                    
+                    # Store in database
+                    if self.db.insert_bill(enriched_bill):
+                        stats['bills_processed'] += 1
+                        stats['new_bills'] += 1  # Simplified - could be enhanced to track new vs updated
+                        logger.info(f"Processed bill: {bill.get('number', 'Unknown')} - {bill.get('title', 'No title')[:100]}")
+                    
+                    # Respectful delay
+                    time.sleep(Config.REQUEST_DELAY)
+                    
+                    # Send warning if too many errors
+                    if stats['errors'] > 5:
+                        self.notifier.send_warning_notification(
+                            f"High error count during scraping: {stats['errors']} errors", 
+                            stats
+                        )
+                        
+                except Exception as e:
+                    stats['errors'] += 1
+                    logger.error(f"Error processing bill {bill.get('number', 'unknown')}: {e}")
+                    continue
+            
+            # Calculate final stats
+            stats['duration_seconds'] = time.time() - start_time
+            
+            # Send success notification
+            self.notifier.send_success_notification(stats)
+            
+            logger.info(f"Daily update completed successfully. Processed {stats['bills_processed']} bills in {stats['duration_seconds']:.1f}s")
+            return stats
+            
+        except Exception as e:
+            stats['duration_seconds'] = time.time() - start_time
+            error_message = str(e)
+            
+            # Send failure notification
+            self.notifier.send_failure_notification(error_message, stats)
+            
+            logger.error(f"Daily update failed: {error_message}")
+            raise
+    
     def weekly_update(self):
         """Weekly update job - sync bills from the last week and update member data."""
         logger.info("Running weekly update...")
@@ -260,7 +340,7 @@ def main():
     parser = argparse.ArgumentParser(description='Congress.gov API Scraper')
     parser.add_argument('--mode', choices=['initial', 'scheduler', 'daily', 'search', 'test'], 
                       default='daily', help='Operation mode')
-    parser.add_argument('--days', type=int, default=30, 
+    parser.add_argument('--days', type=int, default=1, 
                       help='Number of days to look back for bills')
     parser.add_argument('--limit', type=int, default=20, 
                       help='Number of bills to fetch in test mode')
@@ -291,8 +371,8 @@ def main():
             app.run_scheduler()
             
         elif args.mode == 'daily':
-            logger.info(f"Running daily sync for last {args.days} days...")
-            app.sync_recent_bills(days=args.days)
+            logger.info(f"Running daily sync with notifications for last {args.days} days...")
+            app.daily_update_with_notifications(days=args.days, mode='daily')
             
         elif args.mode == 'search':
             if not args.query:
