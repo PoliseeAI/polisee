@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 load_dotenv() # Load variables from .env file
 
 # DB Config
-DB_NAME = "bills"
-DB_USER = "postgres"
-DB_PASSWORD = "postgres"
-DB_HOST = "localhost"
-DB_PORT = "5432"
+DB_NAME = os.getenv('DB_NAME', 'bills')
+DB_USER = os.getenv('DB_USER', 'postgres')
+DB_PASSWORD = os.getenv('DB_PASSWORD', 'postgres')
+DB_HOST = os.getenv('DB_HOST', 'localhost')
+DB_PORT = os.getenv('DB_PORT', '5432')
 
 # AI Config
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
