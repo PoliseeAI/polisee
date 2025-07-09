@@ -12,7 +12,8 @@ import {
   ChevronRight,
   BarChart3,
   HelpCircle,
-  LogOut
+  LogOut,
+  Upload
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'

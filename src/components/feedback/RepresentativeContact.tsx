@@ -27,7 +27,7 @@ interface PersonaData {
   occupation: string
   income_bracket: string
   dependents: number
-  business_type?: string
+  business_type?: string | null
 }
 
 interface RepresentativeContactProps {

@@ -40,51 +40,87 @@ export default function BillAnalysis() {
     const fetchData = async () => {
       try {
         setLoading(true)
+        setError(null) // Clear any previous errors
         
-        // Fetch bill data
-        if (params.billId) {
+        // Validate inputs
+        if (!params.billId) {
+          setError('No bill ID provided')
+          return
+        }
+
+        if (!user?.id) {
+          setError('Authentication required')
+          return
+        }
+
+        // Fetch bill data with better error handling
+        try {
           const fetchedBill = await getBillById(params.billId as string)
           setBill(fetchedBill)
           
           if (!fetchedBill) {
-            setError('Bill not found')
+            setError(`Bill not found in local database. This bill (ID: ${params.billId}) may be from the external search results. Please check back later as we continue to add more bills to our database.`)
             return
           }
 
-          // Fetch PDF URL and source references
-          const pdfUrl = await getBillPDFUrl(params.billId as string)
-          setBillPdfUrl(pdfUrl)
+          // Fetch PDF URL and source references with error handling
+          try {
+            const pdfUrl = await getBillPDFUrl(params.billId as string)
+            setBillPdfUrl(pdfUrl)
 
-          if (pdfUrl) {
-            const sourceRefs = await getBillSourceReferences(params.billId as string)
-            setAllSourceReferences(sourceRefs)
-            
-            // Fetch bill sections for navigation
-            const sections = await getBillSections(params.billId as string)
-            setBillSections(sections)
+            if (pdfUrl) {
+              try {
+                const [sourceRefs, sections] = await Promise.all([
+                  getBillSourceReferences(params.billId as string),
+                  getBillSections(params.billId as string)
+                ])
+                setAllSourceReferences(sourceRefs)
+                setBillSections(sections)
+              } catch (error) {
+                console.error('Error fetching source references or sections:', error)
+                // Continue without these - they're not critical for basic functionality
+              }
+            }
+          } catch (error) {
+            console.error('Error fetching PDF URL:', error)
+            // Continue without PDF - it's not critical for basic functionality
           }
+        } catch (error) {
+          console.error('Error fetching bill:', error)
+          setError('Failed to load bill data. Please try again.')
+          return
         }
 
-        // Fetch user's persona (user is guaranteed to exist due to AuthGuard)
-        const userPersona = await personaUtils.getPersona(user!.id)
-        setPersona(userPersona)
+        // Fetch user's persona with better error handling
+        try {
+          const userPersona = await personaUtils.getPersona(user.id)
+          setPersona(userPersona)
 
-        if (!userPersona) {
-          setError('No persona found. Please create a persona first.')
+          if (!userPersona) {
+            setError('No persona found. Please create a persona first.')
+            return
+          }
+        } catch (error) {
+          console.error('Error fetching persona:', error)
+          setError('Failed to load your persona. Please try again.')
           return
         }
 
       } catch (err) {
-        setError('Failed to load analysis')
-        console.error(err)
+        console.error('Unexpected error in fetchData:', err)
+        setError('An unexpected error occurred. Please try again.')
       } finally {
         setLoading(false)
       }
     }
 
-    // Only run if user exists (AuthGuard ensures this)
-    if (user) {
+    // Only run if user exists and has an ID
+    if (user?.id && params.billId) {
       fetchData()
+    } else if (user === null) {
+      // User is explicitly null (not loading)
+      setError('Authentication required')
+      setLoading(false)
     }
   }, [params.billId, user])
 
@@ -146,13 +182,35 @@ export default function BillAnalysis() {
             <CardContent className="pt-6">
               <div className="text-center py-8">
                 <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-red-800 mb-2">{error}</h3>
-                {error.includes('persona') && (
+                <h3 className="text-lg font-semibold text-red-800 mb-2">
+                  {error.includes('persona') ? 'Persona Required' : 'Bill Not Available'}
+                </h3>
+                <p className="text-red-600 mb-4">{error}</p>
+                
+                {error.includes('persona') ? (
                   <Button asChild className="mt-4">
                     <Link href="/persona/create">
                       Create Your Persona
                     </Link>
                   </Button>
+                ) : (
+                  <div className="space-y-4">
+                    <p className="text-gray-600">
+                      The search results show bills from the Congressional database that may not yet be available for analysis.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                      <Button asChild>
+                        <Link href="/bills">
+                          Browse Available Bills
+                        </Link>
+                      </Button>
+                      <Button asChild variant="outline">
+                        <Link href="/feed">
+                          Back to Feed
+                        </Link>
+                      </Button>
+                    </div>
+                  </div>
                 )}
               </div>
             </CardContent>

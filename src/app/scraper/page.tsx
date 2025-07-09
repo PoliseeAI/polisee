@@ -155,7 +155,7 @@ export default function ScraperPage() {
         },
         body: JSON.stringify({
           forceRegenerate,
-          maxBills: 50,
+          maxBills: 120,
           skipExisting: !forceRegenerate
         }),
       });
