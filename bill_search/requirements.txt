@@ -8,3 +8,5 @@ psycopg2-binary
 python-dotenv
 requests
 sentence-transformers
+fastapi
+uvicorn[standard]
