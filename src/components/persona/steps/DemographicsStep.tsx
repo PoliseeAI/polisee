@@ -1,10 +1,10 @@
 'use client'
 
-import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { MapPin, Calendar, Briefcase } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import { usePersona } from '../PersonaContext'
 
 export function DemographicsStep() {

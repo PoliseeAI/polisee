@@ -24,6 +24,13 @@ export function MainLayout({
   const pathname = usePathname()
   const { user, loading } = useAuthContext()
 
+  // Don't show layout on auth pages
+  if (pathname === '/auth' || pathname === '/login' || pathname === '/signup') {
+    return <>{children}</>
+  }
+
+  const showBreadcrumbsDisplay = showBreadcrumbs && pathname !== '/'
+
   // Use header consistently throughout the app
   const shouldShowHeader = true
 
@@ -53,7 +60,7 @@ export function MainLayout({
       <div className="flex flex-col min-h-screen">
         <main className={cn('flex-1', className)}>
           {/* Breadcrumbs */}
-          {showBreadcrumbs && pathname !== '/' && (
+          {showBreadcrumbsDisplay && (
             <div className="bg-white border-b">
               <div className="container mx-auto py-4">
                 <Breadcrumbs />
