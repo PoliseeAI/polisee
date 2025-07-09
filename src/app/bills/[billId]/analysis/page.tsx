@@ -18,6 +18,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { EnhancedImpactCard, PersonalImpact } from '@/components/ui/enhanced-impact-card'
 import { generatePersonalizedImpacts } from '@/lib/analysis-engine'
 import RepresentativeContact from '@/components/feedback/RepresentativeContact'
+import { SentimentFeedback } from '@/components/feedback/SentimentFeedback'
 
 
 export default function BillAnalysis() {
@@ -351,7 +352,6 @@ export default function BillAnalysis() {
                   impact={impact}
                   index={index}
                   billId={bill.bill_id}
-                  userId={user?.id}
                   onViewInPdf={handleViewInPdf}
                 />
               ))}
@@ -359,41 +359,75 @@ export default function BillAnalysis() {
           )}
         </div>
 
+        {/* Overall Bill Sentiment - Consolidated Voting Section */}
+        {personalImpacts.length > 0 && !impactsLoading && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Your Overall Position on This Bill</CardTitle>
+              <p className="text-gray-600">
+                Based on the impacts above, how do you feel about this bill overall?
+              </p>
+            </CardHeader>
+            <CardContent>
+                             <div className="pt-4">
+                 <SentimentFeedback
+                   userId={user?.id || ''}
+                   billId={bill.bill_id}
+                   showVoteCounts={true}
+                   onFeedbackSubmit={(sentiment, comment) => {
+                     console.log(`Overall feedback for bill ${bill.bill_id}:`, sentiment, comment)
+                   }}
+                   onFeedbackChange={(sentiment) => {
+                     console.log(`Overall feedback for bill ${bill.bill_id}:`, sentiment)
+                   }}
+                 />
+               </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Representative Contact */}
-        <div className="space-y-4">
-          <h2 className="text-xl font-semibold text-gray-900">Contact Your Representatives</h2>
-          <p className="text-gray-600">
-            Based on your sentiment feedback, send a personalized message to your representatives about how you feel about this legislation.
-          </p>
-          
-          {/* Support Contact */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-green-700">If you Support this bill:</h3>
-            <RepresentativeContact
-              sentiment="support"
-              billId={bill.bill_id || ''}
-              billTitle={bill.title || 'Unknown Bill'}
-              personaData={persona}
-              onMessageSent={(rep, message) => {
-                console.log(`Message sent to ${rep.first_name} ${rep.last_name}:`, message)
-              }}
-            />
-          </div>
-          
-          {/* Oppose Contact */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-medium text-red-700">If you Oppose this bill:</h3>
-            <RepresentativeContact
-              sentiment="oppose"
-              billId={bill.bill_id || ''}
-              billTitle={bill.title || 'Unknown Bill'}
-              personaData={persona}
-              onMessageSent={(rep, message) => {
-                console.log(`Message sent to ${rep.first_name} ${rep.last_name}:`, message)
-              }}
-            />
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>Contact Your Representatives</CardTitle>
+            <p className="text-gray-600">
+              Find your representatives and send personalized AI-generated messages expressing your position on this legislation.
+            </p>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="text-center">
+                <p className="text-sm text-gray-600 mb-4">
+                  We'll find your representatives for your location: <span className="font-medium">{persona.location}</span>
+                </p>
+              </div>
+              
+              {/* Single Representative Contact with both options */}
+              <RepresentativeContact
+                sentiment="support"
+                billId={bill.bill_id || ''}
+                billTitle={bill.title || 'Unknown Bill'}
+                personaData={{
+                  location: persona.location,
+                  age: persona.age,
+                  occupation: persona.occupation,
+                  income_bracket: persona.income_bracket,
+                  dependents: persona.dependents,
+                  business_type: persona.business_type || undefined
+                }}
+                onMessageSent={(rep, message) => {
+                  console.log(`Message sent to ${rep.first_name} ${rep.last_name}:`, message)
+                }}
+              />
+              
+              <div className="text-center pt-4 border-t border-gray-100">
+                <p className="text-xs text-gray-500">
+                  Messages are AI-generated based on your persona and can be reviewed before sending
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Actions */}
         <Card>

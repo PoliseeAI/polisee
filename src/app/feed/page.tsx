@@ -259,6 +259,7 @@ export default function EnhancedFeedPage() {
         headers: authHeaders,
         body: JSON.stringify({
           messageId: showSigningModal.id,
+          userId: mockUserId,
           userName: userName.trim(),
           userEmail: userEmail.trim()
         })
@@ -288,7 +289,13 @@ export default function EnhancedFeedPage() {
         setShowSigningModal(null)
         setUserName('')
         setUserEmail('')
-        alert('✅ Message signed successfully!')
+        
+        let alertMessage = '✅ Message signed successfully!'
+        if (data.thresholdReached) {
+          alertMessage += ' This message has reached the signature threshold and will be sent to representatives!'
+        }
+        
+        alert(alertMessage)
       }
     } catch (error) {
       console.error('Error signing message:', error)
