@@ -222,9 +222,18 @@ class CongressScraperApp:
             
             if not recent_bills:
                 logger.info("No recent bills found")
-                stats['duration_seconds'] = time.time() - start_time
-                self.notifier.send_success_notification(stats)
-                return stats
+                
+                # In test mode, fallback to latest bills for database padding
+                if mode == 'test':
+                    logger.info("Test mode: falling back to latest bills for database padding...")
+                    recent_bills = self.scraper.get_latest_bills(limit=20)
+                    logger.info(f"Found {len(recent_bills)} latest bills for testing")
+                    stats['api_calls'] += 1
+                
+                if not recent_bills:
+                    stats['duration_seconds'] = time.time() - start_time
+                    self.notifier.send_success_notification(stats)
+                    return stats
             
             # Process each bill
             for bill in recent_bills:

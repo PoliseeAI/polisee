@@ -150,9 +150,27 @@ class DatabaseManager:
     def insert_bill(self, bill_data: Dict) -> bool:
         """Insert a bill into the database - only if it has substantial text content."""
         try:
-            # Extract main bill data
+            # Extract main bill data with clean bill_id
             bill_url = bill_data.get('url', '')
-            bill_id = bill_url.split('/')[-1] if bill_url else f"{bill_data.get('congress', '')}-{bill_data.get('type', '')}-{bill_data.get('number', '')}"
+            
+            # Create clean bill_id without ?format=json
+            if bill_url:
+                # Extract from URL like: https://api.congress.gov/v3/bill/118/s/5319
+                url_parts = bill_url.rstrip('/').split('/')
+                if len(url_parts) >= 3:
+                    congress = url_parts[-3]
+                    bill_type = url_parts[-2].upper()
+                    number = url_parts[-1].split('?')[0]  # Remove query parameters
+                    bill_id = f"{congress}-{bill_type}-{number}"
+                else:
+                    # Fallback to old method but clean it
+                    bill_id = bill_url.split('/')[-1].split('?')[0]
+            else:
+                # Generate from components
+                congress = bill_data.get('congress', '')
+                bill_type = bill_data.get('type', '').upper()
+                number = bill_data.get('number', '')
+                bill_id = f"{congress}-{bill_type}-{number}"
             
             # Extract latest summary
             summaries = bill_data.get('summaries', [])
@@ -338,49 +356,277 @@ class DatabaseManager:
         return None
     
     def _extract_bill_text(self, bill_data: Dict) -> str:
-        """Extract bill text from various sources."""
-        # Try to get text from different sources
+        """Extract bill text from various sources, prioritizing actual legislative text."""
+        # Try to get actual legislative text from HTML first
+        actual_text = self._fetch_actual_bill_text(bill_data)
+        if actual_text and self._has_substantial_text(actual_text):
+            return actual_text
         
-        # 1. Check if textVersions exist and get the latest
-        text_versions = bill_data.get('textVersions', [])
-        if text_versions:
-            # Sort by date and get the latest
-            latest_version = sorted(text_versions, key=lambda x: x.get('date', ''), reverse=True)[0]
-            if latest_version.get('formats'):
-                # Try to get text content from formats
-                for format_info in latest_version['formats']:
-                    if format_info.get('type') == 'Formatted Text':
-                        return format_info.get('url', '[Text URL available]')
+        # Fallback to metadata extraction if HTML fails
+        return self._extract_metadata_text(bill_data)
+    
+    def _fetch_actual_bill_text(self, bill_data: Dict) -> Optional[str]:
+        """Fetch actual bill text from congress.gov HTML."""
+        try:
+            import requests
+            from bs4 import BeautifulSoup
+            
+            # Get textVersions reference
+            text_versions_ref = bill_data.get('textVersions', {})
+            if not isinstance(text_versions_ref, dict) or not text_versions_ref.get('url'):
+                return None
+            
+            # Import congress scraper to reuse API methods
+            try:
+                from .congress_scraper import CongressScraper
+            except ImportError:
+                from congress_scraper import CongressScraper
+            
+            scraper = CongressScraper()
+            
+            # Fetch the text versions list
+            text_versions_url = text_versions_ref['url'].replace(scraper.base_url, '')
+            response = scraper._make_request(text_versions_url)
+            
+            if not response.get('textVersions'):
+                return None
+            
+            # Look for the most recent version with HTML format
+            versions = response['textVersions']
+            if not versions:
+                return None
+            
+            # Sort by date, most recent first (handle None dates safely)
+            def safe_date_key(version):
+                date_val = version.get('date')
+                if date_val is None:
+                    return ''
+                return str(date_val)
+            
+            sorted_versions = sorted(versions, key=safe_date_key, reverse=True)
+            
+            for version in sorted_versions:
+                try:
+                    formats = version.get('formats', [])
+                    if not formats:
+                        continue
+                        
+                    for format_info in formats:
+                        if format_info.get('type') == 'Formatted Text':
+                            html_url = format_info.get('url')
+                            if html_url:
+                                try:
+                                    # Fetch the HTML content
+                                    html_response = requests.get(html_url, timeout=30, headers={
+                                        'User-Agent': 'Congress-Scraper/1.0'
+                                    })
+                                    html_response.raise_for_status()
+                                    
+                                    # Parse with BeautifulSoup
+                                    soup = BeautifulSoup(html_response.text, 'html.parser')
+                                    
+                                    # Extract the main content
+                                    main_content = None
+                                    selectors = [
+                                        'pre',  # Most common for bill text
+                                        'div.generated-html-container',
+                                        'div.bill-text',
+                                        'div.legis-body',
+                                        'body'
+                                    ]
+                                    
+                                    for selector in selectors:
+                                        content = soup.select_one(selector)
+                                        if content:
+                                            main_content = content.get_text(separator='\n', strip=True)
+                                            # Check if this looks like proper bill text
+                                            if main_content and self._is_legislative_text(main_content):
+                                                logger.info(f"Successfully extracted {len(main_content)} chars of legislative text using selector '{selector}'")
+                                                return main_content
+                                            break
+                                    
+                                    # If no selector worked but we have content, try the whole body
+                                    if not main_content and soup.body:
+                                        main_content = soup.body.get_text(separator='\n', strip=True)
+                                        if main_content and self._is_legislative_text(main_content):
+                                            logger.info(f"Successfully extracted {len(main_content)} chars of legislative text from body")
+                                            return main_content
+                                
+                                except requests.exceptions.RequestException as e:
+                                    logger.warning(f"HTTP error fetching HTML from {html_url}: {e}")
+                                    continue
+                                except Exception as e:
+                                    logger.warning(f"Error parsing HTML from {html_url}: {e}")
+                                    continue
+                            
+                            # Only try first HTML format per version
+                            break
+                            
+                except Exception as e:
+                    logger.warning(f"Error processing version: {e}")
+                    continue
+            
+            return None
+            
+        except Exception as e:
+            logger.warning(f"Error fetching actual bill text: {e}")
+            return None
+    
+    def _is_legislative_text(self, text: str) -> bool:
+        """Check if text looks like actual legislative content."""
+        if not text or len(text) < 200:  # Reduced from 500 to be more lenient
+            return False
         
-        # 2. Check if there's a summary that can serve as text
-        summaries = bill_data.get('summaries', [])
-        if summaries:
-            latest_summary = self._extract_latest_summary(summaries)
-            if latest_summary and len(latest_summary) > 200:  # Substantial summary
-                return latest_summary
+        # Look for legislative indicators
+        legislative_indicators = [
+            'CONGRESS',
+            'Session',
+            'IN THE HOUSE OF REPRESENTATIVES',
+            'IN THE SENATE',
+            'A BILL',
+            'AN ACT',
+            'SECTION 1',
+            'SEC. 1',
+            'Be it enacted',
+            'Congressional Bills',
+            'Government Publishing Office',
+            'Calendar No.',
+            'Report No.',
+            'To amend',
+            'To provide',
+            'To establish',
+            'To designate',
+            'Introduced in',
+            'Reported in'
+        ]
         
-        # 3. Fallback to title + constitutional authority + policy area
+        found_indicators = sum(1 for indicator in legislative_indicators if indicator in text)
+        
+        # More lenient - just need 1 strong indicator for shorter bills
+        if len(text) < 1000:
+            return found_indicators >= 1
+        else:
+            return found_indicators >= 2
+    
+    def _extract_metadata_text(self, bill_data: Dict) -> str:
+        """Extract comprehensive text from metadata (fallback method)."""
         text_parts = []
         
+        # 1. Title and basic info
         if bill_data.get('title'):
             text_parts.append(f"TITLE: {bill_data['title']}")
         
-        if bill_data.get('constitutionalAuthorityStatementText'):
-            text_parts.append(f"CONSTITUTIONAL AUTHORITY: {bill_data['constitutionalAuthorityStatementText']}")
+        # 2. Bill identification
+        congress = bill_data.get('congress', '')
+        bill_type = bill_data.get('type', '')
+        number = bill_data.get('number', '')
+        if congress and bill_type and number:
+            text_parts.append(f"BILL: {congress}th Congress, {bill_type.upper()} {number}")
         
+        # 3. Origin and introduction info
+        if bill_data.get('originChamber'):
+            text_parts.append(f"ORIGIN CHAMBER: {bill_data['originChamber']}")
+        
+        if bill_data.get('introducedDate'):
+            text_parts.append(f"INTRODUCED: {bill_data['introducedDate']}")
+        
+        # 4. Policy area
         if bill_data.get('policyArea', {}).get('name'):
             text_parts.append(f"POLICY AREA: {bill_data['policyArea']['name']}")
         
-        # Add some actions as context
+        # 5. Sponsors (more comprehensive)
+        sponsors = bill_data.get('sponsors', [])
+        if sponsors:
+            sponsor_info = []
+            for sponsor in sponsors[:3]:  # First 3 sponsors
+                if isinstance(sponsor, dict):
+                    name = sponsor.get('fullName') or sponsor.get('name', '')
+                    party = sponsor.get('party', '')
+                    state = sponsor.get('state', '')
+                    if name:
+                        sponsor_detail = name
+                        if party and state:
+                            sponsor_detail += f" [{party}-{state}]"
+                        elif party:
+                            sponsor_detail += f" [{party}]"
+                        sponsor_info.append(sponsor_detail)
+                elif isinstance(sponsor, str):
+                    sponsor_info.append(sponsor)
+            if sponsor_info:
+                text_parts.append(f"SPONSORS: {', '.join(sponsor_info)}")
+        
+        # 6. Constitutional authority (often substantial)
+        if bill_data.get('constitutionalAuthorityStatementText'):
+            authority_text = bill_data['constitutionalAuthorityStatementText']
+            # Clean up HTML tags if present
+            import re
+            authority_text = re.sub(r'<[^>]+>', '', authority_text)
+            text_parts.append(f"CONSTITUTIONAL AUTHORITY: {authority_text}")
+        
+        # 7. Latest action with date
+        latest_action = bill_data.get('latestAction', {})
+        if isinstance(latest_action, dict) and latest_action.get('text'):
+            action_date = latest_action.get('actionDate', '')
+            text_parts.append(f"LATEST ACTION ({action_date}): {latest_action['text']}")
+        elif isinstance(latest_action, str):
+            text_parts.append(f"LATEST ACTION: {latest_action}")
+        
+        # 8. Actions summary (from reference object)
         actions = bill_data.get('actions', [])
-        if actions:
-            recent_actions = actions[:3]  # First 3 actions
-            action_texts = []
-            for action in recent_actions:
-                if action.get('text'):
-                    action_texts.append(f"- {action['text']}")
-            if action_texts:
-                text_parts.append(f"RECENT ACTIONS:\n" + '\n'.join(action_texts))
+        if isinstance(actions, dict) and actions.get('count'):
+            count = actions.get('count', 0)
+            if count > 0:
+                text_parts.append(f"ACTIONS: {count} legislative actions recorded")
+        
+        # 9. Subjects if available
+        subjects = bill_data.get('subjects', [])
+        if isinstance(subjects, dict) and subjects.get('count'):
+            count = subjects.get('count', 0)
+            if count > 0:
+                text_parts.append(f"SUBJECTS: {count} policy subjects classified")
+        elif isinstance(subjects, list) and subjects:
+            subject_names = []
+            for subject in subjects[:5]:  # First 5 subjects
+                if isinstance(subject, dict) and subject.get('name'):
+                    subject_names.append(subject['name'])
+                elif isinstance(subject, str):
+                    subject_names.append(subject)
+            if subject_names:
+                text_parts.append(f"SUBJECTS: {', '.join(subject_names)}")
+        
+        # 10. CBO cost estimates
+        if bill_data.get('cboCostEstimates'):
+            cbo_estimates = bill_data['cboCostEstimates']
+            if isinstance(cbo_estimates, list) and cbo_estimates:
+                text_parts.append(f"CBO COST ESTIMATES: {len(cbo_estimates)} estimates available")
+        
+        # 11. Committee reports
+        if bill_data.get('committeeReports'):
+            committee_reports = bill_data['committeeReports']
+            if isinstance(committee_reports, list) and committee_reports:
+                text_parts.append(f"COMMITTEE REPORTS: {len(committee_reports)} reports available")
+        
+        # 12. Update information
+        if bill_data.get('updateDate'):
+            text_parts.append(f"LAST UPDATED: {bill_data['updateDate']}")
+        
+        # 13. Try to get summary from summaries
+        summaries = bill_data.get('summaries', [])
+        if isinstance(summaries, list) and summaries:
+            latest_summary = self._extract_latest_summary(summaries)
+            if latest_summary and len(latest_summary) > 50:
+                text_parts.append(f"SUMMARY: {latest_summary}")
+        elif isinstance(summaries, dict) and summaries.get('count'):
+            count = summaries.get('count', 0)
+            if count > 0:
+                text_parts.append(f"SUMMARIES: {count} official summaries available")
+        
+        # 14. Text versions info
+        text_versions = bill_data.get('textVersions', [])
+        if isinstance(text_versions, dict) and text_versions.get('count'):
+            count = text_versions.get('count', 0)
+            if count > 0:
+                text_parts.append(f"TEXT VERSIONS: {count} versions available")
         
         combined_text = '\n\n'.join(text_parts)
         
@@ -391,23 +637,32 @@ class DatabaseManager:
         return combined_text
     
     def _has_substantial_text(self, text: str) -> bool:
-        """Check if bill has substantial text content."""
-        if not text or text.strip() == '':
+        """Check if the text content is substantial enough to store."""
+        if not text:
             return False
         
-        # Skip placeholder text
-        if text.startswith('[No text') or text.startswith('[Text extraction'):
+        # Check if it's real legislative text (higher standards)
+        if self._is_legislative_text(text):
+            return len(text) >= 200  # Reduced threshold for legislative text
+        
+        # For metadata text, be more lenient but still require substance
+        # Should have multiple information fields
+        if len(text) < 100:  # Minimum for any text
             return False
         
-        # Check if text is substantial (more than just a title)
-        if len(text.strip()) < 200:  # Lowered from 100 to be more lenient
-            return False
+        # Count information fields (lines that start with known prefixes)
+        info_prefixes = [
+            'TITLE:', 'BILL:', 'ORIGIN CHAMBER:', 'INTRODUCED:', 
+            'POLICY AREA:', 'SPONSORS:', 'CONSTITUTIONAL AUTHORITY:', 
+            'LATEST ACTION:', 'ACTIONS:', 'SUBJECTS:', 'SUMMARY:',
+            'CBO COST ESTIMATES:', 'COMMITTEE REPORTS:', 'LAST UPDATED:',
+            'TEXT VERSIONS:', 'SUMMARIES:'
+        ]
         
-        # Check if it's not just a URL
-        if text.strip().startswith('http'):
-            return False
+        info_count = sum(1 for line in text.split('\n') if any(line.strip().startswith(prefix) for prefix in info_prefixes))
         
-        return True
+        # Require at least 3 information fields for metadata
+        return info_count >= 3
     
     def get_recent_bills(self, days: int = 30) -> List[Dict]:
         """Get bills from the last N days."""

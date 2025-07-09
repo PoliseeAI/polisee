@@ -66,7 +66,7 @@ class CongressScraper:
         return self._make_request(endpoint, params)
     
     def get_recent_bills(self, days: int = 30, max_bills: Optional[int] = None) -> List[Dict]:
-        """Fetch bills introduced in the last N days."""
+        """Fetch bills with recent activity in the last N days."""
         bills = []
         congress = 118  # Current Congress
         offset = 0
@@ -81,28 +81,47 @@ class CongressScraper:
                 break
                 
             for bill in response['bills']:
-                # Parse the introduced date (handle missing field gracefully)
-                introduced_date_str = bill.get('introducedDate')
-                if not introduced_date_str:
-                    # If no introduced date, skip this bill
+                # Try multiple date fields since introducedDate isn't available in basic API
+                date_to_check = None
+                
+                # Priority 1: Latest action date (most recent activity)
+                if bill.get('latestAction', {}).get('actionDate'):
+                    date_to_check = bill['latestAction']['actionDate']
+                
+                # Priority 2: Update date (when bill was last updated)
+                elif bill.get('updateDate'):
+                    date_to_check = bill['updateDate']
+                
+                # Priority 3: Update date including text
+                elif bill.get('updateDateIncludingText'):
+                    date_to_check = bill['updateDateIncludingText']
+                
+                if not date_to_check:
+                    # If no date found, skip this bill
                     continue
                     
-                introduced_date = parse_date(introduced_date_str)
-                
-                if introduced_date >= cutoff_date:
-                    bills.append(bill)
+                try:
+                    recent_date = parse_date(date_to_check)
                     
-                    # If we have a max_bills limit and reached it, stop
-                    if max_bills and len(bills) >= max_bills:
-                        return bills
-                else:
-                    # If we've reached bills older than our cutoff, we can stop
-                    return bills
+                    # Remove timezone info for comparison if present
+                    if recent_date.tzinfo:
+                        recent_date = recent_date.replace(tzinfo=None)
+                    
+                    if recent_date >= cutoff_date:
+                        bills.append(bill)
+                        
+                        # If we have a max_bills limit and reached it, stop
+                        if max_bills and len(bills) >= max_bills:
+                            return bills
+                    
+                except Exception as e:
+                    logger.warning(f"Error parsing date {date_to_check}: {e}")
+                    continue
                     
             offset += limit
             
-            # Safety check to avoid infinite loops
-            if offset > 10000:
+            # Safety check to avoid infinite loops - reduced from 10000 to 2000
+            if offset > 2000:
                 logger.warning("Reached maximum offset limit, stopping")
                 break
                 
