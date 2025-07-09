@@ -35,55 +35,37 @@ export default function FeedPage() {
   const [userEmail, setUserEmail] = useState('')
 
   useEffect(() => {
-    // Simulate loading messages from API
-    const loadMessages = async () => {
-      setLoading(true)
+    loadMessages()
+  }, [filter])
+
+  const loadMessages = async () => {
+    setLoading(true)
+    
+    try {
+      // Get a mock user ID for now (in a real app, this would come from auth)
+      const mockUserId = 'user-123'
       
-      // In a real app, this would fetch from an API
-      // For now, we'll simulate with mock data
-      const mockMessages: FeedMessage[] = [
-        {
-          id: 'msg-1',
-          billId: 'hr2500-118',
-          billTitle: 'Young Adult Economic Security Act',
-          sentiment: 'support',
-          subject: 'Strong Support for Young Adult Economic Security Act',
-          message: 'Dear Senator Smith,\n\nI am writing to express my strong support for the Young Adult Economic Security Act (HR2500-118).\n\nAs a young adult in Denver, Colorado, this legislation would provide crucial support for people like me who are struggling with student debt, housing costs, and limited job opportunities. The provisions for student loan forgiveness, affordable housing assistance, and job training programs would make a real difference in my life and the lives of thousands of young adults in our state.\n\nI urge you to support this important legislation when it comes to a vote.\n\nSincerely,\n[Your Name]',
-          representative: {
-            name: 'John Smith',
-            party: 'D',
-            state: 'CO',
-            title: 'Sen.'
-          },
-          signatures: ['Alice Johnson', 'Bob Wilson', 'Carol Davis'],
-          createdAt: '2024-01-15T10:30:00Z',
-          isSignedByUser: false
-        },
-        {
-          id: 'msg-2',
-          billId: 'hr2200-118',
-          billTitle: 'Medicare Enhancement Act',
-          sentiment: 'oppose',
-          subject: 'Concerns About Medicare Enhancement Act',
-          message: 'Dear Representative Johnson,\n\nI am writing to express my concerns about the Medicare Enhancement Act (HR2200-118).\n\nWhile I support improving Medicare, I believe this particular bill may have unintended consequences for current beneficiaries. The proposed changes to prescription drug coverage could affect my ability to afford my medications, and I worry about the long-term sustainability of the program.\n\nI urge you to consider these concerns and work toward a more balanced approach to Medicare reform.\n\nSincerely,\n[Your Name]',
-          representative: {
-            name: 'Jane Johnson',
-            party: 'R',
-            state: 'CO',
-            title: 'Rep.'
-          },
-          signatures: ['David Brown', 'Emily White'],
-          createdAt: '2024-01-14T15:45:00Z',
-          isSignedByUser: false
-        }
-      ]
+      const params = new URLSearchParams({
+        userId: mockUserId,
+        ...(filter !== 'all' && { sentiment: filter })
+      })
       
-      setMessages(mockMessages)
+      const response = await fetch(`/api/feed-messages?${params}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setMessages(data.messages)
+      } else {
+        console.error('Failed to load messages:', data.error)
+        setMessages([])
+      }
+    } catch (error) {
+      console.error('Error loading messages:', error)
+      setMessages([])
+    } finally {
       setLoading(false)
     }
-
-    loadMessages()
-  }, [])
+  }
 
   const handleSignMessage = (message: FeedMessage) => {
     setShowSigningModal(message)
@@ -96,15 +78,20 @@ export default function FeedPage() {
     }
 
     try {
-      const response = await fetch('/api/sign-representative-message', {
+      // Get a mock user ID for now (in a real app, this would come from auth)
+      const mockUserId = 'user-123'
+      
+      const response = await fetch('/api/feed-messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           messageId: showSigningModal.id,
+          userId: mockUserId,
           userName: userName.trim(),
-          userEmail: userEmail.trim()
+          userEmail: userEmail.trim(),
+          location: 'Denver, CO' // Mock location
         }),
       })
 
@@ -132,7 +119,12 @@ export default function FeedPage() {
         setUserName('')
         setUserEmail('')
         
-        alert('✅ Message signed successfully!')
+        let alertMessage = '✅ Message signed successfully!'
+        if (data.thresholdReached) {
+          alertMessage += ' This message has reached the signature threshold and will be sent to representatives!'
+        }
+        
+        alert(alertMessage)
       }
     } catch (error) {
       console.error('Error signing message:', error)
