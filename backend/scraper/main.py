@@ -340,7 +340,7 @@ async def cleanup_bills_without_text():
         db = DatabaseManager()
         
         # Show current stats
-        logger.info("📊 Checking for bills without text...")
+        logger.info("Checking for bills without text...")
         bills_without_text = db.get_bills_without_text()
         logger.info(f"Found {len(bills_without_text)} bills without substantial text")
         
@@ -350,16 +350,16 @@ async def cleanup_bills_without_text():
             
             # Delete them
             deleted_count = db.delete_bills_without_text()
-            logger.info(f"✅ Deleted {deleted_count} bills without text")
+            logger.info(f"Deleted {deleted_count} bills without text")
             
             # Show updated stats
             stats = db.get_statistics()
-            logger.info(f"📈 Updated stats: {stats['total_bills']} bills remaining")
+            logger.info(f"Updated stats: {stats['total_bills']} bills remaining")
         else:
-            logger.info("✅ No bills without text found")
+            logger.info("No bills without text found")
             
     except Exception as e:
-        logger.error(f"❌ Error during cleanup: {e}")
+        logger.error(f"Error during cleanup: {e}")
         raise
 
 def main():
