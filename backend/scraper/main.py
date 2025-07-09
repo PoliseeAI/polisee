@@ -374,15 +374,15 @@ def main():
             logger.info(f"Running daily sync with notifications for last {args.days} days...")
             app.daily_update_with_notifications(days=args.days, mode='daily')
             
+        elif args.mode == 'test':
+            logger.info(f"Running test mode with notifications for last {args.days} days...")
+            app.daily_update_with_notifications(days=args.days, mode='test')
+            
         elif args.mode == 'search':
             if not args.query:
                 logger.error("Search query required when using search mode")
                 sys.exit(1)
             app.search_and_store_bills(args.query)
-            
-        elif args.mode == 'test':
-            logger.info(f"Running test mode with {args.limit} bills...")
-            app.test_mode(limit=args.limit)
         
         logger.info("Operation completed successfully")
         
