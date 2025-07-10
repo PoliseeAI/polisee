@@ -88,6 +88,12 @@ export default function EnhancedFeedPage() {
   const [userName, setUserName] = useState('')
   const [userEmail, setUserEmail] = useState('')
 
+  // Expanded messages state
+  const [expandedMessages, setExpandedMessages] = useState<Set<string>>(new Set())
+
+  // State for user votes
+  const [userVotes, setUserVotes] = useState<any[]>([])
+
   // Load user persona for personalized search
   useEffect(() => {
     const loadUserPersona = async () => {
@@ -98,13 +104,6 @@ export default function EnhancedFeedPage() {
     }
     loadUserPersona()
   }, [user])
-
-  // Load initial data
-  useEffect(() => {
-    loadAILetters()
-    loadPopularBills()
-    loadUnderRadarBills()
-  }, [])
 
   // Bill Search Function using your ngrok endpoint
   const searchBills = async () => {
@@ -125,7 +124,7 @@ export default function EnhancedFeedPage() {
       
       console.log('Response status:', response.status)
       console.log('Response ok:', response.ok)
-      
+
       if (!response.ok) {
         const errorData = await response.json()
         console.error('Search API error:', errorData)
@@ -145,34 +144,74 @@ export default function EnhancedFeedPage() {
     }
   }
 
-  // Load AI-generated letters with real signature data
-  const loadAILetters = async () => {
-    setLettersLoading(true)
+  // Load initial data
+  useEffect(() => {
+    fetchAiLetters()
+    loadPopularBills()
+    loadUnderRadarBills()
+    if (user) {
+      fetchUserVotes()
+    }
+  }, [user])
+
+  // Fetch user's current votes
+  const fetchUserVotes = async () => {
+    if (!user) return
+
     try {
-      // Query your user_representative_contacts table for letters with multiple signatures
-      const response = await fetch('/api/feed/letters')
-      if (response.ok) {
-        const data = await response.json()
-        setAiLetters(data.letters || [])
+      const { data: votes, error } = await supabase
+        .from('user_bill_votes')
+        .select('bill_id, sentiment')
+        .eq('user_id', user.id)
+
+      if (error) {
+        console.error('Error fetching user votes:', error)
+      } else {
+        setUserVotes(votes || [])
       }
     } catch (error) {
-      console.error('Error loading AI letters:', error)
-      // Fallback to sample data for now
-      setAiLetters([
-        {
-          id: 'letter-1',
-          billId: 'hr2500-118',
-          billTitle: 'Young Adult Economic Security Act',
-          sentiment: 'support',
-          subject: 'Strong Support for Young Adult Economic Security Act',
-          message: 'Dear Senator Smith,\n\nI am writing to express my strong support for the Young Adult Economic Security Act...',
-          representative: { name: 'John Smith', party: 'D', state: 'CO', title: 'Sen.' },
-          signatures: ['Alice Johnson', 'Bob Wilson', 'Carol Davis', 'David Brown', 'Emily White'],
-          signatureCount: 5,
-          createdAt: '2024-01-15T10:30:00Z',
-          isSignedByUser: false
-        }
-      ])
+      console.error('Error fetching user votes:', error)
+    }
+  }
+
+  // Load AI-generated letters with real signature data
+  const fetchAiLetters = async () => {
+    try {
+      setLettersLoading(true)
+      
+      // Ensure we have a session before making the request
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      // Get auth headers if user is logged in
+      const authHeaders: any = {}
+      if (user && session?.access_token) {
+        authHeaders['Authorization'] = `Bearer ${session.access_token}`
+        console.log('Sending auth headers for user:', user.id)
+      } else {
+        console.log('No user or session available:', { user: !!user, session: !!session })
+      }
+
+      const response = await fetch('/api/feed/letters', {
+        method: 'GET',
+        headers: authHeaders
+      })
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch AI letters')
+      }
+      
+      const data = await response.json()
+      
+      // Map hasUserSigned to isSignedByUser for UI compatibility
+      const lettersWithCorrectSignedProperty = (data.letters || []).map((letter: any) => ({
+        ...letter,
+        isSignedByUser: letter.hasUserSigned || false
+      }))
+      
+      setAiLetters(lettersWithCorrectSignedProperty)
+    } catch (error) {
+      console.error('Error fetching AI letters:', error)
+      setAiLetters([])
     } finally {
       setLettersLoading(false)
     }
@@ -254,14 +293,16 @@ export default function EnhancedFeedPage() {
         }
       }
 
+      // Use proper API endpoint for signing messages
       const response = await fetch('/api/sign-representative-message', {
         method: 'POST',
         headers: authHeaders,
         body: JSON.stringify({
           messageId: showSigningModal.id,
-          userId: mockUserId,
+          userId: user?.id || 'temp_user_' + Math.random().toString(36).substr(2, 9),
           userName: userName.trim(),
-          userEmail: userEmail.trim()
+          userEmail: userEmail.trim(),
+          location: 'Denver, CO' // Could be dynamic based on user location
         })
       })
 
@@ -273,26 +314,18 @@ export default function EnhancedFeedPage() {
       const data = await response.json()
       
       if (data.success) {
-        setAiLetters(prev => 
-          prev.map(msg => 
-            msg.id === showSigningModal.id 
-              ? { 
-                  ...msg, 
-                  signatures: data.signatures || [...msg.signatures, userName.trim()],
-                  signatureCount: data.signatureCount || msg.signatureCount + 1,
-                  isSignedByUser: true
-                }
-              : msg
-          )
-        )
-        
+        // Close the modal and reset form first
         setShowSigningModal(null)
         setUserName('')
         setUserEmail('')
         
+        // Refresh the letters data to get the latest state
+        await fetchAiLetters()
+        
+        // Show success message
         let alertMessage = '✅ Message signed successfully!'
-        if (data.thresholdReached) {
-          alertMessage += ' This message has reached the signature threshold and will be sent to representatives!'
+        if (data.targetReached) {
+          alertMessage = '🎯 Letter signed successfully! The target has been reached and the letter has been sent to benny.yang@gauntletai.com!'
         }
         
         alert(alertMessage)
@@ -303,10 +336,50 @@ export default function EnhancedFeedPage() {
     }
   }
 
-  const filteredLetters = aiLetters.filter(msg => {
-    if (letterFilter === 'all') return true
-    return msg.sentiment === letterFilter
+  // Toggle message expansion
+  const toggleMessageExpansion = (messageId: string) => {
+    const newExpanded = new Set(expandedMessages)
+    if (newExpanded.has(messageId)) {
+      newExpanded.delete(messageId)
+    } else {
+      newExpanded.add(messageId)
+    }
+    setExpandedMessages(newExpanded)
+  }
+
+  // Helper function to get filtered messages based on user votes
+  const getFilteredMessagesByUserVotes = (messages: FeedMessage[]) => {
+    return messages.filter(msg => {
+      // Filter based on user's current votes (only show messages that match user's vote)
+      if (user && userVotes.length > 0) {
+        const userVote = userVotes.find(vote => vote.bill_id === msg.billId)
+        if (!userVote) {
+          // If user hasn't voted on this bill, don't show any messages for it
+          return false
+        }
+        // Only show messages that match user's current vote sentiment
+        return msg.sentiment === userVote.sentiment
+      }
+
+      // If no user or no votes, show all messages (for anonymous users)
+      return true
+    })
+  }
+
+  // Get messages filtered by user votes first
+  const messagesFilteredByVotes = getFilteredMessagesByUserVotes(aiLetters)
+
+  const filteredLetters = messagesFilteredByVotes.filter(msg => {
+    // Apply the UI filter (All/Support/Oppose)
+    if (letterFilter !== 'all' && msg.sentiment !== letterFilter) {
+      return false
+    }
+    return true
   })
+
+  // Split letters into active and sent
+  const activeLetters = filteredLetters.filter(letter => letter.signatureCount < (letter.targetSignatures || 1))
+  const sentLetters = filteredLetters.filter(letter => letter.signatureCount >= (letter.targetSignatures || 1))
 
   const getPartyColor = (party: string) => {
     switch (party) {
@@ -345,7 +418,7 @@ export default function EnhancedFeedPage() {
               </TabsTrigger>
               <TabsTrigger value="letters">
                 <MessageCircle className="h-4 w-4 mr-2" />
-                AI Letters ({aiLetters.length})
+                AI Letters ({messagesFilteredByVotes.length})
               </TabsTrigger>
               <TabsTrigger value="popular">
                 <TrendingUp className="h-4 w-4 mr-2" />
@@ -420,32 +493,86 @@ export default function EnhancedFeedPage() {
             {/* AI Letters Tab */}
             <TabsContent value="letters" className="space-y-6">
               {/* Filter Buttons */}
-              <div className="flex gap-2">
-                <Button
-                  variant={letterFilter === 'all' ? 'default' : 'outline'}
-                  onClick={() => setLetterFilter('all')}
-                  size="sm"
-                >
-                  All Letters ({aiLetters.length})
-                </Button>
-                <Button
-                  variant={letterFilter === 'support' ? 'default' : 'outline'}
-                  onClick={() => setLetterFilter('support')}
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  <ThumbsUp className="h-4 w-4" />
-                  Support ({aiLetters.filter(m => m.sentiment === 'support').length})
-                </Button>
-                <Button
-                  variant={letterFilter === 'oppose' ? 'default' : 'outline'}
-                  onClick={() => setLetterFilter('oppose')}
-                  size="sm"
-                  className="flex items-center gap-1"
-                >
-                  <ThumbsDown className="h-4 w-4" />
-                  Oppose ({aiLetters.filter(m => m.sentiment === 'oppose').length})
-                </Button>
+              <div className="flex gap-2 items-center justify-between">
+                <div className="flex gap-2">
+                  <Button
+                    variant={letterFilter === 'all' ? 'default' : 'outline'}
+                    onClick={() => setLetterFilter('all')}
+                    size="sm"
+                  >
+                    All Letters ({messagesFilteredByVotes.length})
+                  </Button>
+                  <Button
+                    variant={letterFilter === 'support' ? 'default' : 'outline'}
+                    onClick={() => setLetterFilter('support')}
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <ThumbsUp className="h-4 w-4" />
+                    Support ({messagesFilteredByVotes.filter(m => m.sentiment === 'support').length})
+                  </Button>
+                  <Button
+                    variant={letterFilter === 'oppose' ? 'default' : 'outline'}
+                    onClick={() => setLetterFilter('oppose')}
+                    size="sm"
+                    className="flex items-center gap-1"
+                  >
+                    <ThumbsDown className="h-4 w-4" />
+                    Oppose ({messagesFilteredByVotes.filter(m => m.sentiment === 'oppose').length})
+                  </Button>
+                </div>
+                
+                <div className="flex gap-2">
+                  {/* Test Email Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/test-email-real')
+                        const result = await response.json()
+                        if (result.success) {
+                          alert('🎉 Test email sent successfully! Check your inbox at benny.yang@gauntletai.com')
+                        } else {
+                          alert(`❌ Email failed: ${result.error}`)
+                        }
+                      } catch (error) {
+                        alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+                      }
+                    }}
+                    className="flex items-center gap-1"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Test Email
+                  </Button>
+
+                  {/* Reset Signatures Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/reset-signatures', {
+                          method: 'POST'
+                        })
+                        const result = await response.json()
+                        if (result.success) {
+                          alert('🔄 Signatures reset! You can now sign letters again.')
+                          // Refresh the page to update the UI
+                          window.location.reload()
+                        } else {
+                          alert(`❌ Reset failed: ${result.error}`)
+                        }
+                      } catch (error) {
+                        alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+                      }
+                    }}
+                    className="flex items-center gap-1 text-orange-600 hover:text-orange-700"
+                  >
+                    <Clock className="h-4 w-4" />
+                    Reset Signatures
+                  </Button>
+                </div>
               </div>
 
               {/* Letters List */}
@@ -479,101 +606,258 @@ export default function EnhancedFeedPage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-4">
-                  {filteredLetters.map((letter) => (
-                    <Card key={letter.id} className={`border-l-4 ${
-                      letter.sentiment === 'support' ? 'border-l-green-500' : 'border-l-red-500'
-                    }`}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
+                <div className="space-y-6">
+                  {/* Active Letters Section */}
+                  {activeLetters.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-semibold text-gray-900">Active Letters</h3>
+                        <Badge variant="outline" className="text-sm">
+                          {activeLetters.length} need signatures
+                        </Badge>
+                      </div>
+                      {activeLetters.map((letter) => (
+                              <Card key={letter.id} className={`border-l-4 ${
+                                letter.sentiment === 'support' ? 'border-l-green-500' : 'border-l-red-500'
+                              }`}>
+                                <CardHeader className="pb-3">
+                                  <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <CardTitle className="text-lg">
+                                          {letter.representative.title} {letter.representative.name}
+                                        </CardTitle>
+                                        <Badge className={getPartyColor(letter.representative.party)}>
+                                          {letter.representative.party === 'D' ? 'Democratic' : letter.representative.party === 'R' ? 'Republican' : 'Independent'}
+                                        </Badge>
+                                        <Badge className={letter.sentiment === 'support' ? 
+                                          'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                                          {letter.sentiment === 'support' ? 'Support' : 'Oppose'}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                                        <div className="flex items-center gap-1">
+                                          <MapPin className="h-4 w-4" />
+                                          {letter.representative.state}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Users className="h-4 w-4" />
+                                          {letter.signatureCount} signatures
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Calendar className="h-4 w-4" />
+                                          {new Date(letter.createdAt).toLocaleDateString()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Link href={`/bills/${letter.billId}/analysis`}>
+                                        <h4 className="font-medium text-blue-600 hover:text-blue-800">
+                                          {letter.billTitle}
+                                        </h4>
+                                      </Link>
+                                      <p className="text-sm text-gray-600 mt-1">
+                                        <strong>Subject:</strong> {letter.subject}
+                                      </p>
+                                    </div>
+                                    
+                                    <div className="p-3 bg-gray-50 rounded-lg">
+                                      <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                                        {expandedMessages.has(letter.id) ? (
+                                          // Show full message
+                                          <>
+                                            {letter.message}
+                                            {letter.message.length > 300 && (
+                                              <button
+                                                onClick={() => toggleMessageExpansion(letter.id)}
+                                                className="block mt-2 text-blue-600 hover:text-blue-800 text-xs font-medium"
+                                              >
+                                                Read Less
+                                              </button>
+                                            )}
+                                          </>
+                                        ) : (
+                                          // Show truncated message
+                                          <>
+                                            {letter.message.length > 300 
+                                              ? letter.message.substring(0, 300) + '...'
+                                              : letter.message
+                                            }
+                                            {letter.message.length > 300 && (
+                                              <button
+                                                onClick={() => toggleMessageExpansion(letter.id)}
+                                                className="block mt-2 text-blue-600 hover:text-blue-800 text-xs font-medium"
+                                              >
+                                                Read More
+                                              </button>
+                                            )}
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-600">
+                                          {letter.signatureCount} of {letter.targetSignatures || 1} signatures
+                                        </span>
+                                        {letter.signatureCount >= (letter.targetSignatures || 1) && (
+                                          <Badge variant="secondary" className="text-xs">
+                                            Ready to send
+                                          </Badge>
+                                        )}
+                                      </div>
+                                      
+                                      <div className="flex gap-2">
+                                        {!letter.isSignedByUser && (
+                                          <Button
+                                            onClick={() => handleSignMessage(letter)}
+                                            size="sm"
+                                            className="flex items-center gap-1"
+                                          >
+                                            <User className="h-4 w-4" />
+                                            Sign Letter
+                                          </Button>
+                                        )}
+                                        
+                                        {letter.isSignedByUser && (
+                                          <Badge variant="secondary" className="flex items-center gap-1">
+                                            <User className="h-3 w-3" />
+                                            Already Signed
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
+                          </div>
+                        )}
+                        
+                        {/* Sent Letters */}
+                        {sentLetters.length > 0 && (
+                          <div className="space-y-4">
                             <div className="flex items-center gap-2">
-                              <CardTitle className="text-lg">
-                                {letter.representative.title} {letter.representative.name}
-                              </CardTitle>
-                              <Badge className={getPartyColor(letter.representative.party)}>
-                                {letter.representative.party === 'D' ? 'Democratic' : letter.representative.party === 'R' ? 'Republican' : 'Independent'}
-                              </Badge>
-                              <Badge className={letter.sentiment === 'support' ? 
-                                'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
-                                {letter.sentiment === 'support' ? 'Support' : 'Oppose'}
+                              <h3 className="text-lg font-semibold text-gray-900">Sent Letters</h3>
+                              <Badge variant="secondary" className="text-sm">
+                                {sentLetters.length} sent to representatives
                               </Badge>
                             </div>
-                            <div className="flex items-center gap-4 text-sm text-gray-600">
-                              <div className="flex items-center gap-1">
-                                <MapPin className="h-4 w-4" />
-                                {letter.representative.state}
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Users className="h-4 w-4" />
-                                {letter.signatureCount} signatures
-                              </div>
-                              <div className="flex items-center gap-1">
-                                <Calendar className="h-4 w-4" />
-                                {new Date(letter.createdAt).toLocaleDateString()}
-                              </div>
-                            </div>
+                            {sentLetters.map((letter) => (
+                              <Card key={letter.id} className={`border-l-4 border-l-gray-400 opacity-75`}>
+                                <CardHeader className="pb-3">
+                                  <div className="flex items-start justify-between">
+                                    <div className="space-y-1">
+                                      <div className="flex items-center gap-2">
+                                        <CardTitle className="text-lg">
+                                          {letter.representative.title} {letter.representative.name}
+                                        </CardTitle>
+                                        <Badge className={getPartyColor(letter.representative.party)}>
+                                          {letter.representative.party === 'D' ? 'Democratic' : letter.representative.party === 'R' ? 'Republican' : 'Independent'}
+                                        </Badge>
+                                        <Badge className={letter.sentiment === 'support' ? 
+                                          'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>
+                                          {letter.sentiment === 'support' ? 'Support' : 'Oppose'}
+                                        </Badge>
+                                        <Badge className="bg-gray-100 text-gray-800">
+                                          ✓ Sent
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center gap-4 text-sm text-gray-600">
+                                        <div className="flex items-center gap-1">
+                                          <MapPin className="h-4 w-4" />
+                                          {letter.representative.state}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Users className="h-4 w-4" />
+                                          {letter.signatureCount} signatures
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          <Calendar className="h-4 w-4" />
+                                          {new Date(letter.createdAt).toLocaleDateString()}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardHeader>
+                                <CardContent>
+                                  <div className="space-y-4">
+                                    <div>
+                                      <Link href={`/bills/${letter.billId}/analysis`}>
+                                        <h4 className="font-medium text-blue-600 hover:text-blue-800">
+                                          {letter.billTitle}
+                                        </h4>
+                                      </Link>
+                                      <p className="text-sm text-gray-600 mt-1">
+                                        <strong>Subject:</strong> {letter.subject}
+                                      </p>
+                                    </div>
+                                    
+                                    <div className="p-3 bg-gray-50 rounded-lg">
+                                      <div className="text-sm text-gray-700 whitespace-pre-wrap">
+                                        {expandedMessages.has(letter.id) ? (
+                                          // Show full message
+                                          <>
+                                            {letter.message}
+                                            {letter.message.length > 300 && (
+                                              <button
+                                                onClick={() => toggleMessageExpansion(letter.id)}
+                                                className="block mt-2 text-blue-600 hover:text-blue-800 text-xs font-medium"
+                                              >
+                                                Read Less
+                                              </button>
+                                            )}
+                                          </>
+                                        ) : (
+                                          // Show truncated message
+                                          <>
+                                            {letter.message.length > 300 
+                                              ? letter.message.substring(0, 300) + '...'
+                                              : letter.message
+                                            }
+                                            {letter.message.length > 300 && (
+                                              <button
+                                                onClick={() => toggleMessageExpansion(letter.id)}
+                                                className="block mt-2 text-blue-600 hover:text-blue-800 text-xs font-medium"
+                                              >
+                                                Read More
+                                              </button>
+                                            )}
+                                          </>
+                                        )}
+                                      </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center justify-between">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-sm text-gray-600">
+                                          {letter.signatureCount} of {letter.targetSignatures || 1} signatures
+                                        </span>
+                                        <Badge variant="secondary" className="text-xs">
+                                          ✓ Sent to benny.yang@gauntletai.com
+                                        </Badge>
+                                      </div>
+                                      
+                                      <div className="flex gap-2">
+                                        {letter.isSignedByUser && (
+                                          <Badge variant="secondary" className="flex items-center gap-1">
+                                            <User className="h-3 w-3" />
+                                            You Signed
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ))}
                           </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          <div>
-                            <Link href={`/bills/${letter.billId}/analysis`}>
-                              <h4 className="font-medium text-blue-600 hover:text-blue-800">
-                                {letter.billTitle}
-                              </h4>
-                            </Link>
-                            <p className="text-sm text-gray-600 mt-1">
-                              <strong>Subject:</strong> {letter.subject}
-                            </p>
-                          </div>
-                          
-                          <div className="p-3 bg-gray-50 rounded-lg">
-                            <div className="text-sm text-gray-700 whitespace-pre-wrap">
-                              {letter.message.length > 300 
-                                ? `${letter.message.substring(0, 300)}...`
-                                : letter.message
-                              }
-                            </div>
-                          </div>
-                          
-                                                     <div className="flex items-center justify-between">
-                             <div className="flex items-center gap-2">
-                               <span className="text-sm text-gray-600">
-                                 {letter.signatureCount} of {letter.targetSignatures || 100} signatures
-                               </span>
-                               {letter.signatureCount >= (letter.targetSignatures || 100) && (
-                                 <Badge variant="secondary" className="text-xs">
-                                   Ready to send
-                                 </Badge>
-                               )}
-                             </div>
-                            
-                            <div className="flex gap-2">
-                              {!letter.isSignedByUser && (
-                                <Button
-                                  onClick={() => handleSignMessage(letter)}
-                                  size="sm"
-                                  className="flex items-center gap-1"
-                                >
-                                  <User className="h-4 w-4" />
-                                  Sign Letter
-                                </Button>
-                              )}
-                              
-                              {letter.isSignedByUser && (
-                                <Badge variant="secondary" className="flex items-center gap-1">
-                                  <User className="h-3 w-3" />
-                                  Signed
-                                </Badge>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                        )}
                 </div>
               )}
             </TabsContent>

@@ -90,7 +90,9 @@ export function SentimentFeedback({
           body: JSON.stringify({
             billId,
             sentiment: backendSentiment,
-            userId
+            userId,
+            sectionId,
+            sectionTitle
           }),
         })
 
@@ -101,8 +103,14 @@ export function SentimentFeedback({
           setVoteCounters(data.counters)
           onFeedbackChange?.(finalSentiment)
           
+          // Show notification if AI message was generated
+          if (data.aiMessageGenerated) {
+            const action = finalSentiment === 'positive' ? 'support' : 'oppose'
+            alert(`🤖 Great! Your ${action} vote triggered an AI-generated message! Check the Feed > AI Letters section to sign and send it to representatives.`)
+          }
+          
           // Also call the original callback for compatibility
-          onFeedbackSubmit(finalSentiment === 'positive' ? 'positive' : 'negative')
+          onFeedbackSubmit?.(finalSentiment === 'positive' ? 'positive' : 'negative')
         } else {
           console.error('Failed to save vote:', data.error)
           alert(`Failed to save vote: ${data.error}`)
