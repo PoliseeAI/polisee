@@ -31,7 +31,6 @@ interface NavigationItem {
 const navigation: NavigationItem[] = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Bills', href: '/bills', icon: FileText },
-  { name: 'Scraper', href: '/scraper', icon: Upload },
   { 
     name: 'Analyze', 
     href: '/analyze', 
