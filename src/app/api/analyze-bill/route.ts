@@ -1,3 +1,4 @@
+// src/app/api/analyze-bill/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { PersonaRow } from '@/lib/supabase'
 import { TextChunk } from '@/lib/text-chunker'
@@ -54,13 +55,17 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { textChunks, billTitle, persona } = await request.json();
+    // UPDATED: Accept 'webContext' from the request body
+    const { textChunks, billTitle, persona, webContext } = await request.json();
 
     if (!textChunks || textChunks.length === 0 || !billTitle || !persona) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
     console.log(`Starting two-step analysis for "${billTitle}" with ${textChunks.length} chunks.`);
+    if (webContext && webContext.length > 0) {
+      console.log(`Using ${webContext.length} pieces of web context.`);
+    }
 
     // Step 1: Map - Analyze the bill in sections
     const CHUNK_GROUP_SIZE = 100;
@@ -87,7 +92,8 @@ export async function POST(request: NextRequest) {
 
     // Step 2: Reduce - Synthesize the final report
     console.log('Synthesizing final report...');
-    const reducePrompt = createReducePrompt(allPotentialImpacts, personaSummary);
+    // UPDATED: Pass webContext to the prompt creator
+    const reducePrompt = createReducePrompt(allPotentialImpacts, personaSummary, webContext);
     const finalResult: AIAnalysisResponse = await callOpenAI(reducePrompt);
 
     console.log(`Analysis complete. Final report has ${finalResult.impacts.length} impacts.`);
@@ -131,13 +137,23 @@ Return ONLY valid JSON in this format:
 `;
 }
 
-function createReducePrompt(potentialImpacts: any[], personaSummary: string): string {
+// UPDATED: Function now accepts an optional webContext array
+function createReducePrompt(potentialImpacts: any[], personaSummary: string, webContext?: string[]): string {
   const formattedImpacts = potentialImpacts.map(impact => 
     `- (Source: ${impact.source_chunk_id}): ${impact.description}`
   ).join('\n');
 
+  // Conditionally add the web context to the prompt if it exists
+  const webContextSection = webContext && webContext.length > 0
+    ? `
+ADDITIONAL WEB CONTEXT:
+Here is some recent news and analysis from the web. Use this to inform your analysis, especially regarding public opinion or recent developments.
+- ${webContext.join('\n- ')}
+`
+    : '';
+
   return `
-You are an expert policy analyst. You have a list of potential impacts identified from a large bill by your research assistants. Your job is to synthesize these raw notes into a final, polished report for the user.
+You are an expert policy analyst. You have a list of potential impacts identified from a large bill by your research assistants. Your job is to synthesize these raw notes into a final, polished report for the user.${webContextSection}
 
 USER PROFILE: ${personaSummary}
 POTENTIAL IMPACTS LIST:
@@ -181,4 +197,4 @@ Return ONLY valid JSON in this format:
   ]
 }
 `;
-} 
+}
