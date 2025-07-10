@@ -193,15 +193,19 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if this exact signature already exists (fallback for unauthenticated users)
-    const { data: existingSignature, error: checkError } = await (supabase as any)
+    const { data: existingSignatures, error: checkError } = await (supabase as any)
       .from('message_signatures')
       .select('id')
       .eq('message_id', messageId)
       .eq('user_name', userName)
       .eq('user_email', userEmail || '')
-      .single()
 
-    if (existingSignature) {
+    if (checkError) {
+      console.error('Error checking existing signatures:', checkError)
+      // Continue anyway
+    }
+
+    if (existingSignatures && existingSignatures.length > 0) {
       return NextResponse.json(
         { error: 'You have already signed this message' },
         { status: 400 }
@@ -251,9 +255,9 @@ export async function POST(request: NextRequest) {
       .from('message_signature_analytics')
       .upsert({
         message_id: messageId,
-        signature_count: signatureCount,
+        total_signatures: signatureCount,
         target_signatures: 1,
-        updated_at: new Date().toISOString()
+        last_signature_at: new Date().toISOString()
       }, {
         onConflict: 'message_id'
       })
