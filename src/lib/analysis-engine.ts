@@ -1,9 +1,9 @@
 import { supabase } from '@/lib/supabase'
 import { Tables } from '@/types/database'
 import { PersonaRow } from '@/lib/supabase'
-import { SourceReference } from '@/components/ui/source-citation'
 import { PersonalImpact } from '@/components/ui/enhanced-impact-card'
 import { analyzeImpactsWithAI } from '@/lib/ai-analysis'
+import { chunkTextByParagraph, TextChunk } from './text-chunker' // Import the new chunker
 
 export type BillRow = Tables<'bills'>
 
@@ -11,7 +11,6 @@ export type BillRow = Tables<'bills'>
 export async function generatePersonalizedImpacts(
   billId: string,
   persona: PersonaRow,
-  sourceReferences: SourceReference[] = []
 ): Promise<PersonalImpact[]> {
   try {
     // Get bill data
@@ -34,17 +33,26 @@ export async function generatePersonalizedImpacts(
     // Use the text column from the bills table
     const billText = bill.text || bill.title || 'No content available'
 
+    console.log('Raw bill text from database:', billText); // Log the text before chunking
+
     if (!billText.trim() || billText === 'No content available') {
       console.error('No bill text available for analysis:', billId)
       return []
     }
 
+    // Chunk the bill text into paragraphs
+    const textChunks = chunkTextByParagraph(billText);
+
+    if (textChunks.length === 0) {
+      console.error('Bill text could not be chunked:', billId)
+      return []
+    }
+
     // Use AI to analyze the bill text and generate personalized impacts
     const impacts = await analyzeImpactsWithAI(
-      billText,
       bill.title || 'Untitled Bill',
       persona,
-      sourceReferences
+      textChunks
     )
 
     return impacts
