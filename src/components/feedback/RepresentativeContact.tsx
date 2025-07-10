@@ -506,26 +506,32 @@ export default function RepresentativeContact({
     }
 
     try {
-      const response = await fetch('/api/sign-representative-message', {
+      // Send the formal letter directly via email (same as community letters)
+      const emailResponse = await fetch('/api/send-representative-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           messageId: showSigningModal.id,
-          userName: userName.trim(),
-          userEmail: userEmail.trim()
+          representative: showSigningModal.representative,
+          subject: showSigningModal.subject,
+          messageContent: showSigningModal.message,
+          signatures: [userName.trim()],
+          senderName: userName.trim(),
+          senderEmail: userEmail.trim() || '',
+          sendFormalEmail: true // Flag to send formal email to benny.yang@gauntletai.com
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to sign message');
+      if (!emailResponse.ok) {
+        throw new Error('Failed to send message');
       }
 
-      const data = await response.json();
+      const emailData = await emailResponse.json();
       
-      if (data.success) {
-        // Update the message with signature
+      if (emailData.success) {
+        // Update the message with signature and mark as sent
         setGeneratedMessages(prev => 
           prev.map(msg => 
             msg.id === showSigningModal.id 
@@ -542,7 +548,7 @@ export default function RepresentativeContact({
         setUserName('');
         setUserEmail('');
         
-        alert('✅ Message signed successfully! It will be sent to your representative once enough signatures are collected.');
+        alert('✅ Message signed and sent successfully! A formal letter has been sent to your representative.');
       }
     } catch (error) {
       console.error('Error signing message:', error);
