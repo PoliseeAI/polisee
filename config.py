@@ -8,13 +8,7 @@ load_dotenv()
 # --- Database Configuration ---
 # Constructs the full database URL from environment variables.
 # This is the standard format for SQLAlchemy.
-DB_USER = os.getenv("DB_USER", "postgres")
-DB_PASSWORD = os.getenv("DB_PASSWORD", "postgres")
-DB_HOST = os.getenv("DB_HOST", "localhost")
-DB_PORT = os.getenv("DB_PORT", "5432")
-DB_NAME = os.getenv("DB_NAME", "polgen")
-
-DATABASE_URL = f"postgresql+psycopg2://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}"
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://postgres:postgres@localhost:5432/polgen")
 
 # --- OpenAI API Configuration ---
 # Retrieves the OpenAI API key from environment variables.

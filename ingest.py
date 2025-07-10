@@ -5,9 +5,8 @@ from typing import List, Iterator, Set, Optional
 import time
 
 # Import SQLAlchemy components for database interaction
-# Note: These are no longer needed with the PGVector approach
-# from sqlalchemy import create_engine, text
-# from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
 
 # Import LangChain components for document loading, splitting, and embedding
 from langchain_community.document_loaders import PyMuPDFLoader, TextLoader, UnstructuredMarkdownLoader
@@ -23,8 +22,48 @@ import config
 # This sets up a simple way to print informative messages to the console.
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Note: The get_db_session and get_existing_documents functions are no longer needed
-# with the PGVector approach, which handles its own database operations
+def get_db_session() -> Session:
+    """
+    Creates and returns a database session for querying existing documents.
+    """
+    engine = create_engine(config.DATABASE_URL)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal()
+
+def get_existing_documents(session: Session) -> Set[str]:
+    """
+    Queries the database to get a set of source filenames that have already been processed.
+    Returns a set of filenames (not full paths) that exist in the vector store.
+    """
+    try:
+        # Query the langchain_pg_embedding table for unique source values
+        # The metadata is stored as JSONB in the 'cmetadata' column
+        query = text("""
+            SELECT DISTINCT cmetadata->>'source' as source
+            FROM langchain_pg_embedding
+            WHERE cmetadata->>'source' IS NOT NULL
+            AND collection_id = (
+                SELECT uuid FROM langchain_pg_collection 
+                WHERE name = :collection_name
+            )
+        """)
+        
+        result = session.execute(query, {"collection_name": config.COLLECTION_NAME})
+        
+        # Extract just the filenames from the full paths
+        existing_files = set()
+        for row in result:
+            if row.source:
+                # Get just the filename from the full path
+                filename = os.path.basename(row.source)
+                existing_files.add(filename)
+        
+        logging.info(f"Found {len(existing_files)} documents already in the database")
+        return existing_files
+        
+    except Exception as e:
+        logging.warning(f"Could not query existing documents (this is normal on first run): {e}")
+        return set()
 
 def clean_text(text: str) -> str:
     """
@@ -141,13 +180,13 @@ def add_chunks_to_vectorstore(chunks: List[Document]):
         batch = chunks[i:i + batch_size]
         logging.info(f"Processing batch {i//batch_size + 1} ({len(batch)} chunks)...")
         
-        # Use pre_delete_collection only on the first batch
+        # Add documents without deleting existing collection
         PGVector.from_documents(
             documents=batch,
             embedding=embeddings,
             collection_name=config.COLLECTION_NAME,
             connection_string=config.DATABASE_URL,
-            pre_delete_collection=(i == 0),  # Only delete on first batch
+            pre_delete_collection=False,  # Never delete existing data
         )
     
     logging.info(f"Successfully added {len(chunks)} chunks to the vector store.")
@@ -156,17 +195,23 @@ if __name__ == "__main__":
     logging.info("--- Starting Data Ingestion Pipeline ---")
 
     try:
-        # Step 1: Load all documents from the data directory.
-        # The new approach will re-ingest everything cleanly each time
-        # because pre_delete_collection is set to True.
-        documents = list(load_documents_from_directory(config.DATA_DIR))
+        # Step 1: Check what documents already exist in the database
+        session = get_db_session()
+        existing_files = get_existing_documents(session)
+        session.close()
         
-        # Step 2: Split documents into processable chunks
-        chunks = split_documents(documents)
+        # Step 2: Load only new documents from the data directory
+        documents = list(load_documents_from_directory(config.DATA_DIR, skip_files=existing_files))
         
-        # Step 3: Add the new chunks to the vector store
-        if chunks:
-            add_chunks_to_vectorstore(chunks)
+        # Step 3: Split documents into processable chunks
+        if documents:
+            chunks = split_documents(documents)
+            
+            # Step 4: Add the new chunks to the vector store
+            if chunks:
+                add_chunks_to_vectorstore(chunks)
+            else:
+                logging.info("No chunks generated from the new documents.")
         else:
             logging.info("No new documents found to process.")
             
