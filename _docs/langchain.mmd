@@ -1,0 +1,39 @@
+graph TD
+    subgraph "User & Interface"
+        User(fa:fa-user User)
+        CLI[CLI Interface]
+    end
+    subgraph "Core Application Logic"
+        Orchestrator[Orchestrator]
+        Agent((fa:fa-robot Agent))
+    end
+    subgraph "State & Data Management"
+        PM[Project Manager]
+        KB[Knowledge Base]
+    end
+    
+    subgraph "Data Backends"
+        FS[(fa:fa-folder-open File System)]
+        DB[(fa:fa-database PostgreSQL DB)]
+    end
+    subgraph "Agent Tools"
+        ToolKB[Tool: Knowledge Base Search]
+        ToolPM[Tool: Project File I/O]
+        ToolList[Tool: List Project Files]
+    end
+    %% -- Connections --
+    User -- "Types command or chat" --> CLI
+    CLI -- "Sends user_input to" --> Orchestrator
+    Orchestrator -- "Returns final_response" --> CLI
+    
+    Orchestrator -- "1. Parses Input" --> Orchestrator
+    Orchestrator -- "2a. Handles Commands (e.g. /create)" ----> PM
+    Orchestrator -- "2b. Delegates Chat/Complex Tasks" --> Agent
+    Agent -- "Uses" --> ToolKB
+    Agent -- "Uses" --> ToolPM
+    Agent -- "Uses" --> ToolList
+    ToolKB -.->|Executes RAG Query| KB
+    ToolPM -.->|Executes read/write| PM
+    ToolList -.->|Executes file list| PM
+    PM <-->|Reads/Writes Project Files| FS
+    KB -->|Queries Chunks & Embeddings| DB
