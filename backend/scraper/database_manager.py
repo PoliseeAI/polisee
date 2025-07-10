@@ -148,7 +148,7 @@ class DatabaseManager:
         return schemas
     
     def insert_bill(self, bill_data: Dict) -> bool:
-        """Insert a bill into the database - only if it has substantial text content."""
+        """Insert a bill into the database - only if it has substantial text content and is not a duplicate."""
         try:
             # Extract main bill data with clean bill_id
             bill_url = bill_data.get('url', '')
@@ -171,6 +171,10 @@ class DatabaseManager:
                 bill_type = bill_data.get('type', '').upper()
                 number = bill_data.get('number', '')
                 bill_id = f"{congress}-{bill_type}-{number}"
+            
+            # CHECK FOR DUPLICATES - Skip if we already have this bill with more recent data
+            if self._should_skip_duplicate_bill(bill_data, congress, bill_type, number):
+                return False
             
             # Extract latest summary
             summaries = bill_data.get('summaries', [])
@@ -244,6 +248,64 @@ class DatabaseManager:
             
         except Exception as e:
             logger.error(f"Error inserting bill: {e}")
+            return False
+    
+    def _should_skip_duplicate_bill(self, bill_data: Dict, congress: str, bill_type: str, number: str) -> bool:
+        """Check if we should skip this bill due to it being a duplicate with older data."""
+        try:
+            # Look for existing bills with same congress, type, and number
+            result = self.supabase.table('bills').select('bill_id, raw_data').execute()
+            
+            for existing_bill in result.data:
+                if not existing_bill or not existing_bill.get('raw_data'):
+                    continue
+                existing_raw = existing_bill.get('raw_data', {})
+                
+                # Check if this matches our bill's congress, type, number
+                if (str(existing_raw.get('congress')) == str(congress) and 
+                    str(existing_raw.get('type', '')).upper() == str(bill_type).upper() and 
+                    str(existing_raw.get('number')) == str(number)):
+                    
+                    # Found a duplicate - compare dates to see which is more recent
+                    new_update_date = bill_data.get('updateDate', '')
+                    existing_update_date = existing_raw.get('updateDate', '')
+                    
+                    # Also check latest action dates as fallback
+                    new_action_date = ''
+                    existing_action_date = ''
+                    
+                    if bill_data.get('latestAction'):
+                        if isinstance(bill_data['latestAction'], dict):
+                            new_action_date = bill_data['latestAction'].get('actionDate', '')
+                        
+                    if existing_raw.get('latestAction'):
+                        if isinstance(existing_raw['latestAction'], dict):
+                            existing_action_date = existing_raw['latestAction'].get('actionDate', '')
+                    
+                    # Use the most recent date available for comparison
+                    new_date = max(new_update_date, new_action_date) if new_update_date or new_action_date else ''
+                    existing_date = max(existing_update_date, existing_action_date) if existing_update_date or existing_action_date else ''
+                    
+                    if new_date and existing_date:
+                        if new_date <= existing_date:
+                            logger.info(f"Skipping duplicate bill {congress}-{bill_type}-{number} - existing version is more recent ({existing_date} vs {new_date})")
+                            return True
+                        else:
+                            logger.info(f"Updating bill {congress}-{bill_type}-{number} - new version is more recent ({new_date} vs {existing_date})")
+                            # Delete the existing version so we can insert the newer one
+                            self.supabase.table('bills').delete().eq('bill_id', existing_bill['bill_id']).execute()
+                            return False
+                    else:
+                        # If we can't compare dates, keep both versions (they might be different stages)
+                        logger.info(f"Keeping both versions of bill {congress}-{bill_type}-{number} - cannot compare dates")
+                        return False
+            
+            # No duplicate found
+            return False
+            
+        except Exception as e:
+            logger.error(f"Error checking for duplicate bill: {e}")
+            # If error checking, proceed with insert to be safe
             return False
     
     def _insert_bill_actions(self, bill_id: str, actions: List[Dict]):
