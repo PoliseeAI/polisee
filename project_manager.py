@@ -68,3 +68,23 @@ def save_conversation_history(project_folder, history):
     path = os.path.join(PROJECTS_DIR, project_folder, "conversation_history.json")
     with open(path, "w") as f:
         json.dump(history, f, indent=4)
+
+def save_document(project_folder, filename, content):
+    """Saves a document to a file in the project directory."""
+    path = os.path.join(PROJECTS_DIR, project_folder, filename)
+    with open(path, 'w') as f:
+        f.write(content)
+    print(f"Saved document: {filename}")
+
+def list_documents(project_folder):
+    """Lists all markdown (.md) documents in a project directory."""
+    project_path = os.path.join(PROJECTS_DIR, project_folder)
+    try:
+        return [f for f in os.listdir(project_path) if f.endswith('.md')]
+    except FileNotFoundError:
+        return []
+
+def document_exists(project_folder, filename):
+    """Checks if a document file already exists in the project."""
+    path = os.path.join(PROJECTS_DIR, project_folder, filename)
+    return os.path.exists(path)

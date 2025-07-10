@@ -10,41 +10,58 @@ from dotenv import load_dotenv
 from knowledge_base import search_global_db
 from ai_core import generate_response
 import project_manager as pm
-import orchestrator as orch
+from orchestrator import Orchestrator
 
 # Create a Typer application instance
 app = typer.Typer()
 
 def run_chat_session(project_folder):
     """Main REPL loop for an active project session."""
+    # Instantiate the Orchestrator for this session
+    orchestrator = Orchestrator(project_folder)
+    
     project_details = pm.load_project_details(project_folder)
     project_name = project_details.get("name", project_folder)
     
     print(f"\n--- Starting session for project: '{project_name}' ---")
-    print("Type '/exit' or 'quit' to end the session.")
+    print("Type '/help' for a list of commands.")
 
     while True:
         try:
             prompt = f"({project_name}) > "
-            user_input = input(prompt)
+            user_input = input(prompt).strip()
 
             if user_input.lower() in ["/exit", "quit"]:
-                raise KeyboardInterrupt  # Use the same exit logic
+                # Check for unsaved draft before exiting
+                if orchestrator.has_unsaved_draft():
+                    confirm = input("You have unsaved changes. Are you sure you want to exit? [y/n]: ").lower()
+                    if confirm != 'y':
+                        continue  # Go back to the loop
+                raise KeyboardInterrupt
 
-            # Handle the query
-            print("> Searching knowledge base and generating response...")
-            response = orch.handle_query(project_folder, user_input)
+            if not user_input:
+                continue
+
+            # Special handling for /create command with unsaved draft
+            if user_input.startswith("/create") and orchestrator.has_unsaved_draft():
+                confirm = input("You have an unsaved draft. Do you want to discard it and start a new one? [y/n]: ").lower()
+                if confirm != 'y':
+                    print("Create command cancelled.")
+                    continue
+
+            # Process input through the orchestrator
+            response = orchestrator.handle_input(user_input)
             print(f"\n{response}\n")
             
             # Save history after every successful turn
-            history = orch.get_current_history(project_folder)
-            pm.save_conversation_history(project_folder, history)
+            history_dicts = orchestrator.get_current_history()
+            pm.save_conversation_history(project_folder, history_dicts)
 
         except KeyboardInterrupt:
             print("\nExiting session. Goodbye!")
             # Save history one final time before exiting
-            history = orch.get_current_history(project_folder)
-            pm.save_conversation_history(project_folder, history)
+            history_dicts = orchestrator.get_current_history()
+            pm.save_conversation_history(project_folder, history_dicts)
             sys.exit(0)
         except Exception as e:
             print(f"\nAn error occurred: {e}")
