@@ -1,18 +1,16 @@
-# Core libraries for database and environment management
-python-dotenv
-psycopg2-binary
-SQLAlchemy
+# requirements.txt
 
-# PDF processing
-PyMuPDF
+# For the CLI application framework
+typer
 
-# LangChain for AI pipeline components
-langchain
-langchain-community
+# For interacting with the OpenAI API
+openai
 langchain-openai
+langchain-community
 
-# Vector database integration
-pgvector 
+# For PostgreSQL and pgvector integration
+pgvector
+psycopg2-binary
 
-# For Markdown and advanced text processing
-unstructured[md]
+# For loading environment variables from .env file
+python-dotenv
