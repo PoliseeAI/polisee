@@ -1,0 +1,18 @@
+PyMuPDF
+SQLAlchemy
+langchain
+langchain-community
+langchain-openai
+openai
+pgvector
+pgvector 
+psycopg2-binary
+python-dotenv
+typer
+unstructured[md]
+
+# Token counting for conversation management
+tiktoken
+
+# In-memory vector search for document search
+faiss-cpu

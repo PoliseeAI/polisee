@@ -1,0 +1,42 @@
+# Sample Questions for Housing Policy Query System
+# Lines starting with # are ignored
+
+What are the main causes of housing affordability issues in the United States?
+
+How does zoning impact housing supply and affordability?
+
+What percentage of renters are cost-burdened and what does that mean?
+
+What tenant protection policies are being introduced in state legislatures?
+
+What is inclusionary zoning and how does it work?
+
+What are the public's views on policies to enable more housing development?
+
+How does the Housing Affordability Index (HAI) work and what does it measure?
+
+What are "worst-case housing needs" and who is most affected by them?
+
+What role does Section 106 funding play in affordable housing development?
+
+How has Minneapolis changed its zoning code to address housing issues?
+
+What are the key components of smart growth policies related to housing?
+
+What percentage of Americans find it difficult to find affordable housing in their area?
+
+How do housing market perceptions affect homebuying intentions?
+
+What are the main arguments for and against inclusionary zoning policies?
+
+What federal programs exist to address housing affordability?
+
+How do housing costs vary between urban and rural areas?
+
+What are the long-term trends in housing affordability over the past decade?
+
+What innovative housing policies have shown success in increasing affordability?
+
+How does the housing crisis impact different demographic groups differently?
+
+What role do local governments play in addressing housing affordability? 
