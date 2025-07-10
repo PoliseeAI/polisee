@@ -1,0 +1,18 @@
+# Core libraries for database and environment management
+python-dotenv
+psycopg2-binary
+SQLAlchemy
+
+# PDF processing
+PyMuPDF
+
+# LangChain for AI pipeline components
+langchain
+langchain-community
+langchain-openai
+
+# Vector database integration
+pgvector 
+
+# For Markdown and advanced text processing
+unstructured[md]

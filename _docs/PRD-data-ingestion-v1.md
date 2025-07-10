@@ -1,4 +1,4 @@
-# PRD: Phase 1 - Local Data Ingestion & Processing Pipeline
+# PRD: Local Data Ingestion & Processing Pipeline
 
 -   **Feature:** Core Data Pipeline for CLI Proof-of-Concept
 -   **Status:** To Do
@@ -9,7 +9,7 @@
 
 ### 1. Introduction/Overview
 
-This project is the foundational data backend for the "PolGen" CLI proof-of-concept. Before the CLI can answer any questions, we need a reliable way to get our source documents into a format the AI can understand. This involves extracting text from files (like PDFs), cleaning it, breaking it into small pieces ("chunks"), and storing both the text and its "meaning" (as a vector) in a local database.
+This project will create the foundational data backend for the "PolGen" CLI proof-of-concept. Before the CLI can answer any questions, we need a reliable way to get our source documents into a format the AI can understand. This involves extracting text from files (like PDFs and Markdown), cleaning it, breaking it into small pieces ("chunks"), and storing both the text and its "meaning" (as a vector) in a local database.
 
 This feature will be a set of scripts that populates a local PostgreSQL database from a folder of source documents.
 
@@ -17,8 +17,8 @@ This feature will be a set of scripts that populates a local PostgreSQL database
 
 ### 2. Goals
 
-*   Successfully process a local folder containing a mix of `.txt` and `.pdf` files.
-*   Extract clean, readable text from both document types.
+*   Successfully process a local folder containing a mix of `.txt`, `.pdf`, and `.md` files.
+*   Extract clean, readable text from all three document types, leveraging Markdown structure where available.
 *   Populate a local PostgreSQL database with structured metadata about each source document.
 *   Populate the same database with the text chunks and their corresponding vector embeddings.
 *   Ensure the entire process can be run from a single command and can be re-run to clear and re-populate the database.
@@ -26,8 +26,8 @@ This feature will be a set of scripts that populates a local PostgreSQL database
 ### 3. User Stories
 
 *   **As a Developer building the CLI, I want to run a single script to 'seed' my local database with all the necessary policy documents so that I have a consistent data environment to test the AI's question-answering capabilities.**
-*   **As a Developer, I want the pipeline to automatically extract text from PDFs so that I don't have to manually copy-paste content from complex documents.**
-*   **As a Product Manager, I want to be able to add a new PDF or TXT file to a folder and re-run the script so that we can easily test the system with new source documents.**
+*   **As a Developer, I want the pipeline to automatically extract text from PDFs and intelligently parse Markdown files so that I don't have to manually copy-paste content from complex documents.**
+*   **As a Product Manager, I want to be able to add a new PDF, TXT, or MD file to a folder and re-run the script so that we can easily test the system with new source documents.**
 
 ### 4. Functional Requirements
 
@@ -35,21 +35,22 @@ The system will be a Python script (e.g., `ingest.py`) that is run manually from
 
 **Data Source & Handling:**
 1.  The script MUST read all files from a pre-defined local directory named `data/`.
-2.  The script MUST be able to process files with `.txt` and `.pdf` extensions. It should ignore all other file types.
+2.  The script MUST be able to process files with `.txt`, `.pdf`, and `.md` extensions. It should ignore all other file types.
 
 **Database Interaction:**
 3.  The script MUST connect to a local PostgreSQL database using credentials specified in the environment.
 4.  Before processing, the script MUST completely clear all data from the `documents` and `chunks` tables to ensure a fresh start.
-5.  For each file processed, the script MUST create one corresponding record in the `documents` table. This record must include the file's name and its type (`pdf` or `txt`).
+5.  For each file processed, the script MUST create one corresponding record in the `documents` table. This record must include the file's name and its type (`pdf`, `txt`, or `md`).
 
 **Text Processing:**
 6.  For `.txt` files, the system MUST read the raw text content directly.
 7.  For `.pdf` files, the system MUST use a library to extract the text content from the document.
-8.  The extracted text from each document MUST be split into smaller, overlapping text chunks (e.g., paragraphs of ~400 words with a 50-word overlap).
+8.  For `.md` (Markdown) files, the system MUST use a specialized loader that interprets Markdown syntax to create more semantically coherent text outputs.
+9.  The extracted text from each document MUST be split into smaller, overlapping text chunks (e.g., paragraphs of ~400 words with a 50-word overlap).
 
 **Vectorization & Storage:**
-9.  For each text chunk, the system MUST use the OpenAI API to generate a vector embedding.
-10. Each chunk MUST be saved as a record in the `chunks` table. This record must include the text of the chunk, a reference back to its parent document (`document_id`), and its vector embedding.
+10. For each text chunk, the system MUST use the OpenAI API to generate a vector embedding.
+11. Each chunk MUST be saved as a record in the `chunks` table. This record must include the text of the chunk, a reference back to its parent document (`document_id`), and its vector embedding.
 
 ### 5. Non-Goals (Out of Scope)
 
@@ -70,11 +71,11 @@ The system will be a Python script (e.g., `ingest.py`) that is run manually from
       - Extracted 15,000 characters.
       - Split into 42 chunks.
       - Stored document and 42 chunks in database.
-    Processing 'doc2_hud_report.txt'...
+    Processing 'doc2_policy_brief.md'...
     ...
     Ingestion complete. Database is ready.
     ```
-*   **Database Schema:** The script will populate a pre-existing schema. It will not be responsible for creating tables. The required tables are `documents` and `chunks` (as defined in the architecture plan).
+*   **Database Schema:** The script will populate a pre-existing schema. It will not be responsible for creating tables. The required tables are `documents` and `chunks`.
 
 ### 7. Technical Considerations
 
@@ -83,13 +84,9 @@ The system will be a Python script (e.g., `ingest.py`) that is run manually from
     *   `psycopg2-binary`: To connect to PostgreSQL.
     *   `sqlalchemy`: To make database interactions easier (ORM).
     *   `pgvector`: For storing vectors in PostgreSQL.
-    *   `PyMuPDF` or a similar library: For PDF text extraction.
+    *   `PyMuPDF`: For PDF text extraction.
+    *   `unstructured[md]`: For intelligent parsing of Markdown files.
     *   `langchain`: To assist with document loading, text splitting, and embedding generation.
     *   `langchain-openai`: For the OpenAI embeddings integration.
 *   **Configuration:** All sensitive information (database credentials, OpenAI API key) MUST be loaded from a `.env` file.
 *   **Idempotency:** The script must be safely re-runnable. Running it ten times should result in the same database state as running it once. This is achieved by the "clear all data" step at the beginning.
-
-### 8. Q*A
-
-*   What is the optimal `chunk_size` and `chunk_overlap` for our initial set of documents? (Answer: Start with a size of 1000 characters and an overlap of 200).
-*   Which specific OpenAI embedding model should we use? (Answer: `text-embedding-3-small` for a balance of cost and performance).
