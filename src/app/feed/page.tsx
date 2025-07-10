@@ -325,7 +325,7 @@ export default function EnhancedFeedPage() {
         // Show success message
         let alertMessage = '✅ Message signed successfully!'
         if (data.targetReached) {
-          alertMessage = '🎯 Letter signed successfully! The target has been reached and the letter has been sent to benny.yang@gauntletai.com!'
+          alertMessage = '🎯 Letter signed successfully! The target has been reached and the letter has been sent to the recipient!'
         }
         
         alert(alertMessage)
@@ -571,6 +571,33 @@ export default function EnhancedFeedPage() {
                   >
                     <Clock className="h-4 w-4" />
                     Reset Signatures
+                  </Button>
+
+                  {/* Reset Email Flags Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const response = await fetch('/api/reset-email-flags', {
+                          method: 'POST'
+                        })
+                        const result = await response.json()
+                        if (result.success) {
+                          alert('📧 Email flags reset! You can now test email sending again.')
+                          // Refresh the page to update the UI
+                          window.location.reload()
+                        } else {
+                          alert(`❌ Reset failed: ${result.error}`)
+                        }
+                      } catch (error) {
+                        alert(`❌ Error: ${error instanceof Error ? error.message : 'Unknown error'}`)
+                      }
+                    }}
+                    className="flex items-center gap-1 text-purple-600 hover:text-purple-700"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Reset Email Flags
                   </Button>
                 </div>
               </div>
@@ -839,7 +866,7 @@ export default function EnhancedFeedPage() {
                                           {letter.signatureCount} of {letter.targetSignatures || 1} signatures
                                         </span>
                                         <Badge variant="secondary" className="text-xs">
-                                          ✓ Sent to benny.yang@gauntletai.com
+                                          ✓ Sent to recipient
                                         </Badge>
                                       </div>
                                       
