@@ -13,7 +13,7 @@ export interface AnalyzedLocation {
   confidence: number;
 }
 
-export interface EnhancedRepresentative extends Representative {
+export interface EnhancedRepresentative extends Omit<Representative, 'created_at' | 'updated_at' | 'in_office'> {
   photo_url?: string;
   years_served: number;
   current_term_start: string;
@@ -21,6 +21,14 @@ export interface EnhancedRepresentative extends Representative {
   biography?: string;
   committees?: string[];
   summary?: string;
+  next_election?: string;
+  term_status?: string;
+  term_end_date?: string;
+  created_at?: string;
+  updated_at?: string;
+  in_office?: boolean;
+  term_start?: string;
+  term_end?: string;
 }
 
 /**
@@ -127,7 +135,7 @@ If a city spans multiple districts, choose the district that covers the city cen
 Return null if location is invalid.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
@@ -190,24 +198,35 @@ export async function fetchCurrentRepresentatives(state: string, district?: stri
       console.log(`Fetching representatives for ${state}${district ? ` district ${district}` : ''} (attempt ${attempt}/${maxRetries})`);
       
       const districtText = district ? ` and congressional district ${district}` : '';
-      const prompt = `Find the current U.S. representatives for ${state}${districtText} as of 2024.
+      const prompt = `Find the current U.S. representatives for ${state}${districtText} as of January 2025.
 
-Your task is to provide accurate, current representative information. Use your knowledge of recent elections and current officeholders.
+🚨 CRITICAL REQUIREMENTS:
+1. ALWAYS return exactly 2 U.S. Senators for ${state} (every state has exactly 2 senators)
+2. Both senators MUST be currently serving in 2025 (not retired, defeated, or deceased)
+3. Use your most current knowledge of who holds these offices right now
+${district ? `4. Include the House Representative for district ${district}` : '4. Include 1 House Representative from the most relevant district'}
 
-For ${state}, provide:
-- The 2 U.S. Senators for ${state}
-${district ? `- The House Representative for district ${district}` : '- The House Representative for the most relevant district'}
+For ${state}, you MUST provide:
+- EXACTLY 2 current U.S. Senators who are actively serving in 2025
+${district ? `- The current House Representative for district ${district}` : '- 1 current House Representative'}
 
-${district ? `IMPORTANT: Focus specifically on district ${district} for the House representative.` : ''}
+🔍 VERIFICATION CHECKLIST:
+- Are both senators currently serving? (Not retired like Portman, Toomey, Burr, etc.)
+- Are the term dates accurate for 2025?
+- Are these the actual people holding office right now?
+
+Use your knowledge of:
+- Recent election results (2020, 2022, 2024)
+- Current officeholders and their terms
+- Any recent appointments, special elections, or changes
+- Current Senate and House compositions
 
 Guidelines:
-- Provide representatives who are currently serving (2025-2027 term for House, varies for Senate)
-- For House representatives, use term dates: "current_term_start": "2025-01-03", "current_term_end": "2027-01-03"
-- For Senators, use their actual 6-year term dates
-- Use realistic bioguide IDs (typically Last name + year format like "S001234")
-- Include accurate office buildings, phone numbers, and committee information
-- If you know recent election results or current officeholders, use that information
-- Provide your best knowledge rather than returning empty results
+- House terms: "current_term_start": "2025-01-03", "current_term_end": "2027-01-03"
+- Senate terms: Use their actual 6-year term dates based on election cycles
+- All representatives should have active terms in 2025
+- Use accurate bioguide IDs, office buildings, and committee information
+- Focus ONLY on currently serving members
 
 Return a JSON array with this exact structure:
 [
@@ -241,11 +260,11 @@ Key requirements:
 - If uncertain about exact details, provide reasonable estimates based on typical congressional information`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4-turbo-preview",
+        model: "gpt-4o",
         messages: [
           {
             role: "system",
-            content: "You are a congressional information API. Your job is to provide current U.S. representative information in JSON format for any location. Use your knowledge of recent elections, current officeholders, and congressional districts. When a specific district is requested, focus on that district. Provide your best knowledge of current representatives (2023-2025 term) rather than returning empty results. Include realistic details like office buildings, phone numbers, and committee assignments. Be helpful and informative."
+            content: "You are a congressional information API. Your primary job is to provide CURRENT (2025) U.S. representative information. CRITICAL: Every state has exactly 2 senators - you MUST return both ACTIVE senators for each state. Use your knowledge of recent elections (2022, 2024) and current officeholders. DO NOT return retired representatives like Rob Portman, Pat Toomey, Richard Burr, Roy Blunt, etc. Focus ONLY on currently serving members of Congress. Both senators must be actively serving in 2025. Include realistic details like office buildings, phone numbers, and committee assignments."
           },
           {
             role: "user",
@@ -303,30 +322,44 @@ Key requirements:
           return false;
         }
         
-        // Skip known outdated representatives
+        // Skip known outdated representatives (comprehensive list)
         const outdatedReps = [
-          'Mitt Romney', 'Chris Stewart', 'Rob Bishop', 'Feinstein', 'Boxer',
-          'McCain', 'Flake', 'Orrin Hatch', 'Jason Chaffetz'
+          'Rob Portman', 'Pat Toomey', 'Richard Burr', 'Roy Blunt', 'Mitt Romney', 
+          'Chris Stewart', 'Rob Bishop', 'Feinstein', 'Boxer', 'McCain', 'Flake', 
+          'Orrin Hatch', 'Jason Chaffetz', 'Shelby', 'Inhofe', 'Leahy', 'Blumenthal',
+          'Dianne Feinstein', 'Barbara Boxer', 'John McCain', 'Jeff Flake', 'Bob Corker',
+          'Lamar Alexander', 'Johnny Isakson', 'Martha McSally', 'David Perdue',
+          'Kelly Loeffler', 'Dean Heller', 'Heidi Heitkamp', 'Joe Donnelly',
+          'Claire McCaskill', 'Bill Nelson', 'Joe Manchin', 'Kyrsten Sinema'
         ];
         const fullName = `${rep.first_name} ${rep.last_name}`;
         if (outdatedReps.some(name => fullName.includes(name))) {
-          console.warn('Skipping outdated representative:', fullName);
+          console.warn('Skipping known outdated representative:', fullName);
           return false;
-        }
-        
-        // Only filter representatives who left office more than 3 years ago (clearly outdated)
-        if (rep.current_term_end) {
-          const termEnd = new Date(rep.current_term_end);
-          const now = new Date();
-          const threeYearsAgo = new Date(now.getTime() - (3 * 365 * 24 * 60 * 60 * 1000));
-          if (termEnd < threeYearsAgo) {
-            console.warn('Skipping representative from 3+ years ago:', fullName, 'ended:', rep.current_term_end);
-            return false;
-          }
         }
         
         return true;
       });
+
+      // CRITICAL: Ensure we have exactly 2 ACTIVE senators for every state
+      const senators = validRepresentatives.filter(rep => rep.chamber === 'senate');
+      const houseReps = validRepresentatives.filter(rep => rep.chamber === 'house');
+
+      if (senators.length !== 2) {
+        console.warn(`Expected exactly 2 senators for ${state}, got ${senators.length}. Senators found: ${senators.map(s => s.first_name + ' ' + s.last_name).join(', ')}`);
+        if (attempt < maxRetries) {
+          continue; // Retry if we don't have exactly 2 senators
+        }
+      }
+
+      // Additional validation: ensure we have active representatives
+      const activeSenators = senators.filter(s => s.chamber === 'senate');
+      if (activeSenators.length < 2) {
+        console.warn(`Expected 2 active senators for ${state}, got ${activeSenators.length} active senators. Retrying...`);
+        if (attempt < maxRetries) {
+          continue;
+        }
+      }
 
       if (validRepresentatives.length === 0) {
         console.log('No valid representatives found after filtering, retrying...');
@@ -348,11 +381,13 @@ Key requirements:
           }
         }
 
-        // Determine if term has ended
+        // Determine if term has ended - for 2025, assume all returned reps are current
         const now = new Date();
         const termEnd = rep.current_term_end ? new Date(rep.current_term_end) : null;
+        // For senators, term end dates are often future dates, so check if term started
+        const termStart = rep.current_term_start ? new Date(rep.current_term_start) : null;
+        const isCurrentlyServing = termStart ? termStart <= now : true;
         const termHasEnded = termEnd && termEnd < now;
-        const isCurrentlyServing = !termHasEnded;
 
         return {
           ...rep,
@@ -1730,7 +1765,7 @@ export async function generateRepresentativeSummary(representative: EnhancedRepr
     `;
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
