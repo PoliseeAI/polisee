@@ -20,6 +20,19 @@ interface AIAnalysisResponse {
   impacts: AIImpact[];
 }
 
+function cleanJsonResponse(content: string): string {
+  // Remove markdown code blocks if present
+  const codeBlockRegex = /```(?:json)?\s*([\s\S]*?)\s*```/;
+  const match = content.match(codeBlockRegex);
+  
+  if (match) {
+    return match[1].trim();
+  }
+  
+  // If no code blocks found, return the content as-is
+  return content.trim();
+}
+
 async function callOpenAI(prompt: string): Promise<any> {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
@@ -29,7 +42,7 @@ async function callOpenAI(prompt: string): Promise<any> {
     },
     body: JSON.stringify({
       model: 'gpt-4o-mini',
-      messages: [{ role: 'system', content: 'You are an expert policy analyst who explains complex legislation in simple, personal terms. Always respond with valid JSON only.' }, { role: 'user', content: prompt }],
+      messages: [{ role: 'system', content: 'You are an expert policy analyst who explains complex legislation in simple, personal terms. Always respond with valid JSON only, without markdown formatting.' }, { role: 'user', content: prompt }],
       max_tokens: 2000,
       temperature: 0.3,
     }),
@@ -46,7 +59,18 @@ async function callOpenAI(prompt: string): Promise<any> {
   if (!content) {
     throw new Error('No content in AI response');
   }
-  return JSON.parse(content);
+  
+  // Clean the JSON response before parsing
+  const cleanedContent = cleanJsonResponse(content);
+  
+  try {
+    return JSON.parse(cleanedContent);
+  } catch (parseError) {
+    console.error('JSON Parse Error:', parseError);
+    console.error('Raw content:', content);
+    console.error('Cleaned content:', cleanedContent);
+    throw new Error(`Failed to parse JSON response: ${parseError}`);
+  }
 }
 
 export async function POST(request: NextRequest) {
