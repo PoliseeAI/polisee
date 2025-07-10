@@ -13,3 +13,6 @@ unstructured[md]
 
 # Token counting for conversation management
 tiktoken
+
+# In-memory vector search for document search
+faiss-cpu

@@ -88,3 +88,11 @@ def document_exists(project_folder, filename):
     """Checks if a document file already exists in the project."""
     path = os.path.join(PROJECTS_DIR, project_folder, filename)
     return os.path.exists(path)
+
+def read_document(project_folder, filename):
+    """Reads the full content of a specified document."""
+    path = os.path.join(PROJECTS_DIR, project_folder, filename)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"File '{filename}' not found in project '{project_folder}'.")
+    with open(path, 'r') as f:
+        return f.read()

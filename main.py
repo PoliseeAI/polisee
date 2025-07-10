@@ -11,26 +11,28 @@ from knowledge_base import search_global_db
 from ai_core import generate_response
 import project_manager as pm
 from orchestrator import Orchestrator
+from langchain_core.messages import HumanMessage, AIMessage
 
 # Create a Typer application instance
 app = typer.Typer()
 
 def run_chat_session(project_folder):
-    """Main REPL loop for an active project session."""
-    # Instantiate the Orchestrator for this session
+    """Main REPL loop for an active project session, with corrected history management."""
     orchestrator = Orchestrator(project_folder)
-    
     project_details = pm.load_project_details(project_folder)
     project_name = project_details.get("name", project_folder)
     
+    # History is a list of LangChain Message objects
+    chat_history = []
+
     print(f"\n--- Starting session for project: '{project_name}' ---")
-    print("Type '/help' for a list of commands.")
+    print("Type /help for a list of commands.")
 
     while True:
         try:
             prompt = f"({project_name}) > "
             user_input = input(prompt).strip()
-
+            
             if user_input.lower() in ["/exit", "quit"]:
                 # Check for unsaved draft before exiting
                 if orchestrator.has_unsaved_draft():
@@ -41,30 +43,53 @@ def run_chat_session(project_folder):
 
             if not user_input:
                 continue
-
+            
             # Special handling for /create command with unsaved draft
             if user_input.startswith("/create") and orchestrator.has_unsaved_draft():
                 confirm = input("You have an unsaved draft. Do you want to discard it and start a new one? [y/n]: ").lower()
                 if confirm != 'y':
                     print("Create command cancelled.")
                     continue
-
-            # Process input through the orchestrator
-            response = orchestrator.handle_input(user_input)
-            print(f"\n{response}\n")
             
-            # Save history after every successful turn
-            history_dicts = orchestrator.get_current_history()
+            # Add user message to history
+            chat_history.append(HumanMessage(content=user_input))
+
+            # Handle input and get response
+            response_generator = orchestrator.handle_input(user_input, chat_history)
+            
+            if isinstance(response_generator, str):
+                # It's a command response or drafting response
+                final_response = response_generator
+                print(f"\n> {final_response}\n")
+            else: 
+                # Streaming agent output
+                final_response = ""
+                print("\n", flush=True)
+                # The verbose=True in AgentExecutor prints the thoughts. We just capture the final output here.
+                for chunk in response_generator:
+                    if "output" in chunk:
+                        # This is the final answer chunk
+                        final_response += chunk["output"]
+                
+                # Print the final response after streaming is complete
+                if final_response:
+                    print(f"> {final_response}\n")
+            
+            # Add AI response to history
+            chat_history.append(AIMessage(content=final_response))
+
+            # Save history to file
+            history_dicts = [{"role": "user" if isinstance(m, HumanMessage) else "assistant", "content": m.content} for m in chat_history]
             pm.save_conversation_history(project_folder, history_dicts)
 
         except KeyboardInterrupt:
             print("\nExiting session. Goodbye!")
             # Save history one final time before exiting
-            history_dicts = orchestrator.get_current_history()
+            history_dicts = [{"role": "user" if isinstance(m, HumanMessage) else "assistant", "content": m.content} for m in chat_history]
             pm.save_conversation_history(project_folder, history_dicts)
             sys.exit(0)
         except Exception as e:
-            print(f"\nAn error occurred: {e}")
+            print(f"\nAn error occurred: {e}\n")
             # Continue the loop on error
 
 def project_selection_menu():
