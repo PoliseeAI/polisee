@@ -340,16 +340,18 @@ export default function BillAnalysis() {
 
         {/* Text Source Viewer Dialog */}
         <Dialog open={showSourceDialog} onOpenChange={setShowSourceDialog}>
-          <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle>{selectedSource?.sectionTitle || "Bill Text"}</DialogTitle>
+          <DialogContent className="max-w-4xl h-[80vh] !flex flex-col p-0 gap-0">
+            <DialogHeader className="px-6 pt-6 pb-4 flex-shrink-0">
+              <DialogTitle>{selectedSource?.sectionTitle || "Referenced from the bill text"}</DialogTitle>
             </DialogHeader>
-            <TextSourceViewer
-              title={selectedSource?.sectionTitle || "Bill Text"}
-              fullText={fullBillText}
-              sourceText={selectedSource?.text || ""}
-              onClose={() => setShowSourceDialog(false)}
-            />
+            <div className="flex-1 min-h-0 overflow-hidden px-6 pb-6">
+              <TextSourceViewer
+                fullText={fullBillText}
+                sourceText={selectedSource?.text || ""}
+                onClose={() => setShowSourceDialog(false)}
+                hideHeader={true}
+              />
+            </div>
           </DialogContent>
         </Dialog>
       </div>

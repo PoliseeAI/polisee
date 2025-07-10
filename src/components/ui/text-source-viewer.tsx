@@ -9,6 +9,7 @@ interface TextSourceViewerProps {
   sourceText: string
   title?: string
   onClose?: () => void
+  hideHeader?: boolean
 }
 
 export function TextSourceViewer({
@@ -16,6 +17,7 @@ export function TextSourceViewer({
   sourceText,
   title = 'Source Text',
   onClose,
+  hideHeader = false,
 }: TextSourceViewerProps) {
   const highlightRef = useRef<HTMLElement>(null)
 
@@ -53,9 +55,23 @@ export function TextSourceViewer({
     )
   }
 
+  // When used in a modal (hideHeader=true), use minimal styling
+  if (hideHeader) {
+    return (
+      <div className="h-full flex flex-col bg-white rounded-lg border overflow-hidden">
+        <div className="flex-1 overflow-y-auto p-4">
+          <div className="text-gray-800 leading-relaxed text-sm">
+            {renderTextWithHighlight()}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Regular card view with header
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader className="flex flex-row items-center justify-between border-b p-4">
+    <Card className="h-full flex flex-col overflow-hidden">
+      <CardHeader className="flex flex-row items-center justify-between border-b p-4 flex-shrink-0">
         <CardTitle className="text-lg font-semibold">{title}</CardTitle>
         {onClose && (
           <button
@@ -67,7 +83,7 @@ export function TextSourceViewer({
           </button>
         )}
       </CardHeader>
-      <CardContent className="py-4 flex-grow overflow-y-auto">
+      <CardContent className="py-4 flex-1 overflow-y-auto">
         <div className="text-gray-800 leading-relaxed text-sm">
           {renderTextWithHighlight()}
         </div>
