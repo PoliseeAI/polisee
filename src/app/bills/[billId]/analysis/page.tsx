@@ -126,7 +126,7 @@ export default function BillAnalysis() {
       }
     };
     fetchData();
-  }, [params.billId, user]);
+  }, [params.billId, user?.id]);
 
   useEffect(() => {
     const runAnalysis = async () => {
