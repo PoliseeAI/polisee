@@ -91,48 +91,47 @@ export async function POST(request: NextRequest) {
       result = data;
     }
 
-    // Recalculate and update vote counters
+    // Get current vote counters (they are automatically updated by database triggers)
+    const { data: voteCounters, error: countersError } = await supabaseAdmin
+      .from('bill_vote_counters' as any)
+      .select('*')
+      .eq('bill_id', billId)
+      .single();
+
+    if (countersError && countersError.code !== 'PGRST116') {
+      console.error('❌ Error fetching vote counters:', countersError);
+      // Create initial counter if it doesn't exist
+      const { data: newCounters, error: createError } = await supabaseAdmin
+        .from('bill_vote_counters' as any)
+        .insert({
+          bill_id: billId,
+          support_count: 0,
+          oppose_count: 0
+        })
+        .select()
+        .single();
+      
+      if (createError) {
+        console.error('❌ Error creating vote counters:', createError);
+        return NextResponse.json(
+          { error: 'Failed to initialize vote counters' },
+          { status: 500 }
+        );
+      }
+      console.log('📊 Created initial vote counters:', newCounters);
+    } else {
+      console.log('📊 Current vote counters:', voteCounters);
+    }
+
+    // Calculate current counts for threshold check
     const { data: allVotes, error: votesError } = await supabaseAdmin
       .from('user_bill_votes' as any)
       .select('sentiment')
       .eq('bill_id', billId);
 
-    if (votesError) {
-      console.error('Error fetching votes for counter update:', votesError);
-      return NextResponse.json(
-        { error: 'Failed to fetch votes for counter update' },
-        { status: 500 }
-      );
-    }
-
-    // Calculate counters
     const supportCount = allVotes?.filter((v: any) => v.sentiment === 'support').length || 0;
     const opposeCount = allVotes?.filter((v: any) => v.sentiment === 'oppose').length || 0;
-    const totalVotes = allVotes?.length || 0;
-    console.log('📊 Calculated counters:', { supportCount, opposeCount, totalVotes });
-
-    // Update the counters
-    const { data: voteCounters, error: countersError } = await supabaseAdmin
-      .from('bill_vote_counters' as any)
-      .upsert({
-        bill_id: billId,
-        support_count: supportCount,
-        oppose_count: opposeCount,
-        updated_at: new Date().toISOString()
-      }, {
-        onConflict: 'bill_id'
-      })
-      .select()
-      .single();
-
-    if (countersError) {
-      console.error('❌ Error updating vote counters:', countersError);
-      return NextResponse.json(
-        { error: 'Failed to update vote counters' },
-        { status: 500 }
-      );
-    }
-    console.log('📊 Counters updated successfully:', voteCounters);
+    console.log('📊 Calculated counters for threshold check:', { supportCount, opposeCount });
 
     // 🚀 AGENTIC WORKFLOW: Check if threshold reached and generate AI message
     const THRESHOLD = 1; // Set threshold to 1 for immediate AI generation
