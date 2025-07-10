@@ -50,6 +50,21 @@ export function MainLayout({
     )
   }
 
+  // Special handling for propose page that needs full height
+  if (pathname === '/propose') {
+    return (
+      <div className="h-screen flex flex-col bg-gray-50">
+        {/* Header Navigation */}
+        {shouldShowHeader && <Header />}
+        
+        {/* Main Content - fills remaining space */}
+        <main className="flex-1 overflow-hidden">
+          {children}
+        </main>
+      </div>
+    )
+  }
+
   // Consistent header layout throughout the app
   return (
     <div className="min-h-screen bg-gray-50">
