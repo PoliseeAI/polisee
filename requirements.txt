@@ -10,3 +10,6 @@ psycopg2-binary
 python-dotenv
 typer
 unstructured[md]
+
+# Token counting for conversation management
+tiktoken
