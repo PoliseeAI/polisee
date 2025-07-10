@@ -1,212 +1,322 @@
 import os
-import sys
 import json
 import psycopg2
-import psycopg2.extras
-from pgvector.psycopg2 import register_vector
+import logging
+from typing import List, Dict, Any, Tuple, Set
+
 from openai import OpenAI
-from sentence_transformers import CrossEncoder
 from dotenv import load_dotenv
 
 # --- Configuration ---
+# Load environment variables from a .env file for local development
 load_dotenv()
 
-# DB Config: Uses a single connection string from your .env file
-# Example: postgresql://postgres:your-postgres-password@db.project-ref.supabase.co:5432/postgres
-SUPABASE_DB_URL = os.getenv("SUPABASE_DB_URL")
-if not SUPABASE_DB_URL:
-    raise ValueError("CRITICAL: SUPABASE_DB_URL environment variable not set.")
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# --- AI Model Configuration ---
-# 1. GENERATOR & EMBEDDER (OpenAI)
-#    - Uses your pre-computed 1536-dimension vectors.
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-SYNTHESIS_MODEL = "gpt-4o-mini"
+# --- Constants ---
+LLM_MODEL = "gpt-4o-mini"
 EMBEDDING_MODEL = "text-embedding-3-small"
+MAX_FINAL_RESULTS = 5 # As requested, cap the final output to 5 bills.
+CANDIDATE_BILL_COUNT_PER_FACET = 5 # How many bills to fetch for each individual facet.
+TOP_CANDIDATE_BILLS_FOR_SYNTHESIS = 7 # How many top candidates to send to the final LLM call.
 
-# 2. RE-RANKER (Local Cross-Encoder)
-#    - This model is loaded into memory once when the script starts.
-print("Loading Re-Ranker model (cross-encoder)...")
-cross_encoder = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2')
-print("Models loaded and ready.")
+# --- Initialize Clients ---
+try:
+    OPENAI_API_KEY = os.environ["OPENAI_API_KEY"]
+    SUPABASE_DB_URL = os.environ["SUPABASE_DB_URL"]
+    openai_client = OpenAI(api_key=OPENAI_API_KEY)
+except KeyError as e:
+    logging.error(f"FATAL: Missing environment variable: {e}")
+    raise SystemExit(f"Error: Missing environment variable: {e}. Please set it before running.")
 
+# --- Helper Functions ---
 
-def get_db_connection():
-    """Establishes and returns a connection to the Supabase database."""
-    conn = psycopg2.connect(SUPABASE_DB_URL)
-    register_vector(conn)
-    return conn
-
-def decompose_persona_to_questions(persona: str) -> list[str]:
-    """Uses LLM to get searchable sub-questions from a user persona."""
-    prompt = f"A user has described themselves with the following persona. Decompose this persona into 3 to 5 specific, concrete questions they might ask about US legislation. Frame the questions from the user's perspective. Persona: '{persona}'. Return a JSON object with a single key \"questions\" that contains an array of the question strings."
-    
+def _get_db_connection():
+    """Establishes a connection to the Supabase PostgreSQL database."""
     try:
-        response = client.chat.completions.create(
-            model=SYNTHESIS_MODEL,
+        conn = psycopg2.connect(SUPABASE_DB_URL)
+        return conn
+    except psycopg2.OperationalError as e:
+        logging.error(f"Database connection failed: {e}")
+        raise
+
+def _extract_persona_facets(persona: str) -> List[str]:
+    """
+    Uses an LLM to deconstruct a user persona into a list of searchable facets.
+    Returns an empty list if the persona is too vague or nonsensical.
+    """
+    prompt = f"""
+    Analyze the following user persona. Extract a list of distinct, concise attributes such as demographics, occupations, interests, locations, and financial situations.
+    These attributes should be factual and suitable for a semantic search.
+
+    - If the persona is detailed, extract multiple attributes.
+    - If the persona is vague, nonsensical, or provides no useful information (e.g., "I'm a person"), return an empty list.
+
+    Persona: "I'm a 45-year-old software engineer living in California, married with two kids. I served in the army for 8 years and am very concerned about climate change."
+    Result: {{"result": ["software engineer", "California resident", "parent", "military veteran", "interest in climate change"]}}
+
+    Persona: "Tell me what's relevant to me."
+    Result: []
+
+    Now, analyze the following persona and return the result as a JSON array of strings under the key "result"
+    Return ONLY the JSON and nothing else.
+
+    Persona: "{persona}"
+    """
+    try:
+        print(prompt)
+        response = openai_client.chat.completions.create(
+            model=LLM_MODEL,
             messages=[{"role": "user", "content": prompt}],
+            temperature=0.0,
             response_format={"type": "json_object"},
-            temperature=0.2,
         )
-        content = json.loads(response.choices[0].message.content or '{}')
-        return content.get("questions", [])
-    except Exception as e:
-        print(f"Error decomposing persona: {e}", file=sys.stderr)
+        # The prompt asks for a JSON array, but response_format wraps it in a dict.
+        # We need to gracefully extract the list, assuming it might be under a key.
+        content = response.choices[0].message.content
+        print(content)
+        data = json.loads(content)
+        # Find the list within the JSON object
+        for value in data.values():
+            if isinstance(value, list):
+                return [item for item in value if isinstance(item, str)]
+        return [] # Return empty if no list is found
+    except (json.JSONDecodeError, IndexError, KeyError) as e:
+        logging.error(f"Failed to extract facets from LLM response: {e}. Response: {response.choices[0].message.content}")
         return []
 
-def retrieve_initial_candidates(sub_questions: list[str], limit_per_question=10) -> list[dict]:
-    """Performs a vector search for each sub-question and aggregates the results."""
-    all_candidates = {} # Use a dict to automatically handle duplicates
-    conn = get_db_connection()
-    
-    with conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
-        for question in sub_questions:
-            embedding = client.embeddings.create(input=[question], model=EMBEDDING_MODEL).data[0].embedding
+def _embed_texts(texts: List[str]) -> List[List[float]]:
+    """Generates embeddings for a list of texts using OpenAI's API."""
+    response = openai_client.embeddings.create(
+        model=EMBEDDING_MODEL,
+        input=texts
+    )
+    return [item.embedding for item in response.data]
 
-            cur.execute(
-                "SELECT * FROM match_summary_chunks(%s::vector, %s, %s);",
-                (embedding, 0.3, limit_per_question) # Using the DB function
-            )
-            
-            for row in cur.fetchall():
-                if row['id'] not in all_candidates:
-                    all_candidates[row['id']] = dict(row)
+def _search_for_facet(facet_embedding: List[float], conn) -> List[Tuple[int, float, str]]:
+    """
+    Performs a vector search in the database for a single facet's embedding.
+    Returns a list of (bill_table_id, similarity_score, chunk_text).
+    """
+    query = """
+    SELECT
+        bill_table_id,
+        1 - (embedding <=> %s) AS similarity,
+        chunk_text
+    FROM
+        public.summary_embeddings
+    ORDER BY
+        similarity DESC
+    LIMIT %s;
+    """
+    # psycopg2 requires the vector to be a string, not a list
+    embedding_str = str(facet_embedding)
+    results = []
+    with conn.cursor() as cur:
+        cur.execute(query, (embedding_str, CANDIDATE_BILL_COUNT_PER_FACET))
+        for row in cur.fetchall():
+            results.append((row[0], row[1], row[2])) # bill_id, similarity, chunk_text
+    return results
 
-    conn.close()
-    print(f"   > Retrieved {len(all_candidates)} unique candidate chunks.")
-    return list(all_candidates.values())
+def _get_bill_details(bill_ids: Set[int], conn) -> Dict[int, Dict[str, Any]]:
+    """Fetches bill title and summary for a set of candidate bill IDs."""
+    if not bill_ids:
+        return {}
 
-def rerank_with_cross_encoder(persona: str, candidates: list[dict]) -> list[dict]:
-    """Re-ranks candidate chunks using a more powerful local CrossEncoder model."""
+    query = """
+    SELECT
+        b.id,
+        b.bill_id as bill_short_name,
+        b.title,
+        s.what_it_does
+    FROM
+        public.bills b
+    JOIN
+        public.ai_bill_summaries s ON b.id = s.bill_table_id
+    WHERE
+        b.id IN %s;
+    """
+    bill_details = {}
+    with conn.cursor() as cur:
+        cur.execute(query, (tuple(bill_ids),))
+        for row in cur.fetchall():
+            bill_details[row[0]] = {
+                "bill_short_name": row[1],
+                "title": row[2],
+                "what_it_does": row[3]
+            }
+    return bill_details
+
+def _synthesize_final_results(persona: str, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Uses an LLM to generate the final, user-facing summary and relevance score for each candidate bill.
+    This is done in a single batch call.
+    """
     if not candidates:
         return []
-    
-    pairs = [[persona, candidate['chunk_text']] for candidate in candidates]
-    
-    print(f"   > Re-ranking {len(pairs)} candidates with CrossEncoder for precision...")
-    scores = cross_encoder.predict(pairs, show_progress_bar=True)
-    
-    for i in range(len(candidates)):
-        candidates[i]['score'] = scores[i]
-        
-    return sorted(candidates, key=lambda x: x['score'], reverse=True)
 
-def generate_final_summary(persona: str, final_context: list[dict]) -> list[dict]:
+    # Construct a detailed prompt with all candidate information
+    candidate_prompts = []
+    for i, cand in enumerate(candidates):
+        candidate_prompts.append(
+            f"""
+            Candidate {i+1}:
+            - Bill ID: {cand['bill_id']}
+            - Bill Title: {cand['details']['title']}
+            - Bill Summary: {cand['details']['what_it_does']}
+            - Matched Persona Facets: {list(cand['matched_facets'])}
+            - Most Relevant Snippet Found: "{cand['top_chunk_text']}"
+            """
+        )
+
+    system_prompt = """
+    You are a helpful and concise US policy analyst. Your task is to analyze a user's persona and a list of potentially relevant congressional bills.
+    For each bill, you will generate a single, compelling sentence explaining its relevance to the user and a relevance score.
+    The final output MUST be a JSON array of objects. Each object must have two keys: "summary_point" (string) and "relevance_score" (integer 0-100).
+    Base the relevance score on how direct and significant the impact on the user's specific persona is. A bill naming a post office for a veteran is less impactful than one changing their healthcare benefits.
     """
-    Uses LLM to synthesize results into a structured JSON list.
-    Each item in the list contains a summary point and the corresponding bill ID.
-    """
-    if not final_context:
-        return []
+    user_prompt = f"""
+    User Persona: "{persona}"
 
-    context_str = ""
-    bill_ids = list(set([c['bill_table_id'] for c in final_context]))
+    Based on this persona, I have found the following candidate bills. Please analyze each one and generate the required JSON output.
+    Return ONLY the JSON array, with one object for each candidate bill. Do not include the bill_id in your output.
 
-    conn = get_db_connection()
-    with conn.cursor() as cur:
-        cur.execute("SELECT id, title, number, type FROM bills WHERE id = ANY(%s);", (bill_ids,))
-        bills = cur.fetchall()
-        bill_map = {b[0]: {'title': b[1], 'number': b[2], 'type': b[3]} for b in bills}
-    conn.close()
-    
-    for i, chunk in enumerate(final_context):
-        bill = bill_map.get(chunk['bill_table_id'])
-        # --- CHANGE 1: Add bill_table_id to the context string ---
-        citation = f"{bill['type']} {bill['number']}" if bill else "Unknown Bill"
-        context_str += f"Context {i + 1} (from bill {citation}, internal_id: {chunk['bill_table_id']}):\n\"{chunk['chunk_text']}\"\n\n"
-
-    # --- CHANGE 2: Completely new prompt asking for JSON output ---
-    prompt = f"""
-    You are a helpful and neutral policy analyst.
-    A user, whose persona is '{persona}', asked what they should know about recent legislation.
-    Based *only* on the following context, generate a JSON array of objects.
-    Each object should represent a single, distinct point of interest for the user and have two keys:
-    1. "summary_point": A string containing a concise summary of the point. This string MUST include the human-readable bill number (e.g., "HR 4303").
-    2. "bill_id": An integer representing the internal database ID of the bill, extracted from the context's 'internal_id'.
-
-    Example output format:
-    [
-      {{
-        "summary_point": "The Social Security Fairness Act (bill H.R. 82) aims to repeal provisions that reduce benefits for government retirees.",
-        "bill_id": 3
-      }},
-      {{
-        "summary_point": "A new bill, S. 2172, proposes an increase in funding for veteran mental health services.",
-        "bill_id": 250
-      }}
-    ]
-
-    Do not add any information that is not present in the provided context.
-    
-    --- CONTEXT ---
-    {context_str}
-    --- END CONTEXT ---
-
-    JSON Response:
+    Candidates:
+    {"".join(candidate_prompts)}
     """
 
-    response = client.chat.completions.create(
-        model=SYNTHESIS_MODEL,
-        messages=[{"role": "user", "content": prompt}],
-        # We now require the model to output a JSON object
-        response_format={"type": "json_object"}, 
-        temperature=0.5,
-    )
-
-    # --- CHANGE 3: Parse the JSON string into a Python list ---
     try:
-        # The model is often instructed to return a root key, e.g. {"points": [...]}.
-        # We'll try to find the list within the returned object.
-        result_json = json.loads(response.choices[0].message.content or '[]')
-        if isinstance(result_json, dict):
-            # Find the first value in the dict that is a list
-            for key, value in result_json.items():
-                if isinstance(value, list):
-                    return value
-        elif isinstance(result_json, list):
-             return result_json
-        return [] # Return empty list if format is unexpected
-    except json.JSONDecodeError:
-        print("Error: LLM did not return valid JSON.")
+        response = openai_client.chat.completions.create(
+            model=LLM_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content
+        # As before, extract the list from the returned JSON object
+        data = json.loads(content)
+        llm_results = []
+        for value in data.values():
+            if isinstance(value, list):
+                llm_results = value
+                break
+
+        # Combine LLM results with our internal bill_id
+        final_results = []
+        for i, res in enumerate(llm_results):
+            if i < len(candidates):
+                # Ensure the LLM result is well-formed before adding
+                if 'summary_point' in res and 'relevance_score' in res:
+                    final_results.append({
+                        "bill_id": candidates[i]['bill_id'],
+                        "summary_point": res['summary_point'],
+                        "relevance_score": res['relevance_score']
+                    })
+        return final_results
+    except (json.JSONDecodeError, IndexError, KeyError) as e:
+        logging.error(f"LLM synthesis failed or returned malformed data: {e}")
         return []
 
 
-def answer_persona_query(persona: str) -> str:
-    """Orchestrates the new, high-fidelity query process and returns the final string."""
-    print(f"\n--- Answering query for persona: '{persona}' ---")
-    
-    print("1. Decomposing persona into specific questions...")
-    sub_questions = decompose_persona_to_questions(persona)
-    if not sub_questions:
-        return "Could not understand the persona to generate questions."
-    print(f"   > Generated questions: {json.dumps(sub_questions, indent=2)}")
+# --- Main Orchestration Function ---
 
-    print("\n2. Retrieving initial candidates via Vector Search...")
-    candidates = retrieve_initial_candidates(sub_questions)
+def answer_persona_query(persona: str) -> List[Dict[str, Any]]:
+    """
+    The main function to find relevant bills for a given persona.
 
-    print("\n3. Re-ranking candidates for precision...")
-    reranked_results = rerank_with_cross_encoder(persona, candidates)
+    This function orchestrates a multi-step process:
+    1. Deconstructs the persona into searchable "facets" using an LLM.
+    2. For each facet, performs a vector search to find relevant bill text chunks.
+    3. Aggregates and ranks the candidate bills based on similarity and number of matching facets.
+    4. Fetches details for the top-ranked bills.
+    5. Uses an LLM in a single batch call to synthesize a final, user-friendly summary and relevance score.
+    6. Returns a list of bills, sorted by relevance.
+    """
+    # 1. Extract facets from persona
+    logging.info(f"Step 1: Extracting facets for persona...")
+    facets = _extract_persona_facets(persona)
+    if not facets:
+        logging.warning("No usable facets extracted from persona. Returning empty list.")
+        return []
+    logging.info(f"Found facets: {facets}")
 
-    final_context = reranked_results[:7]
-    print(f"   > Selected top {len(final_context)} chunks for synthesis.")
+    # 2. Embed all facets and perform parallel searches
+    conn = _get_db_connection()
+    try:
+        facet_embeddings = _embed_texts(facets)
+        all_search_results = {} # {bill_id: {'max_similarity': float, 'facets': set(), 'chunks': list}}
 
-    print("\n4. Synthesizing final answer...")
-    final_answer = generate_final_summary(persona, final_context)
-    
-    return final_answer
+        logging.info("Step 2: Performing vector search for each facet...")
+        for i, facet in enumerate(facets):
+            facet_embedding = facet_embeddings[i]
+            search_results = _search_for_facet(facet_embedding, conn)
 
+            # 3. Aggregate results
+            for bill_id, similarity, chunk_text in search_results:
+                if bill_id not in all_search_results:
+                    all_search_results[bill_id] = {
+                        "max_similarity": 0.0,
+                        "matched_facets": set(),
+                        "top_chunk_text": ""
+                    }
 
-if __name__ == "__main__":
-    if len(sys.argv) > 1:
-        user_persona_query = " ".join(sys.argv[1:])
-        # The function now returns a list of dictionaries
-        structured_answer = answer_persona_query(user_persona_query)
+                # Update max similarity and top chunk text
+                if similarity > all_search_results[bill_id]["max_similarity"]:
+                    all_search_results[bill_id]["max_similarity"] = similarity
+                    all_search_results[bill_id]["top_chunk_text"] = chunk_text
+                
+                all_search_results[bill_id]["matched_facets"].add(facet)
+
+        if not all_search_results:
+            logging.info("No bills found matching any facets.")
+            return []
+
+        # 4. Rank candidates
+        # Score is based on max similarity plus a bonus for each matching facet
+        ranked_candidates = sorted(
+            all_search_results.items(),
+            key=lambda item: item[1]['max_similarity'] + (len(item[1]['matched_facets']) * 0.1),
+            reverse=True
+        )
         
-        print("\n" + "="*20 + " FINAL STRUCTURED ANSWER " + "="*20 + "\n")
-        # Use json.dumps for pretty-printing the structured output
-        print(json.dumps(structured_answer, indent=2))
-        print("\n" + "="*61 + "\n")
-    else:
-        print("Usage: python query_engine.py \"<your persona or question>\"")
-        print("\nExample:")
-        print("python query_engine.py \"I'm a farmer in the Midwest concerned about water rights and international trade.\"")
+        # Prepare top candidates for final synthesis
+        top_candidate_ids = {item[0] for item in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]}
+        logging.info(f"Step 3 & 4: Aggregated and ranked {len(top_candidate_ids)} candidate bills.")
+
+        # 5. Fetch details for top candidates
+        bill_details = _get_bill_details(top_candidate_ids, conn)
+        
+        candidates_for_synthesis = []
+        for bill_id, data in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]:
+            if bill_id in bill_details:
+                candidates_for_synthesis.append({
+                    "bill_id": bill_id,
+                    "details": bill_details[bill_id],
+                    **data
+                })
+
+        # 6. Final LLM synthesis
+        logging.info("Step 5: Synthesizing final results with LLM...")
+        final_results = _synthesize_final_results(persona, candidates_for_synthesis)
+
+        # 7. Sort and truncate final results
+        final_results.sort(key=lambda x: x['relevance_score'], reverse=True)
+        
+        logging.info(f"Successfully generated {len(final_results)} results. Returning top {MAX_FINAL_RESULTS}.")
+        return final_results[:MAX_FINAL_RESULTS]
+
+    finally:
+        if conn:
+            conn.close()
+
+# Example usage for local testing
+if __name__ == '__main__':
+    test_persona = "I'm a disabled military veteran who runs a small software business in rural Washington. I'm also a parent and concerned about government spending."
+    print(f"--- Searching for persona: ---\n{test_persona}\n")
+    results = answer_persona_query(test_persona)
+    print("--- Results: ---")
+    print(json.dumps(results, indent=2))
