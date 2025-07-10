@@ -26,6 +26,39 @@ logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(
 # Note: The get_db_session and get_existing_documents functions are no longer needed
 # with the PGVector approach, which handles its own database operations
 
+def clean_text(text: str) -> str:
+    """
+    Remove null bytes and other problematic characters from text.
+    PostgreSQL doesn't allow null bytes in string literals.
+    """
+    if text is None:
+        return ""
+    # Remove null bytes
+    cleaned = text.replace('\x00', '')
+    # Also remove other control characters that might cause issues
+    # Keep newlines, tabs, and other common whitespace
+    cleaned = ''.join(char for char in cleaned if ord(char) >= 32 or char in '\n\r\t')
+    return cleaned
+
+def clean_document(doc: Document) -> Document:
+    """
+    Clean a document's content and metadata to remove null bytes.
+    """
+    # Clean the page content
+    doc.page_content = clean_text(doc.page_content)
+    
+    # Clean metadata values (they could also contain null bytes)
+    if doc.metadata:
+        cleaned_metadata = {}
+        for key, value in doc.metadata.items():
+            if isinstance(value, str):
+                cleaned_metadata[key] = clean_text(value)
+            else:
+                cleaned_metadata[key] = value
+        doc.metadata = cleaned_metadata
+    
+    return doc
+
 def load_documents_from_directory(directory: str, skip_files: Optional[Set[str]] = None) -> Iterator[Document]:
     """
     Loads all supported documents (.txt, .pdf, .md) from a directory and yields them one by one.
@@ -83,7 +116,10 @@ def split_documents(documents: List[Document]) -> List[Document]:
     logging.info("Splitting documents into chunks...")
     chunks = text_splitter.split_documents(documents)
     logging.info(f"Total chunks created: {len(chunks)}")
-    return chunks
+    
+    # Clean all chunks to remove null bytes
+    cleaned_chunks = [clean_document(chunk) for chunk in chunks]
+    return cleaned_chunks
 
 def add_chunks_to_vectorstore(chunks: List[Document]):
     """
