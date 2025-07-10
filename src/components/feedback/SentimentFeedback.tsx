@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import { ThumbsUp, ThumbsDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -33,6 +34,9 @@ export function SentimentFeedback({
     oppose_count: number
     total_votes: number
   } | null>(null)
+  const [showReasoning, setShowReasoning] = useState(false)
+  const [reasoning, setReasoning] = useState('')
+  const [reasoningLoading, setReasoningLoading] = useState(false)
 
   // Load existing vote and counters
   useEffect(() => {
@@ -59,10 +63,52 @@ export function SentimentFeedback({
           const userSentiment = data.userVote.sentiment === 'support' ? 'positive' : 'negative'
           setSentiment(userSentiment)
           onFeedbackChange?.(userSentiment)
+          
+          // Load existing reasoning if available
+          if (data.userVote.reasoning) {
+            setReasoning(data.userVote.reasoning)
+          }
         }
       }
     } catch (error) {
       console.error('Error loading vote data:', error)
+    }
+  }
+
+  const handleReasoningSubmit = async () => {
+    if (!reasoning.trim() || !userId || !billId || !sentiment) return
+    
+    setReasoningLoading(true)
+    try {
+      const backendSentiment = sentiment === 'positive' ? 'support' : 'oppose'
+      
+      const response = await fetch('/api/vote-bill', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          billId,
+          sentiment: backendSentiment,
+          userId,
+          reasoning: reasoning.trim()
+        }),
+      })
+
+      const data = await response.json()
+      
+      if (data.success) {
+        console.log('✅ Reasoning saved successfully')
+        setShowReasoning(false)
+      } else {
+        console.error('Failed to save reasoning:', data.error)
+        alert(`Failed to save reasoning: ${data.error}`)
+      }
+    } catch (error) {
+      console.error('Error saving reasoning:', error)
+      alert(`Error saving reasoning: ${error}`)
+    } finally {
+      setReasoningLoading(false)
     }
   }
 
@@ -90,7 +136,9 @@ export function SentimentFeedback({
           body: JSON.stringify({
             billId,
             sentiment: backendSentiment,
-            userId
+            userId,
+            sectionId,
+            sectionTitle
           }),
         })
 
@@ -101,8 +149,17 @@ export function SentimentFeedback({
           setVoteCounters(data.counters)
           onFeedbackChange?.(finalSentiment)
           
+          // Show reasoning textbox after voting
+          setShowReasoning(true)
+          
+          // Show notification if AI message was generated
+          if (data.aiMessageGenerated) {
+            const action = finalSentiment === 'positive' ? 'support' : 'oppose'
+            alert(`🤖 Great! Your ${action} vote triggered an AI-generated message! Check the Feed > AI Letters section to sign and send it to representatives.`)
+          }
+          
           // Also call the original callback for compatibility
-          onFeedbackSubmit(finalSentiment === 'positive' ? 'positive' : 'negative')
+          onFeedbackSubmit?.(finalSentiment === 'positive' ? 'positive' : 'negative')
         } else {
           console.error('Failed to save vote:', data.error)
           alert(`Failed to save vote: ${data.error}`)
@@ -175,6 +232,65 @@ export function SentimentFeedback({
         )}
       </div>
       
+      {/* Reasoning textbox */}
+      {showReasoning && sentiment && (
+        <div className="space-y-3 p-4 bg-gray-50 rounded-lg border">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-gray-700">
+              {sentiment === 'positive' ? '✅ Why do you support this bill?' : '❌ Why do you oppose this bill?'}
+            </span>
+          </div>
+          <Textarea
+            placeholder={`Tell us your reasoning for ${sentiment === 'positive' ? 'supporting' : 'opposing'} this bill. Your input will help make AI-generated letters more personalized and effective.`}
+            value={reasoning}
+            onChange={(e) => setReasoning(e.target.value)}
+            className="min-h-[100px] resize-none"
+            maxLength={1000}
+          />
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-gray-500">
+              {reasoning.length}/1000 characters
+            </span>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowReasoning(false)}
+                disabled={reasoningLoading}
+              >
+                Skip
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleReasoningSubmit}
+                disabled={reasoningLoading || !reasoning.trim()}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                {reasoningLoading ? 'Saving...' : 'Save Reasoning'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Show saved reasoning if it exists */}
+      {reasoning && !showReasoning && (
+        <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+          <div className="flex items-center gap-2 mb-2">
+            <span className="text-sm font-medium text-blue-700">Your reasoning:</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowReasoning(true)}
+              className="text-blue-600 hover:text-blue-700 p-0 h-auto"
+            >
+              Edit
+            </Button>
+          </div>
+          <p className="text-sm text-blue-600 italic">"{reasoning}"</p>
+        </div>
+      )}
+
       {showVoteCounts && voteCounters && (
         <div className="text-xs text-gray-500 flex items-center gap-4">
           <span>Total votes: {voteCounters.total_votes}</span>

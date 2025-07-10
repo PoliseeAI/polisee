@@ -50,12 +50,15 @@ export async function GET(request: Request) {
         const token = authHeader.substring(7)
         const { data: { user } } = await supabase.auth.getUser(token)
         currentUserId = user?.id || null
+        console.log('Current user ID:', currentUserId)
       } catch (error) {
         console.log('Could not get user from token:', error)
       }
+    } else {
+      console.log('No authorization header found')
     }
     
-    // Query for representative messages with signature data using actual schema
+    // Query for AI-generated messages with signature data
     const { data: messages, error } = await (supabase as any)
       .from('generated_representative_messages')
       .select(`
@@ -64,59 +67,83 @@ export async function GET(request: Request) {
         subject,
         message,
         sentiment,
+        threshold_reached,
         created_at,
-        message_signature_analytics!inner(
-          total_signatures,
-          campaign_status,
-          target_signatures
-        ),
-        message_signatures(
-          user_name,
-          user_id,
-          created_at
-        )
+        is_active
       `)
       .eq('is_active', true)
-      .gte('message_signature_analytics.total_signatures', 2) // Only letters with multiple signatures
-      .eq('message_signature_analytics.campaign_status', 'active')
       .order('created_at', { ascending: false })
-      .limit(20)
 
     if (error) {
-      console.error('Error fetching letters:', error)
-      // Return empty array if table doesn't exist or has errors
+      console.error('Error fetching messages:', error)
+      return NextResponse.json(
+        { error: 'Failed to fetch messages' },
+        { status: 500 }
+      )
+    }
+
+    console.log('Messages found:', messages?.length || 0)
+
+    if (!messages || messages.length === 0) {
       return NextResponse.json({ letters: [] })
     }
 
-    // Transform the data to match the expected format
-    const formattedLetters = (messages as any[])?.map(msg => {
-      const analytics = msg.message_signature_analytics?.[0]
-      const signatures = msg.message_signatures || []
-      const isSignedByUser = currentUserId ? signatures.some((sig: any) => sig.user_id === currentUserId) : false
-      
-      return {
-        id: msg.id,
-        billId: msg.bill_id,
-        billTitle: `Bill ${msg.bill_id}`, // You might want to join with bills table for actual title
-        sentiment: msg.sentiment || 'support',
-        subject: msg.subject || 'Legislative Action',
-        message: msg.message || '',
-        representative: {
-          name: 'Generated Campaign', // These are community-generated messages
-          party: 'Community',
-          state: msg.target_state || 'All',
-          title: 'Community'
-        },
-        signatures: signatures.map((sig: any) => sig.user_name),
-        signatureCount: analytics?.total_signatures || 0,
-        targetSignatures: analytics?.target_signatures || 100,
-        campaignStatus: analytics?.campaign_status || 'active',
-        createdAt: msg.created_at,
-        isSignedByUser
-      }
-    }) || []
+    // For each message, get signature data
+    const messagesWithSignatures = await Promise.all(
+      messages.map(async (message: any) => {
+        // Get signature count and list
+        const { data: signatures, error: sigError } = await (supabase as any)
+          .from('message_signatures')
+          .select('user_name, created_at')
+          .eq('message_id', message.id)
+          .order('created_at', { ascending: false })
 
-    return NextResponse.json({ letters: formattedLetters })
+        if (sigError) {
+          console.error('Error fetching signatures for message:', message.id, sigError)
+        }
+
+        const signatureCount = signatures?.length || 0
+        const signatureNames = signatures?.map((sig: any) => sig.user_name) || []
+
+        // Check if current user has signed this message
+        let hasUserSigned = false
+        if (currentUserId) {
+          const { data: userSignature } = await (supabase as any)
+            .from('message_signatures')
+            .select('id')
+            .eq('message_id', message.id)
+            .eq('user_id', currentUserId)
+            .single()
+
+          hasUserSigned = !!userSignature
+        }
+
+        return {
+          ...message,
+          billId: message.bill_id,
+          billTitle: message.bill?.title || `Bill ${message.bill_id}`,
+          createdAt: message.created_at,
+          signatureCount,
+          signatures: signatureNames,
+          hasUserSigned,
+          isSignedByUser: hasUserSigned, // Add for UI compatibility
+          targetSignatures: 1,
+          bill: {
+            bill_id: message.bill_id,
+            title: `Bill ${message.bill_id}`,
+            short_title: `Bill ${message.bill_id}`
+          },
+          representative: {
+            name: 'AI-Generated Community Letter',
+            party: 'Community',
+            state: 'All',
+            title: 'Community'
+          }
+        }
+      })
+    )
+
+    return NextResponse.json({ letters: messagesWithSignatures })
   } catch (error) {
     console.error('Error in letters API:', error)
     
@@ -138,24 +165,6 @@ export async function GET(request: Request) {
         signatures: ['Alice Johnson', 'Bob Wilson', 'Carol Davis', 'David Brown', 'Emily White'],
         signatureCount: 5,
         createdAt: '2024-01-15T10:30:00Z',
-        isSignedByUser: false
-      },
-      {
-        id: 'letter-2',
-        billId: 'hr3100-118',
-        billTitle: 'Climate Action and Jobs Act',
-        sentiment: 'support',
-        subject: 'Support for Climate Action and Jobs Act',
-        message: 'Dear Representative Johnson,\n\nI am writing to express my strong support for the Climate Action and Jobs Act. This comprehensive legislation addresses the urgent need for climate action while creating good-paying jobs in the clean energy sector.\n\nAs a constituent, I believe this bill represents a crucial step toward addressing climate change while boosting our economy. The investments in renewable energy infrastructure and green job training programs will benefit our community for generations to come.\n\nI urge you to vote YES on this important legislation.\n\nSincerely,\nYour constituents',
-        representative: {
-          name: 'Jane Johnson',
-          party: 'D',
-          state: 'CO',
-          title: 'Rep.'
-        },
-        signatures: ['Michael Chen', 'Sarah Williams', 'Robert Martinez', 'Lisa Anderson'],
-        signatureCount: 4,
-        createdAt: '2024-01-14T14:20:00Z',
         isSignedByUser: false
       }
     ]
