@@ -12,13 +12,13 @@ import { getBillById, BillWithDetails, formatBillId } from '@/lib/bills'
 import { personaUtils, PersonaRow } from '@/lib/supabase'
 import { useAuthContext } from '@/lib/auth'
 import { SourceReference } from '@/components/ui/source-citation'
-import { AnalysisLinkedPDFViewer } from '@/components/ui/enhanced-pdf-viewer'
-import { getBillPDFUrl, getBillSourceReferences, getBillSections } from '@/lib/pdf-storage'
+import { TextSourceViewer } from '@/components/ui/text-source-viewer' // Import new component
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { EnhancedImpactCard, PersonalImpact } from '@/components/ui/enhanced-impact-card'
 import { generatePersonalizedImpacts } from '@/lib/analysis-engine'
 import RepresentativeContact from '@/components/feedback/RepresentativeContact'
 import { SentimentFeedback } from '@/components/feedback/SentimentFeedback'
+import { isEqual } from 'lodash' // Using lodash for deep equality check
 
 
 export default function BillAnalysis() {
@@ -26,16 +26,14 @@ export default function BillAnalysis() {
   const router = useRouter()
   const { user } = useAuthContext()
   const [bill, setBill] = useState<BillWithDetails | null>(null)
+  const [fullBillText, setFullBillText] = useState<string>('') // Add state for full bill text
   const [persona, setPersona] = useState<PersonaRow | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [personalImpacts, setPersonalImpacts] = useState<PersonalImpact[]>([])
   const [impactsLoading, setImpactsLoading] = useState(false)
-  const [billPdfUrl, setBillPdfUrl] = useState<string | null>(null)
-  const [allSourceReferences, setAllSourceReferences] = useState<SourceReference[]>([])
-  const [showPdfDialog, setShowPdfDialog] = useState(false)
-  const [selectedSourceRef, setSelectedSourceRef] = useState<SourceReference | null>(null)
-  const [billSections, setBillSections] = useState<Array<{ id: string; title: string; pageNumber: number; level: number }>>([])  
+  const [showSourceDialog, setShowSourceDialog] = useState(false) // Rename state for clarity
+  const [selectedSourceText, setSelectedSourceText] = useState<string>('') // State for the selected source text
 
   useEffect(() => {
     const fetchData = async () => {
@@ -64,28 +62,9 @@ export default function BillAnalysis() {
             return
           }
 
-          // Fetch PDF URL and source references with error handling
-          try {
-            const pdfUrl = await getBillPDFUrl(params.billId as string)
-            setBillPdfUrl(pdfUrl)
+          // Set the full bill text
+          setFullBillText(fetchedBill.text || 'No text available for this bill.')
 
-            if (pdfUrl) {
-              try {
-                const [sourceRefs, sections] = await Promise.all([
-                  getBillSourceReferences(params.billId as string),
-                  getBillSections(params.billId as string)
-                ])
-                setAllSourceReferences(sourceRefs)
-                setBillSections(sections)
-              } catch (error) {
-                console.error('Error fetching source references or sections:', error)
-                // Continue without these - they're not critical for basic functionality
-              }
-            }
-          } catch (error) {
-            console.error('Error fetching PDF URL:', error)
-            // Continue without PDF - it's not critical for basic functionality
-          }
         } catch (error) {
           console.error('Error fetching bill:', error)
           setError('Failed to load bill data. Please try again.')
@@ -95,7 +74,14 @@ export default function BillAnalysis() {
         // Fetch user's persona with better error handling
         try {
           const userPersona = await personaUtils.getPersona(user.id)
-          setPersona(userPersona)
+          
+          // Deep compare to prevent unnecessary re-renders
+          setPersona(prevPersona => {
+            if (!isEqual(prevPersona, userPersona)) {
+              return userPersona;
+            }
+            return prevPersona;
+          });
 
           if (!userPersona) {
             setError('No persona found. Please create a persona first.')
@@ -131,12 +117,12 @@ export default function BillAnalysis() {
       if (params.billId && persona) {
         setImpactsLoading(true)
         try {
+          // Pass the full bill text to the analysis engine
           const impacts = await generatePersonalizedImpacts(
             params.billId as string, 
-            persona, 
-            allSourceReferences
+            persona
           )
-      setPersonalImpacts(impacts)
+          setPersonalImpacts(impacts)
         } catch (error) {
           console.error('Error generating impacts:', error)
           setPersonalImpacts([])
@@ -147,13 +133,14 @@ export default function BillAnalysis() {
     }
     
     loadImpacts()
-  }, [params.billId, persona, allSourceReferences])
+  }, [params.billId, persona])
 
 
-
-  const handleViewInPdf = (sourceRef: SourceReference) => {
-    setSelectedSourceRef(sourceRef)
-    setShowPdfDialog(true)
+  const handleViewSource = (source: PersonalImpact['source']) => {
+    if (source) {
+      setSelectedSourceText(source.text)
+      setShowSourceDialog(true)
+    }
   }
 
   if (loading) {
@@ -259,12 +246,7 @@ export default function BillAnalysis() {
                       Uncategorized
                     </Badge>
                   )}
-                  {billPdfUrl && (
-                    <Badge variant="outline" className="text-green-700 border-green-300">
-                      <FileText className="h-3 w-3 mr-1" />
-                      PDF Available
-                    </Badge>
-                  )}
+                  {/* Remove PDF-specific UI */}
                   {impactsLoading && (
                     <Badge variant="outline" className="text-blue-700 border-blue-300">
                       <Loader2 className="h-3 w-3 mr-1 animate-spin" />
@@ -273,15 +255,13 @@ export default function BillAnalysis() {
                   )}
                 </div>
               </div>
-              {billPdfUrl && (
-                <Button
-                  variant="outline"
-                  onClick={() => setShowPdfDialog(true)}
-                >
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  View Full Text
-                </Button>
-              )}
+              <Button
+                variant="outline"
+                onClick={() => handleViewSource({ text: fullBillText, sectionTitle: 'Full Bill Text' })}
+              >
+                <BookOpen className="h-4 w-4 mr-2" />
+                View Full Text
+              </Button>
             </div>
           </CardHeader>
         </Card>
@@ -352,7 +332,7 @@ export default function BillAnalysis() {
                   impact={impact}
                   index={index}
                   billId={bill.bill_id}
-                  onViewInPdf={handleViewInPdf}
+                  onViewSource={handleViewSource} // Corrected prop name
                 />
               ))}
             </div>
@@ -445,15 +425,13 @@ export default function BillAnalysis() {
                     View Full Bill Details
                   </Link>
                 </Button>
-                {billPdfUrl && (
-                  <Button 
-                    variant="outline"
-                    onClick={() => setShowPdfDialog(true)}
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Read Original Text
-                  </Button>
-                )}
+                <Button 
+                  variant="outline"
+                  onClick={() => handleViewSource({ text: fullBillText, sectionTitle: 'Full Bill Text' })}
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Read Original Text
+                </Button>
                 <Button disabled>
                   Provide Feedback (Coming Soon)
                 </Button>
@@ -462,35 +440,17 @@ export default function BillAnalysis() {
           </CardContent>
         </Card>
 
-        {/* PDF Viewer Dialog */}
-        {billPdfUrl && (
-          <Dialog open={showPdfDialog} onOpenChange={setShowPdfDialog}>
-            <DialogContent className="max-w-7xl max-h-[95vh] overflow-hidden">
-              <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  {bill.title}
-                  {selectedSourceRef && (
-                    <Badge variant="outline">
-                      Viewing: {selectedSourceRef.sectionTitle || selectedSourceRef.sectionId}
-                    </Badge>
-                  )}
-                </DialogTitle>
-              </DialogHeader>
-              <div className="h-[80vh] overflow-hidden">
-                <AnalysisLinkedPDFViewer
-                  fileUrl={billPdfUrl}
-                  sourceReferences={allSourceReferences}
-                  sections={billSections}
-                  selectedReference={selectedSourceRef || undefined}
-                  onReferenceSelect={(reference) => {
-                    setSelectedSourceRef(reference)
-                  }}
-                />
-              </div>
-            </DialogContent>
-          </Dialog>
-        )}
+        {/* Text Source Viewer Dialog */}
+        <Dialog open={showSourceDialog} onOpenChange={setShowSourceDialog}>
+          <DialogContent className="max-w-4xl h-[80vh] flex flex-col">
+            <TextSourceViewer
+              title={bill.title || "Bill Text"}
+              fullText={fullBillText}
+              sourceText={selectedSourceText}
+              onClose={() => setShowSourceDialog(false)}
+            />
+          </DialogContent>
+        </Dialog>
       </div>
     </AuthGuard>
   )

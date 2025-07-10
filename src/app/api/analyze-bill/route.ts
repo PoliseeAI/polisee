@@ -1,218 +1,184 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { PersonaRow } from '@/lib/supabase'
+import { TextChunk } from '@/lib/text-chunker'
 
-// Type for AI analysis response
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+
+interface AIImpact {
+  category: string;
+  impact: 'positive' | 'negative' | 'neutral';
+  severity: 'low' | 'medium' | 'high';
+  title: string;
+  description: string;
+  details: string[];
+  relevance_score: number;
+  source_chunk_id?: string;
+}
+
 interface AIAnalysisResponse {
-  impacts: Array<{
-    category: string
-    impact: 'positive' | 'negative' | 'neutral'
-    severity: 'low' | 'medium' | 'high'
-    title: string
-    description: string
-    details: string[]
-    relevance_score: number
-  }>
+  impacts: AIImpact[];
+}
+
+async function callOpenAI(prompt: string): Promise<any> {
+  const response = await fetch('https://api.openai.com/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${OPENAI_API_KEY}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'system', content: 'You are an expert policy analyst who explains complex legislation in simple, personal terms. Always respond with valid JSON only.' }, { role: 'user', content: prompt }],
+      max_tokens: 2000,
+      temperature: 0.3,
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    console.error('OpenAI API Error:', { status: response.status, error: errorText });
+    throw new Error(`OpenAI API error: ${response.status} - ${errorText}`);
+  }
+
+  const result = await response.json();
+  const content = result.choices[0]?.message?.content;
+  if (!content) {
+    throw new Error('No content in AI response');
+  }
+  return JSON.parse(content);
 }
 
 export async function POST(request: NextRequest) {
+  if (!OPENAI_API_KEY) {
+    return NextResponse.json({ error: 'OpenAI API key not configured' }, { status: 500 });
+  }
+
   try {
-    const { billText, billTitle, persona } = await request.json()
+    const { textChunks, billTitle, persona } = await request.json();
 
-    console.log('Analyze-bill API called for:', billTitle)
-    console.log('Bill text length:', billText?.length || 0)
-    console.log('Persona location:', persona?.location)
-
-    // Validate required fields
-    if (!billText || !billTitle || !persona) {
-      console.error('Missing required fields:', { 
-        hasBillText: !!billText, 
-        hasBillTitle: !!billTitle, 
-        hasPersona: !!persona 
-      })
-      return NextResponse.json(
-        { error: 'Missing required fields: billText, billTitle, or persona' },
-        { status: 400 }
-      )
+    if (!textChunks || textChunks.length === 0 || !billTitle || !persona) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Check if bill text is too short or generic
-    if (billText.length < 100) {
-      console.warn('Bill text is very short:', billText.length, 'characters')
+    console.log(`Starting two-step analysis for "${billTitle}" with ${textChunks.length} chunks.`);
+
+    // Step 1: Map - Analyze the bill in sections
+    const CHUNK_GROUP_SIZE = 100;
+    const chunkGroups: TextChunk[][] = [];
+    for (let i = 0; i < textChunks.length; i += CHUNK_GROUP_SIZE) {
+      chunkGroups.push(textChunks.slice(i, i + CHUNK_GROUP_SIZE));
     }
 
-    // Check if OpenAI API key is available
-    const apiKey = process.env.OPENAI_API_KEY
-    
-    if (!apiKey) {
-      console.error('OpenAI API key not configured')
-      return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
-        { status: 500 }
-      )
+    const personaSummary = createPersonaSummary(persona);
+    const mapPromises = chunkGroups.map((group, index) => {
+      console.log(`Analyzing section ${index + 1} of ${chunkGroups.length}...`);
+      const mapPrompt = createMapPrompt(group, billTitle, personaSummary);
+      return callOpenAI(mapPrompt);
+    });
+
+    const mapResults = await Promise.all(mapPromises);
+    const allPotentialImpacts = mapResults.flatMap(result => result.potential_impacts || []);
+
+    console.log(`Found ${allPotentialImpacts.length} potential impacts across all sections.`);
+
+    if (allPotentialImpacts.length === 0) {
+      return NextResponse.json({ impacts: [] });
     }
 
-    // Create persona summary
-    const personaSummary = createPersonaSummary(persona)
-    
-    // Create analysis prompt
-    const prompt = createAnalysisPrompt(billText, billTitle, personaSummary)
-    
-    console.log('Calling OpenAI API...')
-    
-    // Call OpenAI API
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {
-            role: 'system',
-            content: 'You are an expert policy analyst who explains complex legislation in simple, personal terms. Always respond with valid JSON only.'
-          },
-          {
-            role: 'user',
-            content: prompt
-          }
-        ],
-        max_tokens: 2000,
-        temperature: 0.3
-      })
-    })
-    
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('OpenAI API error:', {
-        status: response.status,
-        statusText: response.statusText,
-        error: errorText
-      })
-      return NextResponse.json(
-        { error: `OpenAI API error: ${response.status} - ${errorText}` },
-        { status: 500 }
-      )
-    }
-    
-    const result = await response.json()
-    console.log('OpenAI API response received, processing...')
-    
-    const content = result.choices[0]?.message?.content
-    
-    if (!content) {
-      console.error('No content in AI response:', result)
-      return NextResponse.json(
-        { error: 'No content in AI response' },
-        { status: 500 }
-      )
-    }
-    
-    try {
-      const analysisResult: AIAnalysisResponse = JSON.parse(content)
-      console.log('Analysis successful, found', analysisResult.impacts?.length || 0, 'impacts')
-      
-      // Log impact titles for debugging
-      if (analysisResult.impacts) {
-        console.log('Impact titles:', analysisResult.impacts.map(i => i.title))
-      }
-      
-      return NextResponse.json(analysisResult)
-    } catch (error) {
-      console.error('Failed to parse AI response:', content)
-      console.error('Parse error:', error)
-      return NextResponse.json(
-        { error: 'Invalid JSON response from AI' },
-        { status: 500 }
-      )
-    }
+    // Step 2: Reduce - Synthesize the final report
+    console.log('Synthesizing final report...');
+    const reducePrompt = createReducePrompt(allPotentialImpacts, personaSummary);
+    const finalResult: AIAnalysisResponse = await callOpenAI(reducePrompt);
 
-  } catch (error) {
-    console.error('Error in analyze-bill API:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.log(`Analysis complete. Final report has ${finalResult.impacts.length} impacts.`);
+    return NextResponse.json(finalResult);
+
+  } catch (error: any) {
+    console.error('Error in analyze-bill API:', error);
+    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
   }
 }
 
 function createPersonaSummary(persona: PersonaRow): string {
-  return `
-User Profile:
-- Age: ${persona.age}
-- Location: ${persona.location}
-- Occupation: ${persona.occupation}
-- Income Bracket: ${persona.income_bracket}
-- Dependents: ${persona.dependents}
-- Business Type: ${persona.business_type || 'None'}
-- Employee Count: ${persona.employee_count || 'N/A'}
-- Has Medicare: ${persona.has_medicare ? 'Yes' : 'No'}
-- Has Health Insurance: ${persona.has_health_insurance ? 'Yes' : 'No'}
-- Has Social Security: ${persona.has_social_security ? 'Yes' : 'No'}
-- Has Higher Education: ${persona.has_higher_education ? 'Yes' : 'No'}
-- School District: ${persona.school_district || 'Not specified'}
-`.trim()
+    return `
+  - Age: ${persona.age}, Location: ${persona.location}, Occupation: ${persona.occupation}
+  - Income: ${persona.income_bracket}, Dependents: ${persona.dependents}
+  - Health: ${persona.has_health_insurance ? 'Insured' : 'Uninsured'}, ${persona.has_medicare ? 'Medicare' : 'No Medicare'}
+  - Business: ${persona.business_type || 'None'}`;
 }
 
-function createAnalysisPrompt(billText: string, billTitle: string, personaSummary: string): string {
+function createMapPrompt(chunks: TextChunk[], billTitle: string, personaSummary: string): string {
+  const formattedChunks = chunks.map(c => `--- Chunk ID: ${c.id} ---\n${c.content}`).join('\n\n');
   return `
-You are an expert policy analyst. Analyze how this bill would personally impact the user based on their profile.
+You are a policy research assistant. Your task is to read a section of a bill and identify ANY potential ways it might impact a user based on their profile.
 
 BILL TITLE: ${billTitle}
+USER PROFILE: ${personaSummary}
+BILL SECTION TEXT:
+${formattedChunks}
 
-BILL TEXT (first 4000 characters):
-${billText.substring(0, 4000)}...
+TASK: Identify all potential impacts in this section. For each, describe it and cite the source chunk ID.
 
-USER PROFILE:
-${personaSummary}
+Return ONLY valid JSON in this format:
+{
+  "potential_impacts": [
+    {
+      "description": "A brief summary of the potential impact.",
+      "source_chunk_id": "p-123" 
+    }
+  ]
+}
+`;
+}
 
-TASK: Generate 1-4 specific, personalized impacts this bill would have on this user. Focus on quality over quantity.
+function createReducePrompt(potentialImpacts: any[], personaSummary: string): string {
+  const formattedImpacts = potentialImpacts.map(impact => 
+    `- (Source: ${impact.source_chunk_id}): ${impact.description}`
+  ).join('\n');
+
+  return `
+You are an expert policy analyst. You have a list of potential impacts identified from a large bill by your research assistants. Your job is to synthesize these raw notes into a final, polished report for the user.
+
+USER PROFILE: ${personaSummary}
+POTENTIAL IMPACTS LIST:
+${formattedImpacts}
+
+TASK: Synthesize the list into 1-4 specific, personalized impacts. Consolidate duplicates and rank by importance.
 
 IMPORTANT GUIDELINES:
-1. If this is a simple bill (like naming a post office), create 1 relevant impact about community recognition
-2. For complex bills, find 2-4 specific impacts that match the user's situation
-3. Focus on CONCRETE, SPECIFIC effects on this person's life
-4. Use CLEAR, NON-TECHNICAL language
-5. Explain WHY it affects them based on their situation
-6. Include specific dollar amounts, percentages, or quantities when mentioned in the bill
-7. Be accurate - only mention impacts that are actually in the bill text
-8. If no direct impacts apply, create a general community or procedural impact
+1.  Focus on the most direct and significant impacts for this user.
+2.  Combine related notes into a single, coherent impact.
+3.  Use clear, non-technical language.
+4.  For each final impact, select the BEST source chunk ID from the list.
 
 For each impact, provide:
-- category: (Education, Healthcare, Business, Employment, Taxation, Social Security, Community, etc.)
+- category: (Education, Healthcare, Business, etc.)
 - impact: (positive, negative, or neutral)
-- severity: (low, medium, high) - how much this affects them personally
+- severity: (low, medium, high)
 - title: Brief, clear title (max 60 chars)
-- description: One sentence explaining why this affects them (max 120 chars)
-- details: 3-4 bullet points with specific impacts on their life
-- relevance_score: 1-10 how relevant this is to their specific situation
+- description: One sentence explaining why this affects the user (max 120 chars)
+- details: 3-4 bullet points with specific effects.
+- relevance_score: 1-10 of relevance to the user.
+- source_chunk_id: The single best source chunk ID from the list.
 
 Return ONLY valid JSON in this format:
 {
   "impacts": [
     {
-      "category": "Community",
-      "impact": "neutral",
-      "severity": "low",
-      "title": "Local Post Office Recognition",
-      "description": "This bill recognizes a community member at your local post office.",
+      "category": "Taxation",
+      "impact": "positive",
+      "severity": "medium",
+      "title": "New Tax Deduction for Small Businesses",
+      "description": "As a small business owner, you may be eligible for a new tax deduction.",
       "details": [
-        "Honors local veteran or community leader",
-        "No impact on postal services or costs",
-        "Symbolic importance for local area",
-        "No direct financial impact"
+        "A new deduction for businesses with under 50 employees.",
+        "Potentially lowers your annual tax liability.",
+        "Effective for the next fiscal year."
       ],
-      "relevance_score": 3
+      "relevance_score": 8,
+      "source_chunk_id": "p-45"
     }
   ]
 }
-
-IMPORTANT: 
-- Always generate at least 1 impact, even for simple bills
-- For post office naming bills, focus on community recognition
-- For complex bills, find specific personal impacts
-- Use simple language that anyone can understand
-- Don't generate empty impacts arrays
-`
+`;
 } 

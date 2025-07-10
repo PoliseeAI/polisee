@@ -1,6 +1,6 @@
 import { PersonaRow } from '@/lib/supabase'
 import { PersonalImpact } from '@/components/ui/enhanced-impact-card'
-import { SourceReference } from '@/components/ui/source-citation'
+import { TextChunk } from './text-chunker' // Import TextChunk
 import { 
   TrendingUp, 
   AlertTriangle, 
@@ -23,6 +23,7 @@ interface AIAnalysisResponse {
     description: string
     details: string[]
     relevance_score: number
+    source_chunk_id?: string // The ID of the chunk used as a source
   }>
 }
 
@@ -55,14 +56,13 @@ const CATEGORY_ICONS = {
 }
 
 export async function analyzeImpactsWithAI(
-  billText: string,
   billTitle: string,
   persona: PersonaRow,
-  sourceReferences: SourceReference[]
+  textChunks: TextChunk[]
 ): Promise<PersonalImpact[]> {
   try {
     console.log('Starting AI analysis for bill:', billTitle)
-    console.log('Bill text length:', billText.length)
+    console.log('Number of text chunks:', textChunks.length)
     
     // Call our secure API route instead of OpenAI directly
     const response = await fetch('/api/analyze-bill', {
@@ -71,9 +71,9 @@ export async function analyzeImpactsWithAI(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        billText,
-        billTitle,
-        persona
+        textChunks: textChunks,
+        billTitle: billTitle,
+        persona: persona
       })
     })
     
@@ -87,34 +87,32 @@ export async function analyzeImpactsWithAI(
     console.log('AI analysis completed, found', aiResponse.impacts?.length || 0, 'impacts')
     
     // Convert AI response to PersonalImpact format
-    const impacts = convertAIResponseToImpacts(aiResponse, sourceReferences)
+    const impacts = convertAIResponseToImpacts(aiResponse, textChunks) // Pass chunks
     
     return impacts.slice(0, 6) // Return top 6 most relevant impacts
     
   } catch (error) {
     console.error('AI analysis failed, falling back to enhanced analysis:', error)
     // Fallback to enhanced keyword-based analysis if AI fails
-    return generateEnhancedImpacts(billText, billTitle, persona, sourceReferences)
+    const fullText = textChunks.map(c => c.content).join('\n\n')
+    return generateEnhancedImpacts(fullText, billTitle, persona, textChunks) // Pass chunks to fallback
   }
 }
 
 function convertAIResponseToImpacts(
   aiResponse: AIAnalysisResponse, 
-  sourceReferences: SourceReference[]
+  textChunks: TextChunk[] // Updated parameter
 ): PersonalImpact[] {
   if (!aiResponse.impacts || aiResponse.impacts.length === 0) {
     return []
   }
 
   return aiResponse.impacts.map(impact => {
-    // Find relevant source references based on category keywords
-    const categoryKeywords = getCategoryKeywords(impact.category)
-    const relevantSources = sourceReferences.filter(ref => 
-      categoryKeywords.some(keyword => 
-        ref.text.toLowerCase().includes(keyword.toLowerCase())
-      )
-    ).slice(0, 3)
-    
+    // Find the source chunk cited by the AI
+    const sourceChunk = impact.source_chunk_id 
+      ? textChunks.find(c => c.id === impact.source_chunk_id)
+      : null;
+
     return {
       category: impact.category,
       impact: impact.impact,
@@ -123,7 +121,10 @@ function convertAIResponseToImpacts(
       description: impact.description,
       details: impact.details,
       icon: CATEGORY_ICONS[impact.category as keyof typeof CATEGORY_ICONS] || TrendingUp,
-      sourceReferences: relevantSources
+      source: sourceChunk ? {
+        text: sourceChunk.content,
+        sectionTitle: `Referenced from paragraph ${sourceChunk.id.split('-')[1]}`
+      } : undefined
     }
   }).sort((a, b) => {
     // Sort by severity (high > medium > low)
@@ -160,7 +161,7 @@ function generateEnhancedImpacts(
   billText: string,
   billTitle: string,
   persona: PersonaRow,
-  sourceReferences: SourceReference[]
+  textChunks: TextChunk[] // Updated parameter
 ): PersonalImpact[] {
   console.log('Generating enhanced impacts for bill:', billTitle)
   
@@ -184,7 +185,7 @@ function generateEnhancedImpacts(
         'No cost to taxpayers for operations'
       ],
       icon: Building,
-      sourceReferences: sourceReferences.slice(0, 2)
+      source: textChunks.length > 0 ? { text: textChunks[0].content, sectionTitle: 'Preamble' } : undefined
     })
   }
   
@@ -208,9 +209,9 @@ function generateEnhancedImpacts(
         'Consult a tax professional for detailed analysis'
       ],
       icon: DollarSign,
-      sourceReferences: sourceReferences.filter(ref => 
-        ref.text.toLowerCase().includes('tax')
-      ).slice(0, 3)
+      source: textChunks.find(c => c.content.toLowerCase().includes('tax')) 
+              ? { text: textChunks.find(c => c.content.toLowerCase().includes('tax'))!.content } 
+              : undefined
     })
   }
   
@@ -234,9 +235,9 @@ function generateEnhancedImpacts(
           'Monitor implementation timeline'
         ],
         icon: Heart,
-        sourceReferences: sourceReferences.filter(ref => 
-          ref.text.toLowerCase().includes('health')
-        ).slice(0, 3)
+        source: textChunks.find(c => c.content.toLowerCase().includes('health'))
+                ? { text: textChunks.find(c => c.content.toLowerCase().includes('health'))!.content }
+                : undefined
       })
     }
   }
@@ -260,9 +261,9 @@ function generateEnhancedImpacts(
           'Monitor changes to benefit calculations'
         ],
         icon: CheckCircle,
-        sourceReferences: sourceReferences.filter(ref => 
-          ref.text.toLowerCase().includes('social security')
-        ).slice(0, 3)
+        source: textChunks.find(c => c.content.toLowerCase().includes('social security'))
+                ? { text: textChunks.find(c => c.content.toLowerCase().includes('social security'))!.content }
+                : undefined
       })
     }
   }
@@ -283,10 +284,10 @@ function generateEnhancedImpacts(
         'Could affect wages or benefits'
       ],
       icon: Users,
-      sourceReferences: sourceReferences.filter(ref => 
-        ref.text.toLowerCase().includes('employment') || ref.text.toLowerCase().includes('worker')
-      ).slice(0, 3)
-    })
+      source: textChunks.find(c => c.content.toLowerCase().includes('employment'))
+                ? { text: textChunks.find(c => c.content.toLowerCase().includes('employment'))!.content }
+                : undefined
+      })
   }
   
   // Education impact
@@ -309,9 +310,9 @@ function generateEnhancedImpacts(
           'Could change educational funding or policies'
         ],
         icon: GraduationCap,
-        sourceReferences: sourceReferences.filter(ref => 
-          ref.text.toLowerCase().includes('education') || ref.text.toLowerCase().includes('school')
-        ).slice(0, 3)
+        source: textChunks.find(c => c.content.toLowerCase().includes('education'))
+                ? { text: textChunks.find(c => c.content.toLowerCase().includes('education'))!.content }
+                : undefined
       })
     }
   }
@@ -335,9 +336,9 @@ function generateEnhancedImpacts(
           'Could change business compliance requirements'
         ],
         icon: Building,
-        sourceReferences: sourceReferences.filter(ref => 
-          ref.text.toLowerCase().includes('business')
-        ).slice(0, 3)
+        source: textChunks.find(c => c.content.toLowerCase().includes('business'))
+                ? { text: textChunks.find(c => c.content.toLowerCase().includes('business'))!.content }
+                : undefined
       })
     }
   }
@@ -360,7 +361,7 @@ function generateEnhancedImpacts(
         'Monitor for implementation details'
       ],
       icon: TrendingUp,
-      sourceReferences: sourceReferences.slice(0, 2)
+      source: textChunks.length > 0 ? { text: textChunks[0].content, sectionTitle: 'Overview' } : undefined
     })
   }
   
