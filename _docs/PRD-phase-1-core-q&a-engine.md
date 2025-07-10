@@ -42,10 +42,10 @@ This document outlines the requirements for Phase 1 of the **PolGen** applicatio
 -   Upon receiving a valid question, the script must immediately print a status message to the console, such as `> Searching knowledge base and generating response...`.
 
 ### FR3: Knowledge Base Search
--   The system must connect to a pre-existing PostgreSQL database named `polgen`.
--   It must perform a similarity search on the `chunks` table to find text chunks relevant to the user's question.
+-   The system must connect to a pre-existing PostgreSQL database.
+-   It must perform a similarity search against the pre-populated `PGVector` vector store collection to find text chunks relevant to the user's question.
 -   The search must retrieve the **top 5** most relevant chunks.
--   For each retrieved chunk, the system must retain both the text (`chunk_text`) and its source document metadata (specifically the `file_name` from the `documents` table).
+-   The system must retrieve these chunks as LangChain `Document` objects. For each retrieved document, the system must use its page content and its metadata dictionary, which contains the original source filename.
 
 ### FR4: AI-Powered Answer Generation
 -   The system must use the `gpt-4-turbo` model from OpenAI to generate the final answer.
@@ -104,5 +104,4 @@ This document outlines the requirements for Phase 1 of the **PolGen** applicatio
     *   `pgvector`, `psycopg2-binary` (for connecting to PostgreSQL)
     *   `python-dotenv` (for managing environment variables)
 *   **Configuration:** The script must load the `OPENAI_API_KEY` and database connection details from a `.env` file at the root of the project. These credentials must not be hardcoded in the source code.
-*   **Pre-existing Components:** You can assume the `schema.sql` and the data ingestion script are complete and the `polgen` database is already populated with data.
-
+*   **Pre-existing Components:** You can assume the data ingestion script is complete and the PostgreSQL database has been populated with a `PGVector` collection containing the knowledge base.

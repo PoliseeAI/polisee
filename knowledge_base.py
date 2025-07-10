@@ -1,28 +1,21 @@
 # knowledge_base.py
 
-import os
 from typing import List
 from langchain_community.vectorstores.pgvector import PGVector
 from langchain_core.documents import Document
 from langchain_openai import OpenAIEmbeddings
 
-# Define the collection name that will be used in the database
-COLLECTION_NAME = "polgen_documents"
+import config
 
 def get_retriever():
     """Initializes and returns a PGVector retriever."""
-    # Load database connection string from environment variables
-    CONNECTION_STRING = os.getenv("DATABASE_URL")
-    if not CONNECTION_STRING:
-        raise ValueError("DATABASE_URL environment variable not set.")
-
     # Use OpenAI's embedding model, which must match the one used in ingestion
-    embeddings = OpenAIEmbeddings(model="text-embedding-3-small")
+    embeddings = OpenAIEmbeddings(model=config.EMBEDDING_MODEL)
 
     # Initialize the PGVector store
     store = PGVector(
-        collection_name=COLLECTION_NAME,
-        connection_string=CONNECTION_STRING,
+        collection_name=config.COLLECTION_NAME,
+        connection_string=config.DATABASE_URL,
         embedding_function=embeddings,
     )
 
@@ -41,5 +34,6 @@ def search_global_db(query: str) -> List[Document]:
     """
     print("> Searching knowledge base...")
     retriever = get_retriever()
+    print(query)
     # The invoke method performs the similarity search
     return retriever.invoke(query)

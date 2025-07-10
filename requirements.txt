@@ -1,16 +1,12 @@
-# requirements.txt
-
-# For the CLI application framework
-typer
-
-# For interacting with the OpenAI API
-openai
-langchain-openai
+PyMuPDF
+SQLAlchemy
+langchain
 langchain-community
-
-# For PostgreSQL and pgvector integration
+langchain-openai
+openai
 pgvector
+pgvector 
 psycopg2-binary
-
-# For loading environment variables from .env file
 python-dotenv
+typer
+unstructured[md]

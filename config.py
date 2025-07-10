@@ -35,3 +35,11 @@ CHUNK_OVERLAP = 200
 
 # Defines the specific OpenAI model to use for creating embeddings.
 EMBEDDING_MODEL = "text-embedding-3-small" 
+
+# Batch size for embedding API calls
+# OpenAI allows up to 2048 inputs per call, but we use a conservative value
+# to avoid token limits and reduce the impact of failures
+EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "100")) 
+
+# Collection name for PGVector store
+COLLECTION_NAME = "polgen_documents" 
