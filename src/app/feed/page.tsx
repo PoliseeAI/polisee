@@ -14,7 +14,7 @@ import {
 import Link from 'next/link'
 import { AuthGuard } from '@/components/auth'
 import { useAuthContext } from '@/lib/auth'
-import { personaUtils, supabase } from '@/lib/supabase'
+import { personaUtils, supabase, PersonaRow } from '@/lib/supabase'
 
 interface BillSearchResult {
   summary_point: string
@@ -60,6 +60,36 @@ interface UnderRadarBill {
   importance_score: number
 }
 
+// Helper function to create comprehensive persona string
+function createComprehensivePersonaString(persona: PersonaRow): string {
+  const parts = [
+    // Basic demographics
+    `I am a ${persona.age}-year-old ${persona.occupation} living in ${persona.location}`,
+    
+    // Income and dependents
+    `with an income in the ${persona.income_bracket} bracket`,
+    persona.dependents > 0 ? `and ${persona.dependents} dependents` : 'with no dependents',
+    
+    // Education
+    persona.has_higher_education ? 'with higher education' : 'without higher education',
+    
+    // Health and benefits
+    `I ${persona.has_health_insurance ? 'have' : 'do not have'} health insurance`,
+    persona.has_medicare ? 'I receive Medicare benefits' : 'I do not receive Medicare',
+    persona.has_social_security ? 'I receive Social Security benefits' : 'I do not receive Social Security',
+    
+    // Business information
+    persona.business_type ? `I operate a ${persona.business_type} business` : 'I do not operate a business',
+    persona.employee_count ? `with ${persona.employee_count} employees` : null,
+    
+    // School district
+    persona.school_district ? `in the ${persona.school_district} school district` : null
+  ]
+  
+  // Filter out null values and join with appropriate punctuation
+  return parts.filter(Boolean).join(', ') + '.'
+}
+
 export default function EnhancedFeedPage() {
   // Search State
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,7 +111,7 @@ export default function EnhancedFeedPage() {
   
   // User and Persona State
   const { user } = useAuthContext()
-  const [userPersona, setUserPersona] = useState<any>(null)
+  const [userPersona, setUserPersona] = useState<PersonaRow | null>(null)
   
   // Signature Modal State
   const [showSigningModal, setShowSigningModal] = useState<FeedMessage | null>(null)
@@ -105,20 +135,32 @@ export default function EnhancedFeedPage() {
     loadUserPersona()
   }, [user])
 
-  // Bill Search Function using your ngrok endpoint
+  // Updated Bill Search Function - Option 2: Combine persona + query
   const searchBills = async () => {
     if (!searchQuery.trim()) return
     
     setSearchLoading(true)
     try {
-      console.log('Starting search with query:', searchQuery)
+      // Create comprehensive persona string if user has one
+      let combinedPersona = searchQuery.trim()
+      
+      if (userPersona) {
+        const fullPersonaString = createComprehensivePersonaString(userPersona)
+        combinedPersona = `${fullPersonaString} I am interested in: ${searchQuery.trim()}`
+        console.log('Combined persona + query:', combinedPersona)
+      } else {
+        console.log('Using search query only (no stored persona):', combinedPersona)
+      }
+
       const response = await fetch('/api/search-bills', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          persona: searchQuery
+          persona: combinedPersona,
+          query: searchQuery.trim(),
+          hasStoredPersona: !!userPersona
         })
       })
       

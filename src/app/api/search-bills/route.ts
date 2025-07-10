@@ -3,8 +3,12 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     console.log('=== Search Bills API Called ===')
-    const { persona } = await request.json()
-    console.log('Received persona:', persona)
+    const { persona, query, hasStoredPersona } = await request.json()
+    console.log('Received data:', { 
+      persona: persona?.substring(0, 100) + '...', 
+      query, 
+      hasStoredPersona 
+    })
 
     // Validate required fields
     if (!persona) {
@@ -24,7 +28,10 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        persona: persona
+        persona: persona,
+        // Optional: pass additional metadata
+        query: query,
+        has_stored_persona: hasStoredPersona
       })
     })
 
