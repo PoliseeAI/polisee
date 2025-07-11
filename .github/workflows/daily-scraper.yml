@@ -1,0 +1,130 @@
+name: Daily Bill Scraper
+
+on:
+  schedule:
+    # Run daily at 6 AM EST (11 AM UTC)
+    - cron: '0 11 * * *'
+  
+  # Allow manual triggering for testing
+  workflow_dispatch:
+    inputs:
+      days:
+        description: 'Number of days to look back'
+        required: false
+        default: '1'
+        type: string
+      mode:
+        description: 'Scraper mode (daily, test)'
+        required: false
+        default: 'daily'
+        type: choice
+        options:
+        - daily
+        - test
+        - initial
+
+jobs:
+  scrape-bills:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        cd backend
+        pip install -r requirements.txt
+    
+    - name: Verify environment
+      run: |
+        echo "Python version: $(python --version)"
+        echo "Working directory: $(pwd)"
+        echo "Backend directory contents:"
+        ls -la backend/
+        echo "Scraper directory contents:"
+        ls -la backend/scraper/
+    
+    - name: Run Federal Bill Scraper
+      id: scraper
+      env:
+        CONGRESS_API_KEY: ${{ secrets.CONGRESS_API_KEY }}
+        NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+        SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
+        # Set logging level for GitHub Actions
+        LOG_LEVEL: INFO
+      run: |
+        cd backend/scraper
+        echo "Starting scraper with mode: ${{ github.event.inputs.mode || 'daily' }}"
+        echo "Looking back: ${{ github.event.inputs.days || '1' }} days"
+        python main.py --mode ${{ github.event.inputs.mode || 'daily' }} --days ${{ github.event.inputs.days || '1' }}
+    
+    - name: Check scraper output
+      if: always()
+      run: |
+        echo "Scraper completed with exit code: ${{ steps.scraper.outcome }}"
+        if [ -f backend/scraper/congress_scraper.log ]; then
+          echo "Log file size: $(wc -l backend/scraper/congress_scraper.log)"
+          echo "Last 20 lines of log:"
+          tail -n 20 backend/scraper/congress_scraper.log
+        else
+          echo "No log file found"
+        fi
+    
+    - name: Upload logs
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: scraper-logs-${{ github.run_number }}
+        path: |
+          backend/scraper/*.log
+          backend/scraper/state_scraper.log
+        retention-days: 7
+        if-no-files-found: ignore
+    
+    - name: Create failure issue
+      if: failure()
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const title = `Daily Scraper Failed - ${new Date().toISOString().split('T')[0]}`;
+          const body = `The daily bill scraper failed on ${new Date().toISOString()}.
+          
+          **Workflow Run:** https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          **Error Details:**
+          - Mode: ${{ github.event.inputs.mode || 'daily' }}
+          - Days: ${{ github.event.inputs.days || '1' }}
+          - Repository: ${{ github.repository }}
+          - Commit: ${{ github.sha }}
+          
+          Please check the workflow logs and fix the issue.`;
+          
+          await github.rest.issues.create({
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            title: title,
+            body: body,
+            labels: ['bug', 'automation', 'scraper-failure']
+          });
+    
+    - name: Summary
+      if: always()
+      run: |
+        echo "## Daily Scraper Summary" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status:** ${{ steps.scraper.outcome }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Mode:** ${{ github.event.inputs.mode || 'daily' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Days looked back:** ${{ github.event.inputs.days || '1' }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.scraper.outcome }}" == "failure" ]; then
+          echo "- **Issue created:** Yes" >> $GITHUB_STEP_SUMMARY
+        fi 

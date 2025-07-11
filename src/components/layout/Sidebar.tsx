@@ -12,7 +12,8 @@ import {
   ChevronRight,
   BarChart3,
   HelpCircle,
-  LogOut
+  LogOut,
+  Upload
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -29,6 +30,7 @@ interface NavigationItem {
 
 const navigation: NavigationItem[] = [
   { name: 'Home', href: '/', icon: Home },
+  { name: 'Bills', href: '/bills', icon: FileText },
   { 
     name: 'Analyze', 
     href: '/analyze', 

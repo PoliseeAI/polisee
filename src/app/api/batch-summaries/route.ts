@@ -51,8 +51,25 @@ export async function POST(request: NextRequest) {
     // Get admin Supabase client
     const supabaseAdmin = getSupabaseAdmin()
 
-    // Get all bills with content (select id, bill_id and other needed fields)
-    const { data: bills, error: billsError } = await supabaseAdmin
+    // Get existing summaries first to prioritize bills without summaries
+    const { data: existingSummaries, error: summariesError } = await supabaseAdmin
+      .from('ai_bill_summaries')
+      .select('bill_id, bill_text_hash')
+
+    if (summariesError) {
+      console.error('Error fetching existing summaries:', summariesError)
+      return NextResponse.json({
+        success: false,
+        message: 'Failed to fetch existing summaries'
+      }, { status: 500 })
+    }
+
+    const existingSummaryMap = new Map(
+      existingSummaries?.map(summary => [summary.bill_id, summary.bill_text_hash]) || []
+    )
+
+    // Get all bills with content, prioritizing those without summaries
+    const { data: allBills, error: billsError } = await supabaseAdmin
       .from('bills')
       .select('id, bill_id, title, text')
       .eq('is_active', true)
@@ -60,7 +77,6 @@ export async function POST(request: NextRequest) {
       .not('text', 'eq', '')
       .not('text', 'ilike', '%[No text content available]%')
       .order('introduced_date', { ascending: false })
-      .limit(maxBills)
 
     if (billsError) {
       console.error('Error fetching bills:', billsError)
@@ -69,6 +85,49 @@ export async function POST(request: NextRequest) {
         message: 'Failed to fetch bills from database'
       }, { status: 500 })
     }
+
+    if (!allBills || allBills.length === 0) {
+      return NextResponse.json({
+        success: true,
+        processed: 0,
+        skipped: 0,
+        failed: 0,
+        errors: [],
+        message: 'No bills found with content to process',
+        details: {
+          totalBills: 0,
+          existingSummaries: 0,
+          billsToProcess: 0
+        }
+      })
+    }
+
+    // Separate bills into those without summaries and those with outdated summaries
+    const billsWithoutSummaries: typeof allBills = []
+    const billsWithOutdatedSummaries: typeof allBills = []
+    const billsWithCurrentSummaries: typeof allBills = []
+
+    for (const bill of allBills) {
+      const billTextHash = createHash('sha256').update(bill.text || '').digest('hex')
+      const existingHash = existingSummaryMap.get(bill.bill_id)
+
+      if (!existingHash) {
+        billsWithoutSummaries.push(bill)
+      } else if (existingHash !== billTextHash) {
+        billsWithOutdatedSummaries.push(bill)
+      } else {
+        billsWithCurrentSummaries.push(bill)
+      }
+    }
+
+    // Prioritize bills without summaries first, then outdated summaries
+    const bills = [
+      ...billsWithoutSummaries,
+      ...billsWithOutdatedSummaries,
+      ...billsWithCurrentSummaries
+    ].slice(0, maxBills)
+
+    console.log(`Bill prioritization: ${billsWithoutSummaries.length} without summaries, ${billsWithOutdatedSummaries.length} with outdated summaries, ${billsWithCurrentSummaries.length} with current summaries`)
 
     if (!bills || bills.length === 0) {
       return NextResponse.json({
@@ -85,23 +144,6 @@ export async function POST(request: NextRequest) {
         }
       })
     }
-
-    // Get existing summaries
-    const { data: existingSummaries, error: summariesError } = await supabaseAdmin
-      .from('ai_bill_summaries')
-      .select('bill_id, bill_text_hash')
-
-    if (summariesError) {
-      console.error('Error fetching existing summaries:', summariesError)
-      return NextResponse.json({
-        success: false,
-        message: 'Failed to fetch existing summaries'
-      }, { status: 500 })
-    }
-
-    const existingSummaryMap = new Map(
-      existingSummaries?.map(summary => [summary.bill_id, summary.bill_text_hash]) || []
-    )
 
     // Determine which bills need processing
     const billsToProcess: BillForSummary[] = []
@@ -314,10 +356,10 @@ export async function GET() {
     // Get admin Supabase client
     const supabaseAdmin = getSupabaseAdmin()
     
-    // Get statistics about current summary status
+    // Get statistics about current summary status using the same logic as POST
     const { data: bills, error: billsError } = await supabaseAdmin
       .from('bills')
-      .select('bill_id, title')
+      .select('id, bill_id, title, text')
       .eq('is_active', true)
       .not('text', 'is', null)
       .not('text', 'eq', '')
@@ -332,7 +374,7 @@ export async function GET() {
 
     const { data: summaries, error: summariesError } = await supabaseAdmin
       .from('ai_bill_summaries')
-      .select('bill_id')
+      .select('bill_id, bill_text_hash')
 
     if (summariesError) {
       return NextResponse.json({
@@ -343,14 +385,41 @@ export async function GET() {
 
     const totalBills = bills?.length || 0
     const existingSummaries = summaries?.length || 0
-    const billsWithoutSummaries = totalBills - existingSummaries
+
+    // Use the same hash-based logic as POST endpoint to calculate bills needing processing
+    const existingSummaryMap = new Map(
+      summaries?.map(summary => [summary.bill_id, summary.bill_text_hash]) || []
+    )
+
+    let billsWithoutSummaries = 0
+    let billsWithOutdatedSummaries = 0
+
+    for (const bill of bills || []) {
+      const billTextHash = createHash('sha256').update(bill.text || '').digest('hex')
+      const existingHash = existingSummaryMap.get(bill.bill_id)
+
+      if (!existingHash) {
+        // No summary at all
+        billsWithoutSummaries++
+      } else if (existingHash !== billTextHash) {
+        // Summary exists but text has changed
+        billsWithOutdatedSummaries++
+      }
+    }
+
+    const totalBillsNeedingProcessing = billsWithoutSummaries + billsWithOutdatedSummaries
+    const completionRate = totalBills > 0 ? Math.round(((totalBills - totalBillsNeedingProcessing) / totalBills) * 100) : 0
 
     return NextResponse.json({
       success: true,
       totalBills,
       existingSummaries,
-      billsWithoutSummaries,
-      completionRate: totalBills > 0 ? Math.round((existingSummaries / totalBills) * 100) : 0
+      billsWithoutSummaries: totalBillsNeedingProcessing,
+      billsWithoutSummariesBreakdown: {
+        noSummary: billsWithoutSummaries,
+        outdatedSummary: billsWithOutdatedSummaries
+      },
+      completionRate
     })
 
   } catch (error) {

@@ -27,7 +27,7 @@ interface PersonaData {
   occupation: string
   income_bracket: string
   dependents: number
-  business_type?: string
+  business_type?: string | null
 }
 
 interface RepresentativeContactProps {
@@ -273,6 +273,60 @@ export default function RepresentativeContact({
     }
   };
 
+  const generateAIMessageForRepresentativeWithSentiment = async (representative: Representative | EnhancedRepresentative, messageSentiment: 'support' | 'oppose') => {
+    setIsGeneratingMessage(true);
+    
+    try {
+      console.log(`Generating ${messageSentiment} message for ${representative.first_name} ${representative.last_name}...`);
+      
+      const response = await fetch('/api/generate-representative-message', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          representative,
+          sentiment: messageSentiment,
+          billId,
+          billTitle,
+          personaData
+        }),
+      });
+
+      if (!response.ok) {
+        console.error(`Failed to generate ${messageSentiment} message for ${representative.first_name} ${representative.last_name}:`, response.status);
+        throw new Error(`Failed to generate ${messageSentiment} message for ${representative.first_name} ${representative.last_name}`);
+      }
+
+      const data = await response.json();
+      console.log(`Response for ${representative.first_name} ${representative.last_name}:`, data);
+      
+      if (data.success && data.message && data.subject) {
+        const newMessage = {
+          id: `${representative.bioguide_id || (representative as Representative).id}-${messageSentiment}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          message: data.message,
+          subject: data.subject,
+          representative,
+          sentiment: messageSentiment,
+          signatures: [],
+          isSignedByUser: false,
+          created_at: new Date().toISOString()
+        };
+        
+        setGeneratedMessages(prev => [...prev, newMessage]);
+        console.log(`Successfully created ${messageSentiment} message for ${representative.first_name} ${representative.last_name}`);
+      } else {
+        console.error(`Invalid response data for ${representative.first_name} ${representative.last_name}:`, data);
+        throw new Error(`Invalid response data for ${representative.first_name} ${representative.last_name}`);
+      }
+    } catch (error) {
+      console.error('Error generating AI message:', error);
+      alert(`Error generating ${messageSentiment} message for ${representative.first_name} ${representative.last_name}. Please try again.`);
+    } finally {
+      setIsGeneratingMessage(false);
+    }
+  };
+
   const generateAIMessage = async () => {
     setIsGeneratingMessage(true);
     
@@ -452,26 +506,32 @@ export default function RepresentativeContact({
     }
 
     try {
-      const response = await fetch('/api/sign-representative-message', {
+      // Send the formal letter directly via email (same as community letters)
+      const emailResponse = await fetch('/api/send-representative-message', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           messageId: showSigningModal.id,
-          userName: userName.trim(),
-          userEmail: userEmail.trim()
+          representative: showSigningModal.representative,
+          subject: showSigningModal.subject,
+          messageContent: showSigningModal.message,
+          signatures: [userName.trim()],
+          senderName: userName.trim(),
+          senderEmail: userEmail.trim() || '',
+          sendFormalEmail: true // Flag to send formal email to benny.yang@gauntletai.com
         }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to sign message');
+      if (!emailResponse.ok) {
+        throw new Error('Failed to send message');
       }
 
-      const data = await response.json();
+      const emailData = await emailResponse.json();
       
-      if (data.success) {
-        // Update the message with signature
+      if (emailData.success) {
+        // Update the message with signature and mark as sent
         setGeneratedMessages(prev => 
           prev.map(msg => 
             msg.id === showSigningModal.id 
@@ -488,7 +548,7 @@ export default function RepresentativeContact({
         setUserName('');
         setUserEmail('');
         
-        alert('✅ Message signed successfully! It will be sent to your representative once enough signatures are collected.');
+        alert('✅ Message signed and sent successfully! A formal letter has been sent to your representative.');
       }
     } catch (error) {
       console.error('Error signing message:', error);
@@ -1066,10 +1126,10 @@ export default function RepresentativeContact({
                   <div className="space-y-4">
                     <div className="p-4 bg-gray-50 rounded-lg">
                       <h4 className="font-medium mb-2">
-                        {sentiment === 'support' ? 'Support' : 'Oppose'} {billTitle}
+                        Generate AI Message for {billTitle}
                       </h4>
                       <p className="text-sm text-gray-600 mb-3">
-                        Generate an AI-powered message expressing your {sentiment} for this legislation:
+                        Generate an AI-powered message expressing your position on this legislation:
                       </p>
                       
                       <div className="space-y-3">
@@ -1086,14 +1146,25 @@ export default function RepresentativeContact({
                           </label>
                         </div>
                         
-                        <Button
-                          onClick={() => generateAIMessageForRepresentative(rep)}
-                          disabled={isGeneratingMessage || !selectedRepresentatives.has(repKey)}
-                          className="w-full flex items-center gap-2"
-                        >
-                          <Sparkles className="h-4 w-4" />
-                          {isGeneratingMessage ? 'Generating AI Message...' : 'Generate AI Message'}
-                        </Button>
+                        <div className="grid grid-cols-2 gap-2">
+                          <Button
+                            onClick={() => generateAIMessageForRepresentativeWithSentiment(rep, 'support')}
+                            disabled={isGeneratingMessage || !selectedRepresentatives.has(repKey)}
+                            className="flex items-center gap-2 bg-green-600 hover:bg-green-700"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                            {isGeneratingMessage ? 'Generating...' : 'Generate Support Message'}
+                          </Button>
+                          
+                          <Button
+                            onClick={() => generateAIMessageForRepresentativeWithSentiment(rep, 'oppose')}
+                            disabled={isGeneratingMessage || !selectedRepresentatives.has(repKey)}
+                            className="flex items-center gap-2 bg-red-600 hover:bg-red-700"
+                          >
+                            <Sparkles className="h-4 w-4" />
+                            {isGeneratingMessage ? 'Generating...' : 'Generate Oppose Message'}
+                          </Button>
+                        </div>
                       </div>
                     </div>
                   </div>

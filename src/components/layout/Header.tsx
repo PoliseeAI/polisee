@@ -3,7 +3,7 @@
 import * as React from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Menu, X, User, FileText, Settings, Home, LogOut, ChevronDown, Download, Users, MessageCircle } from 'lucide-react'
+import { Menu, X, User, FileText, Settings, Home, LogOut, ChevronDown, Download, Users, MessageCircle, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { useAuthContext } from '@/lib/auth'
@@ -21,7 +21,7 @@ const navigation = [
   { name: 'Home', href: '/', icon: Home },
   { name: 'Analyze', href: '/analyze', icon: FileText },
   { name: 'Feed', href: '/feed', icon: MessageCircle },
-  { name: 'Representatives', href: '/representatives', icon: Users },
+  { name: 'Propose', href: '/propose', icon: Lightbulb },
   { name: 'Settings', href: '/settings', icon: Settings },
 ]
 
@@ -67,13 +67,6 @@ export function Header() {
                 </Link>
               )
             })}
-            <Link 
-              href="/scraper" 
-              className="flex items-center space-x-2 text-gray-700 hover:text-blue-600 transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              <span>Scraper</span>
-            </Link>
           </nav>
         )}
 
@@ -171,18 +164,6 @@ export function Header() {
                 </Link>
               )
             })}
-            
-            {/* Scraper link for mobile - Only show when user is logged in */}
-            {user && (
-              <Link
-                href="/scraper"
-                className="flex items-center space-x-3 px-3 py-2 rounded-md text-base font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                <Download className="h-5 w-5" />
-                <span>Scraper</span>
-              </Link>
-            )}
             
             <div className={cn("pt-4 pb-2", user && "border-t")}>
               <div className="px-3 space-y-2">

@@ -1,0 +1,5 @@
+# flyctl launch added from .gitignore
+**/venv
+**/.env
+**/lambda_deployment
+fly.toml

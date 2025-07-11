@@ -238,14 +238,14 @@ export default function Bills() {
                           {bill.title}
                         </CardTitle>
                       </div>
-                                             <div className="flex flex-col sm:items-end gap-2">
-                         <Badge 
-                           className={getBillStatusColor(bill)}
-                           variant="secondary"
-                           title={bill.latest_action || 'Status Unknown'}
-                         >
-                           {truncateText(bill.latest_action, 30) || 'Status Unknown'}
-                         </Badge>
+                      <div className="flex flex-col sm:items-end gap-2">
+                        <Badge 
+                          className={getBillStatusColor(bill)}
+                          variant="secondary"
+                          title={bill.latest_action || 'Status Unknown'}
+                        >
+                          {truncateText(bill.latest_action, 30) || 'Status Unknown'}
+                        </Badge>
                         <div className="flex items-center text-sm text-gray-500">
                           <Calendar className="h-4 w-4 mr-1" />
                           {formatDate(bill.introduced_date)}
@@ -300,26 +300,26 @@ export default function Bills() {
                         </div>
                       )}
 
-                                             <div className="space-y-2 pt-4">
-                         <div className="text-sm text-gray-600">
-                           <span className="font-medium">Latest Action:</span> {bill.latest_action || 'No action recorded'}
-                         </div>
-                         <div className="text-xs text-gray-500">
-                           Action Date: {formatDate(bill.latest_action_date)}
-                         </div>
-                         <div className="flex gap-2">
-                           <Button variant="outline" size="sm" asChild>
-                             <Link href={`/bills/${bill.bill_id}`}>
-                               View Details
-                             </Link>
-                           </Button>
-                           <Button size="sm" asChild>
-                             <Link href={`/bills/${bill.bill_id}/analysis`}>
-                               Get Analysis
-                             </Link>
-                           </Button>
-                         </div>
-                       </div>
+                      <div className="space-y-2 pt-4">
+                        <div className="text-sm text-gray-600">
+                          <span className="font-medium">Latest Action:</span> {bill.latest_action || 'No action recorded'}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          Action Date: {formatDate(bill.latest_action_date)}
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href={`/bills/${bill.bill_id}`}>
+                              View Details
+                            </Link>
+                          </Button>
+                          <Button size="sm" asChild>
+                            <Link href={`/bills/${bill.bill_id}/analysis`}>
+                              Get Analysis
+                            </Link>
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -327,8 +327,6 @@ export default function Bills() {
             </div>
           </>
         )}
-
-
       </div>
     </AuthGuard>
   )

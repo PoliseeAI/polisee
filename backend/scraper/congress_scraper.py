@@ -24,7 +24,7 @@ class CongressScraper:
         })
         
     def _make_request(self, endpoint: str, params: Optional[Dict] = None) -> Dict:
-        """Make a request to the Congress.gov API with retry logic."""
+        """Make a request to the Congress.gov API with retry logic and timeout."""
         if params is None:
             params = {}
         
@@ -35,12 +35,18 @@ class CongressScraper:
         
         for attempt in range(Config.MAX_RETRIES):
             try:
-                response = self.session.get(url, params=params)
+                # Add timeout to prevent hanging
+                response = self.session.get(url, params=params, timeout=30)
                 response.raise_for_status()
                 
                 time.sleep(Config.REQUEST_DELAY)
                 return response.json()
                 
+            except requests.exceptions.Timeout:
+                logger.warning(f"Request timed out (attempt {attempt + 1}/{Config.MAX_RETRIES}): {url}")
+                if attempt == Config.MAX_RETRIES - 1:
+                    raise
+                time.sleep(2 ** attempt)  # Exponential backoff
             except requests.exceptions.RequestException as e:
                 logger.warning(f"Request failed (attempt {attempt + 1}/{Config.MAX_RETRIES}): {e}")
                 if attempt == Config.MAX_RETRIES - 1:

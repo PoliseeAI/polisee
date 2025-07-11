@@ -77,11 +77,11 @@ export default function Representatives() {
       const data = await response.json()
       console.log('API Response:', data)
 
-      if (data.success && data.representatives) {
-        setRepresentatives(data.representatives)
+      if (data.success) {
+        setRepresentatives(data.representatives || [])
         setLastUpdated(new Date().toLocaleString())
-        if (data.representatives.length === 0) {
-          // Handle no representatives found case
+        if (data.representatives?.length === 0) {
+          console.log('No representatives found for location:', location)
         }
       } else {
         console.error('Failed to fetch representatives:', data.error)
@@ -97,11 +97,7 @@ export default function Representatives() {
     }
   }, [location])
 
-  useEffect(() => {
-    if (location.trim()) {
-      loadRepresentatives()
-    }
-  }, [location, loadRepresentatives])
+  // Removed automatic triggering - only call when user clicks button or presses Enter
 
   const getPartyColor = (party: string) => {
     switch (party) {
@@ -152,6 +148,11 @@ export default function Representatives() {
                     type="text"
                     value={location}
                     onChange={(e) => setLocation(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        loadRepresentatives();
+                      }
+                    }}
                     placeholder="e.g., Denver, CO"
                     className="mt-1"
                   />
@@ -161,7 +162,7 @@ export default function Representatives() {
                   disabled={loading}
                   className="flex items-center gap-2"
                 >
-                  <Loader2 className="h-4 w-4" />
+                  {loading && <Loader2 className="h-4 w-4 animate-spin" />}
                   {loading ? 'Loading...' : 'Find Representatives'}
                 </Button>
               </div>

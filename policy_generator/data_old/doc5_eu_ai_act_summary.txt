@@ -1,0 +1,25 @@
+DOCUMENT TITLE: A Comparative Analysis: The US Approach vs. The EU AI Act
+
+SOURCE: Global Governance Institute (GGI)
+
+DOCUMENT TYPE: Policy Analysis
+
+DATE: May 1, 2024
+
+---
+ANALYSIS:
+
+The world's two largest Western economies, the United States and the European Union, are taking distinctly different approaches to AI regulation.
+
+**The EU AI Act:**
+The EU has adopted a comprehensive, horizontal legal framework that categorizes AI systems into risk tiers.
+-   **Unacceptable Risk:** These systems are banned outright (e.g., social scoring, real-time biometric surveillance in most cases).
+-   **High-Risk:** These systems (e.g., in medical devices, critical infrastructure, employment) are subject to strict obligations, including conformity assessments, risk management systems, and high-quality data governance *before* they can enter the market.
+-   **Limited Risk:** These systems are subject to transparency obligations (e.g., chatbots must disclose they are AI).
+-   **Minimal Risk:** The vast majority of AI systems fall here with no obligations.
+The AI Act is a market-access law; any product sold in the EU must comply.
+
+**The US Approach:**
+In contrast, the US approach is more sector-specific and relies on a combination of executive orders and voluntary frameworks. The White House Executive Order directs existing regulatory agencies (like the HHS, DOT) to apply their authority to AI within their domains. It also relies heavily on the voluntary adoption of the NIST AI RMF. The US has emphasized government-industry partnership and has focused its mandatory reporting requirements only on the most powerful foundation models, unlike the EU's broader "high-risk" category.
+
+**Key Difference:** The EU's approach is pre-market ("ex-ante") regulation, focused on legal certainty and rights protection. The US approach is more post-market ("ex-post"), focused on fostering rapid innovation while addressing harms as they arise through existing legal structures and promoting voluntary safety standards.

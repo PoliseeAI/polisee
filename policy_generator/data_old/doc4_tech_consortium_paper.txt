@@ -1,0 +1,20 @@
+DOCUMENT TITLE: Fostering Responsible Innovation: An Industry Perspective on AI Regulation
+
+SOURCE: Alliance for Digital Progress (ADP) - Tech Industry Consortium
+
+DOCUMENT TYPE: White Paper
+
+DATE: February 28, 2024
+
+---
+POSITION STATEMENT:
+
+The Alliance for Digital Progress believes that artificial intelligence will be a primary driver of economic growth and scientific discovery for the next century. We support a regulatory approach that is pro-innovation, flexible, and avoids stifling competition with overly burdensome rules.
+
+Our Recommendations:
+
+1.  **Risk-Based Regulation:** We advocate for a tiered, risk-based approach. Low-risk applications of AI (e.g., spam filters, recommendation engines) should face minimal regulatory scrutiny. High-risk applications (e.g., in critical infrastructure, medicine) should adhere to higher standards. The definition of "dual-use foundation models" must be precise to avoid capturing a wide range of general-purpose models that do not pose a serious risk.
+
+2.  **Support for Voluntary Frameworks:** We endorse the widespread adoption of the NIST AI RMF. Its flexible, non-prescriptive nature allows companies to adapt best practices to their specific contexts and technologies. Mandating a single set of standards would be a mistake, as the technology is evolving too quickly.
+
+3.  **Focus on Talent and Open Source:** The greatest asset for AI safety is human talent. Government policy should prioritize attracting and retaining top AI talent in the U.S. through streamlined visa programs. Furthermore, promoting open-source AI models is crucial for transparency and allows the entire research community to identify and fix security and bias issues, leading to safer systems for everyone. Over-regulation could drive innovation underground or overseas.

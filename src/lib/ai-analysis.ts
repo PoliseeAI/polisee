@@ -1,195 +1,94 @@
+// src/lib/ai-analysis.ts
+import { OpenAI } from 'openai'
 import { PersonaRow } from '@/lib/supabase'
 import { PersonalImpact } from '@/components/ui/enhanced-impact-card'
-import { SourceReference } from '@/components/ui/source-citation'
-import { 
-  TrendingUp, 
-  AlertTriangle, 
-  CheckCircle, 
-  DollarSign, 
-  Users, 
-  GraduationCap, 
-  Heart, 
-  Building, 
-  Zap 
-} from 'lucide-react'
+import { TextChunk } from './text-chunker'
 
-// Type for AI analysis response
-interface AIAnalysisResponse {
-  impacts: Array<{
-    category: string
-    impact: 'positive' | 'negative' | 'neutral'
-    severity: 'low' | 'medium' | 'high'
-    title: string
-    description: string
-    details: string[]
-    relevance_score: number
-  }>
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+  // It's a good practice to set a timeout
+  timeout: 30 * 1000, // 30 seconds
+})
+
+/**
+ * A generic function to get a completion from the OpenAI API.
+ * It's configured to request a JSON response.
+ * @param prompt The prompt to send to the AI.
+ * @returns A promise that resolves to the string content of the AI's response.
+ */
+export async function getCompletion(prompt: string): Promise<string> {
+  try {
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      response_format: { type: 'json_object' },
+      temperature: 0.2, // Lower temperature for more deterministic, structured output
+    })
+
+    const content = response.choices[0].message?.content
+    if (!content) {
+      throw new Error('OpenAI returned an empty response.')
+    }
+    return content
+  } catch (error) {
+    console.error('Error getting completion from OpenAI:', error)
+    // Re-throw the error to be handled by the calling function
+    throw error
+  }
 }
 
-// Icon mapping
-const CATEGORY_ICONS = {
-  'Education': GraduationCap,
-  'Healthcare': Heart,
-  'Business': Building,
-  'Employment': Users,
-  'Taxation': DollarSign,
-  'Social Security': CheckCircle,
-  'Housing': Building,
-  'Environment': Zap,
-  'Agriculture': Building,
-  'Transportation': Building,
-  'Financial': DollarSign,
-  'Food Security': AlertTriangle,
-  'Energy': Zap,
-  'Future Planning': TrendingUp,
-  'Economic': TrendingUp,
-  'Community': Users,
-  'Professional': GraduationCap,
-  'Family': Users,
-  'Infrastructure': Building,
-  'Local Impact': Building
-}
-
+// This is the original AI analysis function. We will refactor it to use the new helper.
 export async function analyzeImpactsWithAI(
-  billText: string,
   billTitle: string,
   persona: PersonaRow,
-  sourceReferences: SourceReference[]
+  textChunks: TextChunk[]
 ): Promise<PersonalImpact[]> {
+  const personaSummary = `
+- Location: ${persona.location}
+- Age: ${persona.age}
+- Occupation: ${persona.occupation}
+- Income Bracket: ${persona.income_bracket}
+- Dependents: ${persona.dependents}
+- Education: ${persona.has_higher_education ? 'Has higher education' : 'No higher education'}
+- Health Insurance: ${persona.has_health_insurance ? 'Has health insurance' : 'No health insurance'}
+${persona.business_type ? `- Business Type: ${persona.business_type} (Employee Count: ${persona.employee_count})` : ''}
+`
+
+  const prompt = `
+    You are an AI assistant that provides personalized analysis of legislative texts.
+    Analyze the bill titled "${billTitle}" and its text provided in chunks.
+    Explain its potential impact on the user based on their persona.
+
+    **User Persona:**
+    ${personaSummary}
+
+    **Bill Text (in chunks):**
+    ---
+    ${textChunks.map(chunk => chunk.content).join('\n\n---\n\n')}
+    ---
+
+    Your task is to identify up to 5 key impacts this bill will have on the user.
+    For each impact, provide a detailed analysis.
+    Structure your response as a JSON object with a single key "impacts" that contains an array of objects.
+    Each object in the array must have the following shape:
+    {
+      "impact": "positive" | "negative" | "neutral",
+      "summary": "A brief summary of the impact (max 20 words).",
+      "explanation": "A detailed explanation of how this section affects the user.",
+      "category": "financial" | "health" | "family" | "business" | "other",
+      "source": {
+        "text": "The exact text from the bill chunk that this analysis is based on."
+      }
+    }
+  `
+
   try {
-    // Call our secure API route instead of OpenAI directly
-    const response = await fetch('/api/analyze-bill', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        billText,
-        billTitle,
-        persona
-      })
-    })
-    
-    if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || `API error: ${response.status}`)
-    }
-    
-    const aiResponse: AIAnalysisResponse = await response.json()
-    
-    // Convert AI response to PersonalImpact format
-    const impacts = convertAIResponseToImpacts(aiResponse, sourceReferences)
-    
-    return impacts.slice(0, 6) // Return top 6 most relevant impacts
-    
+    const completion = await getCompletion(prompt)
+    const result = JSON.parse(completion)
+    return result.impacts || []
   } catch (error) {
-    console.error('AI analysis failed, falling back to basic analysis:', error)
-    // Fallback to basic keyword-based analysis if AI fails
-    return generateBasicImpacts(billText, persona, sourceReferences)
+    console.error('Error analyzing impacts with AI:', error)
+    return []
   }
 }
-
-
-
-function convertAIResponseToImpacts(
-  aiResponse: AIAnalysisResponse, 
-  sourceReferences: SourceReference[]
-): PersonalImpact[] {
-  return aiResponse.impacts.map(impact => {
-    // Find relevant source references based on category keywords
-    const categoryKeywords = getCategoryKeywords(impact.category)
-    const relevantSources = sourceReferences.filter(ref => 
-      categoryKeywords.some(keyword => 
-        ref.text.toLowerCase().includes(keyword.toLowerCase())
-      )
-    ).slice(0, 3)
-    
-    return {
-      category: impact.category,
-      impact: impact.impact,
-      severity: impact.severity,
-      title: impact.title,
-      description: impact.description,
-      details: impact.details,
-      icon: CATEGORY_ICONS[impact.category as keyof typeof CATEGORY_ICONS] || TrendingUp,
-      sourceReferences: relevantSources
-    }
-  }).sort((a, b) => {
-    // Sort by severity (high > medium > low)
-    const severityOrder = { 'high': 3, 'medium': 2, 'low': 1 }
-    return severityOrder[b.severity] - severityOrder[a.severity]
-  })
-}
-
-function getCategoryKeywords(category: string): string[] {
-  const keywordMap: { [key: string]: string[] } = {
-    'Education': ['education', 'school', 'student', 'teacher', 'university', 'college'],
-    'Healthcare': ['health', 'medical', 'medicare', 'medicaid', 'insurance', 'hospital'],
-    'Business': ['business', 'small business', 'tax credit', 'deduction', 'commerce'],
-    'Employment': ['employment', 'job', 'worker', 'employee', 'wage', 'salary'],
-    'Taxation': ['tax', 'taxation', 'deduction', 'credit', 'income tax'],
-    'Social Security': ['social security', 'disability', 'retirement', 'benefits'],
-    'Housing': ['housing', 'home', 'mortgage', 'rent', 'property'],
-    'Environment': ['environment', 'climate', 'energy', 'renewable', 'pollution'],
-    'Agriculture': ['agriculture', 'farm', 'farmer', 'crop', 'livestock'],
-    'Transportation': ['transportation', 'highway', 'road', 'infrastructure'],
-    'Financial': ['financial', 'banking', 'credit', 'loan', 'debt'],
-    'Food Security': ['SNAP', 'food stamp', 'food assistance', 'nutrition']
-  }
-  
-  return keywordMap[category] || [category.toLowerCase()]
-}
-
-// Fallback function for when AI is not available
-function generateBasicImpacts(
-  billText: string,
-  persona: PersonaRow,
-  sourceReferences: SourceReference[]
-): PersonalImpact[] {
-  const impacts: PersonalImpact[] = []
-  
-  // Basic tax impact analysis
-  if (billText.toLowerCase().includes('tax')) {
-    impacts.push({
-      category: 'Taxation',
-      impact: 'neutral',
-      severity: 'medium',
-      title: 'Tax Changes May Affect You',
-      description: 'This bill contains tax provisions that may impact your situation.',
-      details: [
-        'Tax provisions are included in this legislation',
-        'Impact depends on your specific tax situation',
-        'Consult a tax professional for detailed analysis',
-        'Changes may affect future tax filings'
-      ],
-      icon: DollarSign,
-      sourceReferences: sourceReferences.filter(ref => 
-        ref.text.toLowerCase().includes('tax')
-      ).slice(0, 3)
-    })
-  }
-  
-  // Basic healthcare impact
-  if ((persona.has_medicare || persona.has_health_insurance) && 
-      billText.toLowerCase().includes('health')) {
-    impacts.push({
-      category: 'Healthcare',
-      impact: 'neutral',
-      severity: 'medium',
-      title: 'Healthcare System Changes',
-      description: 'Healthcare provisions may affect your coverage or costs.',
-      details: [
-        'Healthcare-related provisions are included',
-        'May impact insurance coverage or costs',
-        'Review with your healthcare provider',
-        'Monitor implementation timeline'
-      ],
-      icon: Heart,
-      sourceReferences: sourceReferences.filter(ref => 
-        ref.text.toLowerCase().includes('health')
-      ).slice(0, 3)
-    })
-  }
-  
-  return impacts
-} 

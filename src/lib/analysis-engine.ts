@@ -1,50 +1,88 @@
 import { supabase } from '@/lib/supabase'
 import { Tables } from '@/types/database'
 import { PersonaRow } from '@/lib/supabase'
-import { SourceReference } from '@/components/ui/source-citation'
 import { PersonalImpact } from '@/components/ui/enhanced-impact-card'
-import { analyzeImpactsWithAI } from '@/lib/ai-analysis'
+import { findRelevantSections, analyzeImpact } from './agent-tools'
 
 export type BillRow = Tables<'bills'>
 
-// Main analysis function - now AI-powered!
-export async function generatePersonalizedImpacts(
-  billId: string,
-  persona: PersonaRow,
-  sourceReferences: SourceReference[] = []
-): Promise<PersonalImpact[]> {
-  try {
-    // Get bill with summaries
-    const { data: bill, error } = await supabase
-      .from('bills')
-      .select(`
-        *,
-        bill_summaries(*)
-      `)
-      .eq('bill_id', billId)
-      .single()
+// The new agent that will perform the analysis.
+class BillAnalysisAgent {
+  private bill: BillRow
+  private persona: PersonaRow
 
-    if (error || !bill || !bill.bill_summaries || bill.bill_summaries.length === 0) {
-      console.error('Error fetching bill or no summary available:', error)
+  constructor(bill: BillRow, persona: PersonaRow) {
+    this.bill = bill
+    this.persona = persona
+  }
+
+  /**
+   * Executes the multi-step analysis process.
+   */
+  async analyze(): Promise<PersonalImpact[]> {
+    console.log(`[Agent] Starting analysis for bill: ${this.bill.title}`)
+
+    const billText = this.bill.text || this.bill.title || 'No content available'
+    if (!billText.trim() || billText === 'No content available') {
+        console.error('No bill text available for agent analysis:', this.bill.bill_id)
+        return []
+    }
+
+    // Step 1: Use a tool to find the most relevant sections of the bill.
+    console.log('[Agent] Step 1: Finding relevant sections...')
+    const relevantSections = await findRelevantSections(billText, this.persona)
+
+    if (!relevantSections || relevantSections.length === 0) {
+      console.log('[Agent] No relevant sections found. Ending analysis.')
       return []
     }
 
-    // Use the most recent summary text for analysis
-    const mostRecentSummary = bill.bill_summaries[0]
-    const billText = mostRecentSummary.summary_text || bill.title || 'No content available'
+    console.log('[Agent] Found ${relevantSections.length} relevant sections.')
+    console.log('[Agent] Step 2: Analyzing impact of just those sections...')
 
-    // Use AI to analyze the bill text and generate personalized impacts
-    const impacts = await analyzeImpactsWithAI(
-      billText,
-      bill.title || 'Untitled Bill',
-      persona,
-      sourceReferences
-    )
+    // Step 2: Use a second tool to analyze the impact of only the relevant sections.
+    const impacts = await analyzeImpact(relevantSections, this.persona)
+
+    console.log(`[Agent] Analysis complete. Found ${impacts.length} impacts.`)
+    return impacts
+  }
+}
+
+
+/**
+ * The main analysis function, which now delegates the entire process to the agent.
+ */
+export async function generatePersonalizedImpacts(
+  billId: string,
+  persona: PersonaRow,
+): Promise<PersonalImpact[]> {
+  try {
+    // 1. Fetch the bill from the database.
+    const { data: bill, error } = await supabase
+      .from('bills')
+      .select('*')
+      .eq('bill_id', billId)
+      .single()
+
+    if (error) {
+      console.error('Error fetching bill:', error)
+      throw new Error(`Failed to fetch bill with ID ${billId}`)
+    }
+
+    if (!bill) {
+      console.error('Bill not found:', billId)
+      return []
+    }
+
+    // 2. Initialize and run the analysis agent.
+    const agent = new BillAnalysisAgent(bill, persona)
+    const impacts = await agent.analyze()
 
     return impacts
 
   } catch (error) {
-    console.error('Error generating personalized impacts:', error)
+    console.error('Error in generatePersonalizedImpacts:', error)
+    // Return an empty array to prevent the frontend from crashing.
     return []
   }
-} 
+}
