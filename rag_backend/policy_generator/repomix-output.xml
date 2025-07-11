@@ -1,0 +1,2704 @@
+This file is a merged representation of a subset of the codebase, containing files not matching ignore patterns, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching these patterns are excluded: Dockerfile, .dockerignore, fly.toml, *lambda*, _docs, data
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+data_old/
+  doc1_wh_exec_order.txt
+  doc2_nist_framework.txt
+  doc3_clu_report.txt
+  doc4_tech_consortium_paper.txt
+  doc5_eu_ai_act_summary.txt
+policy_ai_safety/
+  1_Technical_Summary.md
+  2_Policy_Brief_Draft_v1.md
+policy_ai_safety_and_regulation/
+  1_Technical_Summary.md
+  2_Policy_Brief_Draft_v1.md
+prompts/
+  research.md
+.gitignore
+agent_tools.py
+ai_core.py
+config.py
+engine.py
+ingest.py
+knowledge_base.py
+main.py
+orchestrator.py
+polgen_cli.py
+project_manager.py
+prompts.py
+query.py
+README_ingestion.md
+README_phase2.md
+README_phase4.md
+README_query.md
+README.md
+requirements.txt
+sample_questions.txt
+schema.sql
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="data_old/doc1_wh_exec_order.txt">
+DOCUMENT TITLE: Summary of Executive Order 14110 on Safe, Secure, and Trustworthy Artificial Intelligence
+
+SOURCE: The White House
+
+DOCUMENT TYPE: Executive Summary
+
+DATE: October 30, 2023
+
+---
+SUMMARY:
+
+On October 30, 2023, the President issued a landmark Executive Order establishing new standards for AI safety and security. The order aims to protect Americans from the potential risks of AI systems while harnessing their benefits. It is built on eight guiding principles, including safety, innovation, and advancing equity.
+
+Key Directives:
+
+1.  **New Standards for AI Safety and Security:** The order directs the National Institute of Standards and Technology (NIST) to develop rigorous standards for red-teaming, model evaluation, and authenticating AI-generated content. For the most powerful AI systems, known as "dual-use foundation models," companies must report their safety test results to the federal government. This reporting mandate applies to any model that poses a serious risk to national security or public health.
+
+2.  **Protecting Consumer Privacy:** The order calls for the advancement of privacy-enhancing techniques (PETs) to protect personal data used in the training and deployment of AI systems. It pushes for bipartisan federal privacy legislation to be passed by Congress.
+
+3.  **Advancing Equity and Civil Rights:** The order directs federal agencies to provide clear guidance to landlords, federal contractors, and employers to prevent AI algorithms from being used to exacerbate discrimination. It addresses algorithmic bias in the criminal justice system by developing best practices for its use in sentencing and parole decisions.
+
+4.  **Promoting Innovation and Competition:** The order aims to catalyze AI research across the United States by expanding grants for AI research in fields like healthcare and climate change. It also seeks to streamline the visa process for highly skilled AI professionals to attract global talent.
+
+This Executive Order represents the most significant action ever taken by the U.S. government to manage the development and deployment of artificial intelligence.
+</file>
+
+<file path="data_old/doc2_nist_framework.txt">
+DOCUMENT TITLE: The NIST AI Risk Management Framework (AI RMF 1.0) - Core Concepts
+
+SOURCE: National Institute of Standards and Technology (NIST)
+
+DOCUMENT TYPE: Framework Overview
+
+DATE: January 26, 2023
+
+---
+OVERVIEW:
+
+The AI Risk Management Framework (AI RMF) is a voluntary framework intended for use by organizations designing, developing, or deploying AI systems to help manage the numerous risks associated with AI. It is not a prescriptive checklist but a flexible, structured process.
+
+The framework is organized around four core functions:
+
+1.  **GOVERN:** This function is about cultivating a culture of risk management within an organization. It involves creating clear lines of responsibility, ensuring transparency, and engaging with stakeholders. A key aspect of GOVERN is creating processes to address risks associated with third-party AI models and data sources.
+
+2.  **MAP:** This function involves identifying the specific context and risks for an AI system. Organizations are encouraged to inventory their AI systems, categorize them based on potential impact, and map out potential sources of algorithmic bias, security vulnerabilities, and privacy issues. The MAP function stresses the importance of understanding limitations and potential failures before deployment.
+
+3.  **MEASURE:** This function focuses on testing, evaluating, and monitoring AI risks. It involves using quantitative and qualitative metrics to assess fairness, accuracy, robustness, and security. A key challenge highlighted in MEASURE is the difficulty of testing for emergent, unexpected behaviors in complex foundation models. It recommends ongoing monitoring after a system is deployed.
+
+4.  **MANAGE:** This function is about allocating resources to mitigate identified risks. Based on the outputs from the MAP and MEASURE functions, organizations should prioritize risks and deploy appropriate controls. This could include technical controls like de-biasing algorithms, procedural controls like human oversight, or documenting the known limitations of the AI system for end-users. The framework emphasizes that risks should be managed on a continuous basis, not just at a single point in time.
+</file>
+
+<file path="data_old/doc3_clu_report.txt">
+DOCUMENT TITLE: Algorithmic Injustice: How AI Reinforces Systemic Bias
+
+SOURCE: Civil Liberties Union (CLU)
+
+DOCUMENT TYPE: Advocacy Report
+
+DATE: March 15, 2024
+
+---
+EXECUTIVE SUMMARY:
+
+While promoted as objective tools, AI systems deployed in critical public sectors are amplifying and hiding historical biases. Our investigation reveals that AI used in hiring, loan applications, and criminal justice consistently produces discriminatory outcomes against marginalized communities.
+
+Key Findings:
+
+1.  **Hiring Algorithms:** Automated resume screeners, trained on data from existing workforces, often penalize candidates from non-traditional backgrounds and disproportionately favor male applicants. These systems learn to associate keywords and experiences from past successful (and often privileged) employees with future success, creating a cycle of exclusion.
+
+2.  **Pre-Trial Risk Assessments:** So-called "neutral" risk assessment tools used by courts to recommend bail have been shown to be unreliable and racially biased. These tools often use proxies for race, like zip codes or education levels, which results in higher risk scores for Black and Latino defendants compared to white defendants with similar case files. The CLU calls for a moratorium on their use in pre-trial decisions.
+
+3.  **The "Black Box" Problem:** A major challenge is the lack of transparency. The proprietary nature of many foundation models makes it impossible for the public to audit them for bias. Frameworks like the NIST AI RMF are a good first step, but their voluntary nature is insufficient. The CLU advocates for mandatory, independent third-party audits for any AI system used in public sector decision-making. Federal privacy legislation is also urgently needed to give individuals control over how their data is used to train these biased systems.
+</file>
+
+<file path="data_old/doc4_tech_consortium_paper.txt">
+DOCUMENT TITLE: Fostering Responsible Innovation: An Industry Perspective on AI Regulation
+
+SOURCE: Alliance for Digital Progress (ADP) - Tech Industry Consortium
+
+DOCUMENT TYPE: White Paper
+
+DATE: February 28, 2024
+
+---
+POSITION STATEMENT:
+
+The Alliance for Digital Progress believes that artificial intelligence will be a primary driver of economic growth and scientific discovery for the next century. We support a regulatory approach that is pro-innovation, flexible, and avoids stifling competition with overly burdensome rules.
+
+Our Recommendations:
+
+1.  **Risk-Based Regulation:** We advocate for a tiered, risk-based approach. Low-risk applications of AI (e.g., spam filters, recommendation engines) should face minimal regulatory scrutiny. High-risk applications (e.g., in critical infrastructure, medicine) should adhere to higher standards. The definition of "dual-use foundation models" must be precise to avoid capturing a wide range of general-purpose models that do not pose a serious risk.
+
+2.  **Support for Voluntary Frameworks:** We endorse the widespread adoption of the NIST AI RMF. Its flexible, non-prescriptive nature allows companies to adapt best practices to their specific contexts and technologies. Mandating a single set of standards would be a mistake, as the technology is evolving too quickly.
+
+3.  **Focus on Talent and Open Source:** The greatest asset for AI safety is human talent. Government policy should prioritize attracting and retaining top AI talent in the U.S. through streamlined visa programs. Furthermore, promoting open-source AI models is crucial for transparency and allows the entire research community to identify and fix security and bias issues, leading to safer systems for everyone. Over-regulation could drive innovation underground or overseas.
+</file>
+
+<file path="data_old/doc5_eu_ai_act_summary.txt">
+DOCUMENT TITLE: A Comparative Analysis: The US Approach vs. The EU AI Act
+
+SOURCE: Global Governance Institute (GGI)
+
+DOCUMENT TYPE: Policy Analysis
+
+DATE: May 1, 2024
+
+---
+ANALYSIS:
+
+The world's two largest Western economies, the United States and the European Union, are taking distinctly different approaches to AI regulation.
+
+**The EU AI Act:**
+The EU has adopted a comprehensive, horizontal legal framework that categorizes AI systems into risk tiers.
+-   **Unacceptable Risk:** These systems are banned outright (e.g., social scoring, real-time biometric surveillance in most cases).
+-   **High-Risk:** These systems (e.g., in medical devices, critical infrastructure, employment) are subject to strict obligations, including conformity assessments, risk management systems, and high-quality data governance *before* they can enter the market.
+-   **Limited Risk:** These systems are subject to transparency obligations (e.g., chatbots must disclose they are AI).
+-   **Minimal Risk:** The vast majority of AI systems fall here with no obligations.
+The AI Act is a market-access law; any product sold in the EU must comply.
+
+**The US Approach:**
+In contrast, the US approach is more sector-specific and relies on a combination of executive orders and voluntary frameworks. The White House Executive Order directs existing regulatory agencies (like the HHS, DOT) to apply their authority to AI within their domains. It also relies heavily on the voluntary adoption of the NIST AI RMF. The US has emphasized government-industry partnership and has focused its mandatory reporting requirements only on the most powerful foundation models, unlike the EU's broader "high-risk" category.
+
+**Key Difference:** The EU's approach is pre-market ("ex-ante") regulation, focused on legal certainty and rights protection. The US approach is more post-market ("ex-post"), focused on fostering rapid innovation while addressing harms as they arise through existing legal structures and promoting voluntary safety standards.
+</file>
+
+<file path="policy_ai_safety/1_Technical_Summary.md">
+# Technical Summary on AI Safety: Key Frameworks, Risks, and Stakeholder Positions
+
+## 1. Key Frameworks and Standards
+- **NIST AI Risk Management Framework (AI RMF 1.0)**:
+  - A voluntary framework designed to help organizations manage AI-related risks.
+  - Organized around four core functions:
+    1. **GOVERN**: Cultivating a risk management culture, establishing responsibilities, ensuring transparency, and managing third-party risks.
+    2. **IDENTIFY**: Recognizing and understanding risks associated with AI systems.
+    3. **ASSESS**: Evaluating risks and their potential impacts on stakeholders.
+    4. **MANAGE**: Implementing strategies to mitigate identified risks.
+  
+- **New Standards for AI Safety and Security**:
+  - Directs the NIST to establish standards for red-teaming, model evaluation, and authenticating AI-generated content.
+  - Requires companies to report safety tests for "dual-use foundation models" to the federal government if they pose serious risks to national security or public health.
+
+- **EU AI Act**:
+  - A comprehensive regulatory framework categorizing AI systems into risk tiers (unacceptable, high, limited, minimal).
+  - High-risk systems face strict obligations, including conformity assessments and risk management systems prior to market entry.
+
+## 2. Risks and Challenges
+- **Technical and Ethical Risks**:
+  - Potential for AI systems to cause harm, including bias, security vulnerabilities, and misuse of technology.
+  - Concerns about dual-use foundation models, which can be applied for both beneficial and harmful purposes.
+
+- **Privacy and Data Security**:
+  - The use of personal data in training AI systems raises significant privacy concerns.
+  - Need for robust privacy-enhancing techniques (PETs) to protect consumer data.
+
+- **Regulatory Ambiguity**:
+  - The definition of "dual-use foundation models" must be precise to avoid overly broad regulations that could stifle innovation.
+
+- **Talent Shortage**:
+  - A critical need for skilled professionals in AI safety and regulation, compounded by competition from other countries.
+
+## 3. Stakeholder Positions
+- **Government**:
+  - Advocates for rigorous safety standards and reporting requirements to ensure public safety and national security.
+  - Emphasizes the need for bipartisan privacy legislation to protect consumer data.
+
+- **Industry**:
+  - Supports a flexible, risk-based regulatory approach that allows for innovation while ensuring safety.
+  - Prefers voluntary frameworks like NIST AI RMF over mandatory standards to avoid hindering technological advancements.
+
+- **Civil Society**:
+  - Urges for strong protections against AI misuse, particularly regarding privacy and ethical use of technology.
+  - Advocates for transparency and accountability in AI systems to protect against biases and discrimination.
+
+## 4. Best Practices and Recommendations
+- **Risk-Based Regulation**:
+  - Implement a tiered regulatory approach where low-risk applications face minimal scrutiny while high-risk applications adhere to stringent standards.
+
+- **Support for Voluntary Frameworks**:
+  - Endorse the NIST AI RMF for its adaptability, allowing organizations to customize practices to their specific technologies.
+
+- **Focus on Talent and Open Source**:
+  - Promote policies that attract and retain AI talent, including streamlined visa programs.
+  - Encourage the development of open-source AI models to enhance transparency and facilitate community-driven safety improvements.
+
+## 5. International Perspectives
+- **Comparative Approaches**:
+  - The U.S. and the EU are adopting different regulatory frameworks for AI, with the EU taking a more prescriptive approach through the AI Act, focusing on market access and tiered risk categorization.
+  - The U.S. is leaning towards a flexible, voluntary framework that emphasizes innovation while managing risks, reflecting a balance between regulation and industry needs.
+
+This comprehensive overview outlines the key frameworks, risks, stakeholder positions, and best practices in the realm of AI safety, highlighting the need for collaboration among all stakeholders to ensure the responsible development and deployment of AI technologies.
+</file>
+
+<file path="policy_ai_safety/2_Policy_Brief_Draft_v1.md">
+# Policy Brief: AI Safety and Regulation Framework
+
+## Executive Summary
+The rapid advancement of artificial intelligence (AI) technologies brings significant opportunities for innovation and efficiency across various sectors. However, it also presents substantial risks related to safety, privacy, and ethical use. This policy brief outlines a comprehensive framework for AI safety and regulation, drawing upon established standards such as the NIST AI Risk Management Framework and the EU AI Act. The proposed approach emphasizes a balanced regulatory structure that fosters innovation while ensuring public safety and accountability.
+
+In light of the evolving landscape of AI technologies, immediate policy action is required to address technical and ethical risks, privacy concerns, and the need for a skilled workforce. By establishing a risk-based regulatory framework, we can safeguard against misuse and enhance consumer trust, while simultaneously promoting responsible AI development.
+
+## Background and Context
+AI systems are increasingly integrated into critical areas such as healthcare, finance, and national security, necessitating a robust framework for managing associated risks. Current frameworks, including the NIST AI Risk Management Framework, provide valuable guidance but must be complemented by specific regulatory measures to address unique challenges posed by dual-use foundation models and emerging technologies.
+
+Moreover, the lack of clarity surrounding definitions and standards, particularly concerning dual-use applications, can hinder innovation and create regulatory ambiguities. Stakeholders—including industry representatives, government agencies, and civil society—are calling for a cohesive regulatory approach that balances innovation with accountability and public safety.
+
+## Policy Objectives
+1. Establish a clear regulatory framework for AI that categorizes systems based on risk levels, ensuring appropriate oversight for high-risk applications.
+2. Promote voluntary adherence to the NIST AI Risk Management Framework among organizations to enhance AI safety practices.
+3. Strengthen privacy protections through bipartisan legislation that addresses data security concerns related to AI technologies.
+4. Foster the development of a skilled workforce in AI safety and regulation through targeted educational programs and streamlined immigration policies.
+5. Encourage international collaboration and alignment on AI safety standards to facilitate global cooperation and innovation.
+
+## Proposed Policy Framework
+### Regulatory Structure
+- Implement a tiered regulatory approach categorizing AI systems into four risk tiers: unacceptable, high, limited, and minimal.
+- Require high-risk systems to undergo rigorous conformity assessments and risk management prior to market entry.
+
+### Key Provisions
+- Mandate safety tests for dual-use foundation models and require reporting to federal authorities if significant risks to national security or public health are identified.
+- Support voluntary frameworks like the NIST AI RMF to allow customization based on specific organizational needs.
+
+### Implementation Timeline
+- Short-term (0-12 months): Engage stakeholders to refine definitions and standards; begin public consultations.
+- Medium-term (1-3 years): Develop and implement tiered regulatory guidelines; launch educational initiatives for workforce development.
+- Long-term (3-5 years): Evaluate the effectiveness of the regulatory framework and make necessary adjustments based on stakeholder feedback.
+
+### Enforcement Mechanisms
+- Establish a dedicated oversight body responsible for monitoring compliance with AI regulations and frameworks.
+- Implement penalties for non-compliance to ensure accountability among organizations developing AI technologies.
+
+## Stakeholder Impact Analysis
+### Industry/Private Sector
+- While industry stakeholders may favor a flexible regulatory approach, they will benefit from clear guidelines that promote safety without stifling innovation.
+  
+### Government Agencies
+- Government agencies will be empowered to enforce safety standards and protect public interests, requiring enhanced resources and training to fulfill these responsibilities.
+
+### Civil Society/Public
+- Civil society will gain greater protections against the misuse of AI technologies, fostering trust through transparency and accountability measures.
+
+### International Partners
+- Aligning with international standards will facilitate global cooperation, allowing for shared best practices and collaborative approaches to AI safety.
+
+## Implementation Considerations
+### Resource Requirements
+- Adequate funding and staffing resources will be necessary to establish oversight bodies and support stakeholder engagement initiatives.
+
+### Potential Challenges
+- Regulatory ambiguity and pushback from industry stakeholders could hinder the swift implementation of the proposed framework.
+  
+### Risk Mitigation Strategies
+- Continuous dialogue with stakeholders will be essential to ensure that regulations remain relevant and adaptive to emerging technologies and industry needs.
+
+## Recommendations
+1. Adopt a risk-based regulatory framework that categorizes AI systems and establishes proportional oversight.
+2. Endorse the NIST AI Risk Management Framework as a foundational guideline for organizations to bolster AI safety.
+3. Develop bipartisan privacy legislation to address data security concerns associated with AI technologies.
+4. Invest in educational programs that cultivate AI talent and expertise in safety and regulation.
+5. Engage in international dialogue to harmonize AI safety standards and facilitate collaborative innovation.
+
+## Conclusion
+The development of a comprehensive AI safety and regulation framework is imperative to manage the risks associated with emerging technologies effectively. By taking a balanced approach that prioritizes public safety while fostering innovation, stakeholders can work together to ensure the responsible use of AI. The next steps involve refining the proposed framework, engaging with stakeholders, and initiating necessary legislative and regulatory actions to safeguard the future of AI.
+</file>
+
+<file path="policy_ai_safety_and_regulation/1_Technical_Summary.md">
+# Technical Summary on AI Safety: Frameworks, Risks, and Stakeholder Perspectives
+
+## 1. Key Frameworks and Standards
+
+### AI Risk Management Framework (AI RMF 1.0)
+- **Source**: National Institute of Standards and Technology (NIST)
+- **Overview**: A voluntary framework designed to help organizations manage AI-related risks.
+- **Core Functions**:
+  - **GOVERN**: Establishing a culture of risk management, ensuring transparency, and stakeholder engagement.
+  - **Other Functions**: Includes identifying, assessing, and mitigating risks associated with AI systems.
+
+### New Standards for AI Safety and Security
+- **Directives**: Mandates NIST to develop standards for:
+  - Red-teaming (simulating attacks to identify vulnerabilities).
+  - Model evaluation and authentication of AI-generated content.
+- **Reporting Requirements**: Companies must report safety test results for dual-use foundation models that pose significant risks.
+
+## 2. Risks and Challenges
+
+- **AI System Risks**: Potential harm to national security and public health from advanced AI systems.
+- **Data Privacy**: The need for privacy-enhancing techniques (PETs) to protect personal data in AI training and deployment.
+- **Regulatory Challenges**: Balancing the need for safety with the risks of over-regulation, which could stifle innovation or drive it overseas.
+- **Defining "Dual-Use Foundation Models"**: The necessity to accurately define these models to avoid unnecessary regulatory burdens on low-risk AI applications.
+
+## 3. Stakeholder Positions
+
+### Government
+- Advocates for rigorous standards and regulations to ensure AI safety and consumer privacy.
+- Emphasizes the importance of risk-based regulation, where high-risk applications face stricter oversight.
+
+### Industry
+- Supports the adoption of flexible frameworks like the NIST AI RMF to adapt to rapidly evolving technology.
+- Concerns about over-regulation leading to diminished innovation and competitiveness.
+
+### Civil Society
+- Focuses on consumer protection and the ethical implications of AI, advocating for transparency and accountability in AI systems.
+- Pushes for strong privacy protections and ethical guidelines in AI development.
+
+## 4. Best Practices and Recommendations
+
+- **Risk-Based Regulation**: Implement a tiered regulatory approach based on the risk level of AI applications.
+- **Promote Voluntary Frameworks**: Encourage the adoption of the NIST AI RMF for its flexibility and adaptability to various organizational contexts.
+- **Talent Retention**: Prioritize policies that attract and retain AI talent, including streamlined visa processes.
+- **Encourage Open Source**: Support open-source AI models for enhanced transparency and community-driven improvements in safety and bias mitigation.
+
+## 5. International Perspectives
+
+### European Union AI Act
+- **Framework**: A comprehensive legal approach categorizing AI systems into risk tiers:
+  - **Unacceptable Risk**: Banned (e.g., social scoring, certain biometric surveillance).
+  - **High-Risk**: Subject to strict obligations (e.g., medical devices, employment).
+  - **Limited Risk**: Transparency obligations (e.g., AI chatbots).
+  - **Minimal Risk**: Most AI systems with no obligations.
+- **Market Access**: Compliance with the EU AI Act is required for any AI product sold in the EU, promoting a standardized approach to AI safety.
+
+---
+
+This summary provides a balanced overview of the current landscape regarding AI safety, emphasizing the need for careful regulation that protects public interests while fostering innovation. Stakeholder engagement and international collaboration are crucial for developing effective and adaptive AI safety frameworks.
+</file>
+
+<file path="policy_ai_safety_and_regulation/2_Policy_Brief_Draft_v1.md">
+# Policy Brief: AI Safety and Regulation Framework
+
+## Executive Summary
+The rapid advancement of artificial intelligence (AI) technology presents significant opportunities and challenges concerning safety, security, and ethical use. As AI systems become increasingly integrated into various sectors, the potential risks they pose to national security, public health, and individual privacy demand a comprehensive regulatory framework. The proposed policy aims to balance the need for rigorous safety standards and regulations with the imperative to foster innovation and maintain global competitiveness. By adopting a risk-based regulatory approach and promoting voluntary frameworks like the NIST AI Risk Management Framework (AI RMF 1.0), we can ensure that AI technologies are developed and deployed responsibly while protecting public interests.
+
+## Background and Context
+The current landscape of AI technology is characterized by rapid growth and complexity, necessitating an urgent policy response to manage associated risks. In particular, advanced AI systems pose potential threats to national security and public health. Additionally, concerns surrounding data privacy and ethical implications of AI usage require immediate attention. The National Institute of Standards and Technology (NIST) has taken steps toward establishing a voluntary AI RMF and developing standards for AI safety, but there remains a significant gap in comprehensive regulations that address the nuanced challenges posed by different tiers of AI applications. The international regulatory landscape, including the European Union AI Act, highlights the need for standardized approaches to AI safety, further emphasizing the urgency for coherent domestic policies.
+
+## Policy Objectives
+1. **Establish a Risk-Based Regulatory Framework**: Create a tiered regulatory structure that categorizes AI applications based on their associated risks, ensuring high-risk systems face stricter oversight.
+2. **Promote Adoption of Voluntary Frameworks**: Encourage the widespread implementation of the NIST AI RMF among organizations to facilitate effective AI risk management.
+3. **Enhance Data Privacy Protections**: Develop and mandate the use of privacy-enhancing techniques (PETs) in AI systems to safeguard personal data.
+4. **Attract and Retain AI Talent**: Implement policies that streamline visa processes and create an attractive ecosystem for AI professionals.
+5. **Support Open Source Initiatives**: Promote and incentivize open-source AI development to enhance transparency and collaboration in AI safety efforts.
+
+## Proposed Policy Framework
+- **Regulatory Structure**: Implement a tiered regulatory framework categorizing AI applications by risk (high, limited, minimal, and unacceptable), with tailored requirements for each category.
+- **Key Provisions**:
+  - Mandatory reporting for dual-use foundation models.
+  - Adoption of the NIST AI RMF as a voluntary standard for AI risk management.
+  - Development and enforcement of privacy-enhancing techniques in AI systems.
+- **Implementation Timeline**: Initiate a phased rollout with an initial focus on high-risk applications within the first year, followed by gradual inclusion of other tiers.
+- **Enforcement Mechanisms**: Establish oversight bodies to ensure compliance and enforce regulations, with penalties for non-compliance based on the risk level of the application.
+
+## Stakeholder Impact Analysis
+- **Industry/Private Sector**: Flexibility in the regulatory framework may facilitate innovation while ensuring safety. However, over-regulation may hinder competitiveness.
+- **Government Agencies**: Increased responsibilities for oversight and compliance monitoring, necessitating resource allocation and training.
+- **Civil Society/Public**: Enhanced consumer protection and ethical standards in AI development will strengthen public trust in technology.
+- **International Partners**: Alignment with international standards, such as the EU AI Act, can promote market access and cooperation on global AI safety initiatives.
+
+## Implementation Considerations
+- **Resource Requirements**: Adequate funding and personnel for regulatory bodies will be essential for effective implementation.
+- **Potential Challenges**: Resistance from industries fearing over-regulation and the challenge of defining "dual-use foundation models" adequately.
+- **Risk Mitigation Strategies**: Engage stakeholders in the regulatory process to ensure balanced perspectives and avoid stifling innovation.
+
+## Recommendations
+1. **Adopt a Risk-Based Approach**: Implement a regulatory framework that scales based on the risk profile of AI applications.
+2. **Encourage Voluntary Frameworks**: Promote the NIST AI RMF as an industry standard for organizations to manage AI risks proactively.
+3. **Enhance Data Privacy**: Mandate privacy-enhancing techniques in AI systems to protect personal data and build public trust.
+4. **Create Talent Attraction Policies**: Streamline visa processes and foster educational initiatives to attract and retain AI professionals in the country.
+5. **Support Open Source Development**: Provide incentives for the development of open-source AI models to enhance community collaboration and transparency.
+
+## Conclusion
+The evolving AI landscape necessitates a proactive and comprehensive regulatory approach that prioritizes safety while fostering innovation. By implementing a risk-based regulatory framework, promoting voluntary standards, and ensuring stakeholder engagement, we can effectively navigate the complexities of AI technology. Immediate action is required to establish a robust policy framework that balances the interests of industry, government, and civil society, setting the stage for responsible AI development and deployment in the future.
+</file>
+
+<file path="prompts/research.md">
+### Prompt for AI Research Assistant
+
+Role: You are a Specialist Research Assistant tasked with compiling a curated dataset for a machine learning proof-of-concept.
+
+Mission: Your mission is to find high-quality, publicly available documents related to the policy area of "Housing Affordability in the United States." The goal is to gather a diverse set of source materials that represent the legal, economic, political, and social dimensions of this issue.
+
+Output Format: For each document you find, you MUST provide the following in a clean, categorized list:
+
+1.  Category: The category name from the list below.
+
+2.  Document Title/Description: A brief, one-sentence description of the document.
+
+3.  Source Organization: The name of the organization that published it.
+
+4.  Direct URL: A direct, functioning URL that leads to the document's landing page or, preferably, a direct download link for the PDF.
+
+Please structure your entire response according to the five categories below.
+
+---
+
+### Research Categories and Instructions:
+
+### 1. The Law: Legislation & Regulation
+
+   *Objective:** Find an example of a dense, technical legal document that governs housing development. The goal is to find a document that is difficult for a layperson to read.
+
+   *Instructions:** Search for the residential zoning code of a major U.S. city. Good examples to search for include Minneapolis, MN (known for reform); Houston, TX (known for minimal zoning); or Portland, OR.
+
+   *Example Search Query:** "Minneapolis residential zoning code pdf"
+
+### 2. The Numbers: Government Data & Reports
+
+   *Objective:** Find a flagship, data-heavy report from a federal agency that quantifies the scale of the housing affordability problem.
+
+   *Instructions:** Prioritize official reports from sources like the Department of Housing and Urban Development (HUD) or the US Census Bureau. The "Worst Case Housing Needs" report from HUD is an ideal example.
+
+   *Example Search Query:** "HUD Worst Case Housing Needs report latest pdf" or "US Census American Community Survey housing cost burden data"
+
+### 3. The Arguments: Opposing Think Tank Analyses
+
+   *Objective:** Find two high-quality reports that represent the primary opposing viewpoints in the housing debate. It is vital that these two documents offer different solutions.
+
+   *Instructions:**
+
+       *A) Pro-Supply / Market-Oriented View:** Find one report arguing that deregulating zoning and land use to increase housing supply is the primary solution. Search the publications of organizations like the Mercatus Center, the American Enterprise Institute (AEI), or the Cato Institute.
+
+       *B) Pro-Intervention / Tenant Protection View:** Find one report arguing for policies such as rent control, expansion of housing vouchers, or other forms of government aid and tenant protection. Search the publications of organizations like the Center on Budget and Policy Priorities (CBPP) or the National Low Income Housing Coalition (NLIHC).
+
+### 4. The Stakeholders: Industry & Advocacy Positions
+
+   *Objective:** Find two documents that represent the official positions of key stakeholder groups with vested interests in the housing market.
+
+   *Instructions:**
+
+       *A) Industry Voice:** Find a policy statement, press release, or "issue brief" from a group representing home builders or realtors. Search the websites of the National Association of Home Builders (NAHB) or the National Association of Realtors (NAR) for their stated policy on housing supply.
+
+       *B) Advocacy Voice:** Find a report or statement from a prominent tenants' rights or affordable housing advocacy group. The annual "Out of Reach" report from the National Low Income Housing Coalition (NLIHC) is a perfect example.
+
+### 5. The Reality: Public Opinion & Polling
+
+   *Objective:** Find a summary of a national public opinion poll on housing affordability. The goal is to understand the political landscape and public sentiment.
+
+   *Instructions:** Search for polls that gauge American attitudes towards housing costs, local development (NIMBYism), or potential solutions like building more apartments locally. Prioritize credible, non-partisan polling organizations like the Pew Research Center, Gallup, or YouGov.
+
+   *Example Search Query:** "Pew Research poll housing affordability"
+
+---
+
+Please execute this research task with precision. Ensure all links are active and lead to the primary source documents where possible, not just news articles discussing them. Your final output should be a well-organized list ready for review.
+</file>
+
+<file path=".gitignore">
+.env
+venv
+__pycache__
+data
+projects
+</file>
+
+<file path="agent_tools.py">
+import os
+from langchain.tools import tool
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_openai import ChatOpenAI, OpenAIEmbeddings
+from langchain.chains.summarize import load_summarize_chain
+from langchain_community.vectorstores import FAISS
+from langchain_core.documents import Document
+
+import project_manager as pm
+from knowledge_base import search_global_db
+
+# Global variable to store the current project folder
+_current_project_folder = None
+
+def set_project_folder(folder):
+    """Set the current project folder for all tools to use."""
+    global _current_project_folder
+    _current_project_folder = folder
+
+# --- Tool 1: Search the main Knowledge Base ---
+@tool
+def search_knowledge_base(query: str) -> str:
+    """
+    Searches the main PostgreSQL knowledge base for information on a given query.
+    Returns relevant document chunks formatted as text.
+    """
+    print(f"[Tool Call] Searching knowledge base for: '{query}'")
+    results = search_global_db(query)
+    # Format results as a string for the agent
+    formatted_results = []
+    for doc in results:
+        formatted_results.append(f"Content: {doc.page_content}\nSource: {doc.metadata.get('source', 'Unknown')}")
+    return "\n---\n".join(formatted_results) if formatted_results else "No relevant results found."
+
+# --- Tool 2: List Project Files ---
+@tool
+def list_project_files() -> str:
+    """
+    Lists all markdown (.md) documents in the current project folder.
+    Returns a comma-separated list of filenames.
+    """
+    if not _current_project_folder:
+        return "Error: No project folder is currently set."
+    
+    print(f"[Tool Call] Listing files in project: '{_current_project_folder}'")
+    files = pm.list_documents(_current_project_folder)
+    if not files:
+        return "No markdown files found in the current project."
+    return ", ".join(files)
+
+# --- Tool 3: Summarize a Document ---
+@tool
+def summarize_document(filename: str) -> str:
+    """
+    Reads a document from the project folder and returns a concise summary.
+    Use this for large documents to understand their contents without reading the whole file.
+    Args:
+        filename: The name of the markdown file to summarize (e.g., 'policy_brief.md')
+    """
+    if not _current_project_folder:
+        return "Error: No project folder is currently set."
+        
+    print(f"[Tool Call] Summarizing document: '{filename}'")
+    try:
+        # We need a function in project_manager to read a file's content
+        content = pm.read_document(_current_project_folder, filename)
+        if not content:
+            return "Error: Document is empty or could not be read."
+
+        docs = [Document(page_content=content)]
+        llm = ChatOpenAI(temperature=0, model="gpt-4-turbo")
+        
+        # Use LangChain's summarization chain
+        chain = load_summarize_chain(llm, chain_type="refine")
+        summary = chain.invoke({"input_documents": docs})
+        return summary['output_text']
+
+    except FileNotFoundError:
+        return f"Error: File '{filename}' not found."
+    except Exception as e:
+        return f"An error occurred during summarization: {e}"
+
+# --- Tool 4: Search within a Single Document ---
+@tool
+def search_in_document(filename: str, query: str) -> str:
+    """
+    Performs a semantic search for a query within a single specified document.
+    Use this to find specific information inside a file.
+    Args:
+        filename: The name of the markdown file to search in (e.g., 'problem_statement.md')
+        query: What to search for within the document
+    """
+    if not _current_project_folder:
+        return "Error: No project folder is currently set."
+        
+    print(f"[Tool Call] Searching in '{filename}' for: '{query}'")
+    try:
+        content = pm.read_document(_current_project_folder, filename)
+        if not content:
+            return "Error: Document is empty or could not be read."
+
+        # In-memory RAG for the single document
+        text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
+        split_docs = text_splitter.create_documents([content])
+        
+        embeddings = OpenAIEmbeddings()
+        vector_store = FAISS.from_documents(split_docs, embeddings)
+        
+        retriever = vector_store.as_retriever(search_kwargs={'k': 3})
+        results = retriever.invoke(query)
+        
+        # Format results into a single string
+        return "\n---\n".join([doc.page_content for doc in results])
+
+    except FileNotFoundError:
+        return f"Error: File '{filename}' not found."
+    except Exception as e:
+        return f"An error occurred during search: {e}"
+
+def get_all_tools():
+    """Returns a list of all defined tools for the agent."""
+    return [
+        search_knowledge_base,
+        list_project_files,
+        summarize_document,
+        search_in_document
+    ]
+</file>
+
+<file path="ai_core.py">
+# ai_core.py
+
+from typing import List, Optional
+from langchain_core.documents import Document
+from langchain_core.prompts import ChatPromptTemplate
+from langchain_openai import ChatOpenAI
+
+# Define the precise prompt template as required by the PRD
+PROMPT_TEMPLATE = (
+    "System: You are an AI policy research assistant. Your task is to answer the user's question based *only* on the provided context. "
+    "If the context does not contain the answer, state that you could not find the information in the knowledge base.\n\n"
+    "Human:\n"
+    "Here is the context retrieved from the knowledge base:\n"
+    "---\n"
+    "{context}\n"
+    "---\n"
+    "Based on the context above, please answer the following question:\n"
+    "{question}"
+)
+
+def generate_response(question: str, context_docs: List[Document], conversation_history: Optional[List[dict]] = None) -> str:
+    """
+    Generates a response using an LLM based on the user's question and retrieved context.
+    
+    Args:
+        question: The user's question.
+        context_docs: A list of documents retrieved from the knowledge base.
+        conversation_history: Optional conversation history for Phase 2 interactive sessions.
+    
+    Returns:
+        The AI-generated answer as a string.
+    """
+    print("> Generating response...")
+    
+    # Format the retrieved document chunks into a single string
+    context_text = "\n\n---\n\n".join([doc.page_content for doc in context_docs])
+
+    # Initialize the ChatOpenAI model
+    model = ChatOpenAI(model="gpt-4-turbo")
+    
+    # For Phase 1 compatibility (single-shot Q&A)
+    if conversation_history is None:
+        # Create the prompt using the template
+        prompt_template = ChatPromptTemplate.from_template(PROMPT_TEMPLATE)
+        prompt = prompt_template.format(question=question, context=context_text)
+        
+        # Invoke the model and get the response
+        response = model.invoke(prompt)
+    else:
+        # For Phase 2 (interactive sessions with memory)
+        # Build messages list with system prompt, history, and current question
+        messages = [
+            {
+                "role": "system", 
+                "content": "You are an AI policy research assistant. Your task is to answer the user's question based *only* on the provided context. "
+                          "If the context does not contain the answer, state that you could not find the information in the knowledge base."
+            }
+        ]
+        
+        # Add conversation history
+        messages.extend(conversation_history)
+        
+        # Add current question with context
+        user_message = (
+            f"Here is the context retrieved from the knowledge base:\n"
+            f"---\n"
+            f"{context_text}\n"
+            f"---\n"
+            f"Based on the context above, please answer the following question:\n"
+            f"{question}"
+        )
+        messages.append({"role": "user", "content": user_message})
+        
+        # Invoke the model with full message history
+        response = model.invoke(messages)
+    
+    return response.content
+</file>
+
+<file path="config.py">
+# config.py
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from a .env file
+load_dotenv()
+
+# --- Database Configuration ---
+# Constructs the full database URL from environment variables.
+# This is the standard format for SQLAlchemy.
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+psycopg2://postgres:postgres@localhost:5432/polgen")
+
+# --- OpenAI API Configuration ---
+# Retrieves the OpenAI API key from environment variables.
+# The script will fail if this is not set in the .env file.
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+if not OPENAI_API_KEY:
+    raise ValueError("OPENAI_API_KEY environment variable not set.")
+
+# --- Data and Processing Configuration ---
+# Defines the location of the source documents.
+DATA_DIR = "data"
+
+# Defines parameters for splitting text into chunks.
+# CHUNK_SIZE is the maximum size of a chunk in characters.
+# CHUNK_OVERLAP is the number of characters to overlap between consecutive chunks.
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
+
+# Defines the specific OpenAI model to use for creating embeddings.
+EMBEDDING_MODEL = "text-embedding-3-small" 
+
+# Batch size for embedding API calls
+# OpenAI allows up to 2048 inputs per call, but we use a conservative value
+# to avoid token limits and reduce the impact of failures
+EMBEDDING_BATCH_SIZE = int(os.getenv("EMBEDDING_BATCH_SIZE", "100")) 
+
+# Collection name for PGVector store
+COLLECTION_NAME = "polgen_documents"
+</file>
+
+<file path="engine.py">
+"""
+Engine module for document processing and LLM interactions.
+"""
+
+from pathlib import Path
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain_text_splitters import RecursiveCharacterTextSplitter
+from langchain_community.vectorstores import FAISS
+from langchain.chains import RetrievalQA
+from langchain.prompts import PromptTemplate
+from langchain_core.documents import Document
+import os
+
+
+def load_and_process_documents():
+    """Load documents from the data directory and create a retriever."""
+    # Load all text files from the data directory
+    data_dir = Path("data")
+    documents = []
+    
+    for txt_file in data_dir.glob("*.txt"):
+        with open(txt_file, "r", encoding="utf-8") as f:
+            content = f.read()
+            doc = Document(
+                page_content=content,
+                metadata={"source": txt_file.name}
+            )
+            documents.append(doc)
+    
+    # Split documents into chunks
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,
+        separators=["\n\n", "\n", " ", ""]
+    )
+    splits = text_splitter.split_documents(documents)
+    
+    # Create embeddings and vector store
+    embeddings = OpenAIEmbeddings()
+    vectorstore = FAISS.from_documents(splits, embeddings)
+    
+    # Create retriever
+    retriever = vectorstore.as_retriever(search_kwargs={"k": 5})
+    
+    return retriever
+
+
+def run_summary_chain(retriever, prompt_template, topic):
+    """Run a chain to generate a summary based on retrieved documents."""
+    llm = ChatOpenAI(temperature=0.7, model="gpt-4o-mini")
+    
+    prompt = PromptTemplate(
+        template=prompt_template,
+        input_variables=["context", "question"]
+    )
+    
+    qa_chain = RetrievalQA.from_chain_type(
+        llm=llm,
+        chain_type="stuff",
+        retriever=retriever,
+        chain_type_kwargs={"prompt": prompt},
+        return_source_documents=False
+    )
+    
+    # The RetrievalQA chain expects 'query' but our prompt uses 'topic'
+    # We need to pass the topic as the query
+    result = qa_chain.invoke({"query": topic})
+    return result["result"]
+
+
+def run_drafting_chain(summary_text, prompt_template):
+    """Run a chain to draft a policy brief based on the summary."""
+    llm = ChatOpenAI(temperature=0.7, model="gpt-4o-mini")
+    
+    prompt = PromptTemplate(
+        template=prompt_template,
+        input_variables=["summary"]
+    )
+    
+    # Direct LLM call since we're not using retrieval here
+    formatted_prompt = prompt.format(summary=summary_text)
+    response = llm.invoke(formatted_prompt)
+    
+    return response.content
+</file>
+
+<file path="ingest.py">
+# ingest.py
+import os
+import logging
+from typing import List, Iterator, Set, Optional
+import time
+
+# Import SQLAlchemy components for database interaction
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
+
+# Import LangChain components for document loading, splitting, and embedding
+from langchain_community.document_loaders import PyMuPDFLoader, TextLoader, UnstructuredMarkdownLoader
+from langchain_community.vectorstores.pgvector import PGVector
+from langchain_core.documents import Document
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_openai import OpenAIEmbeddings
+
+# Import our application's configuration
+import config
+
+# --- Logging Setup ---
+# This sets up a simple way to print informative messages to the console.
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def get_db_session() -> Session:
+    """
+    Creates and returns a database session for querying existing documents.
+    """
+    engine = create_engine(config.DATABASE_URL)
+    SessionLocal = sessionmaker(bind=engine)
+    return SessionLocal()
+
+def get_existing_documents(session: Session) -> Set[str]:
+    """
+    Queries the database to get a set of source filenames that have already been processed.
+    Returns a set of filenames (not full paths) that exist in the vector store.
+    """
+    try:
+        # Query the langchain_pg_embedding table for unique source values
+        # The metadata is stored as JSONB in the 'cmetadata' column
+        query = text("""
+            SELECT DISTINCT cmetadata->>'source' as source
+            FROM langchain_pg_embedding
+            WHERE cmetadata->>'source' IS NOT NULL
+            AND collection_id = (
+                SELECT uuid FROM langchain_pg_collection 
+                WHERE name = :collection_name
+            )
+        """)
+        
+        result = session.execute(query, {"collection_name": config.COLLECTION_NAME})
+        
+        # Extract just the filenames from the full paths
+        existing_files = set()
+        for row in result:
+            if row.source:
+                # Get just the filename from the full path
+                filename = os.path.basename(row.source)
+                existing_files.add(filename)
+        
+        logging.info(f"Found {len(existing_files)} documents already in the database")
+        return existing_files
+        
+    except Exception as e:
+        logging.warning(f"Could not query existing documents (this is normal on first run): {e}")
+        return set()
+
+def clean_text(text: str) -> str:
+    """
+    Remove null bytes and other problematic characters from text.
+    PostgreSQL doesn't allow null bytes in string literals.
+    """
+    if text is None:
+        return ""
+    # Remove null bytes
+    cleaned = text.replace('\x00', '')
+    # Also remove other control characters that might cause issues
+    # Keep newlines, tabs, and other common whitespace
+    cleaned = ''.join(char for char in cleaned if ord(char) >= 32 or char in '\n\r\t')
+    return cleaned
+
+def clean_document(doc: Document) -> Document:
+    """
+    Clean a document's content and metadata to remove null bytes.
+    """
+    # Clean the page content
+    doc.page_content = clean_text(doc.page_content)
+    
+    # Clean metadata values (they could also contain null bytes)
+    if doc.metadata:
+        cleaned_metadata = {}
+        for key, value in doc.metadata.items():
+            if isinstance(value, str):
+                cleaned_metadata[key] = clean_text(value)
+            else:
+                cleaned_metadata[key] = value
+        doc.metadata = cleaned_metadata
+    
+    return doc
+
+def load_documents_from_directory(directory: str, skip_files: Optional[Set[str]] = None) -> Iterator[Document]:
+    """
+    Loads all supported documents (.txt, .pdf, .md) from a directory and yields them one by one.
+    Skips files that are in the skip_files set.
+    """
+    if skip_files is None:
+        skip_files = set()
+    
+    logging.info(f"Scanning for documents in '{directory}'...")
+    new_files_found = 0
+    skipped_existing = 0
+    
+    for filename in os.listdir(directory):
+        filepath = os.path.join(directory, filename)
+        
+        # Skip if this file already exists in the database
+        if filename in skip_files:
+            logging.info(f"Skipping existing file: {filename}")
+            skipped_existing += 1
+            continue
+        
+        # Determine the correct loader based on file extension
+        if filepath.endswith(".pdf"):
+            loader = PyMuPDFLoader(filepath)
+        elif filepath.endswith(".txt"):
+            loader = TextLoader(filepath)
+        elif filepath.endswith(".md"):
+            loader = UnstructuredMarkdownLoader(filepath)
+        else:
+            # Skip unsupported files
+            logging.info(f"Skipping unsupported file: {filename}")
+            continue
+        
+        try:
+            logging.info(f"Loading new document: {filename}")
+            new_files_found += 1
+            # The loader returns a list of documents, yield each one
+            # (Unstructured loaders can sometimes create multiple docs from one file)
+            for doc in loader.load():
+                yield doc
+        except Exception as e:
+            logging.error(f"Failed to load or process {filename}: {e}")
+            continue
+    
+    logging.info(f"Summary: {new_files_found} new files to process, {skipped_existing} existing files skipped")
+
+def split_documents(documents: List[Document]) -> List[Document]:
+    """
+    Takes a list of documents and splits them into smaller chunks.
+    """
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=config.CHUNK_SIZE,
+        chunk_overlap=config.CHUNK_OVERLAP
+    )
+    logging.info("Splitting documents into chunks...")
+    chunks = text_splitter.split_documents(documents)
+    logging.info(f"Total chunks created: {len(chunks)}")
+    
+    # Clean all chunks to remove null bytes
+    cleaned_chunks = [clean_document(chunk) for chunk in chunks]
+    return cleaned_chunks
+
+def add_chunks_to_vectorstore(chunks: List[Document]):
+    """
+    Embeds chunks and adds them to the PGVector store using LangChain.
+    This handles table creation, embedding, and insertion automatically.
+    """
+    if not chunks:
+        logging.info("No new chunks to add to the vector store.")
+        return
+
+    logging.info(f"Adding {len(chunks)} new chunks to the vector store...")
+
+    # Use the same embedding model as in retrieval
+    embeddings = OpenAIEmbeddings(model=config.EMBEDDING_MODEL)
+
+    # Process in batches to avoid token limits
+    batch_size = config.EMBEDDING_BATCH_SIZE
+    for i in range(0, len(chunks), batch_size):
+        batch = chunks[i:i + batch_size]
+        logging.info(f"Processing batch {i//batch_size + 1} ({len(batch)} chunks)...")
+        
+        # Add documents without deleting existing collection
+        PGVector.from_documents(
+            documents=batch,
+            embedding=embeddings,
+            collection_name=config.COLLECTION_NAME,
+            connection_string=config.DATABASE_URL,
+            pre_delete_collection=False,  # Never delete existing data
+        )
+    
+    logging.info(f"Successfully added {len(chunks)} chunks to the vector store.")
+
+if __name__ == "__main__":
+    logging.info("--- Starting Data Ingestion Pipeline ---")
+
+    try:
+        # Step 1: Check what documents already exist in the database
+        session = get_db_session()
+        existing_files = get_existing_documents(session)
+        session.close()
+        
+        # Step 2: Load only new documents from the data directory
+        documents = list(load_documents_from_directory(config.DATA_DIR, skip_files=existing_files))
+        
+        # Step 3: Split documents into processable chunks
+        if documents:
+            chunks = split_documents(documents)
+            
+            # Step 4: Add the new chunks to the vector store
+            if chunks:
+                add_chunks_to_vectorstore(chunks)
+            else:
+                logging.info("No chunks generated from the new documents.")
+        else:
+            logging.info("No new documents found to process.")
+            
+    except Exception as e:
+        logging.error(f"An error occurred during the ingestion process: {e}", exc_info=True)
+    finally:
+        logging.info("--- Data Ingestion Pipeline Finished ---")
+</file>
+
+<file path="knowledge_base.py">
+# knowledge_base.py
+
+from typing import List
+from langchain_community.vectorstores.pgvector import PGVector
+from langchain_core.documents import Document
+from langchain_openai import OpenAIEmbeddings
+
+import config
+
+def get_retriever():
+    """Initializes and returns a PGVector retriever."""
+    # Use OpenAI's embedding model, which must match the one used in ingestion
+    embeddings = OpenAIEmbeddings(model=config.EMBEDDING_MODEL)
+
+    # Initialize the PGVector store
+    store = PGVector(
+        collection_name=config.COLLECTION_NAME,
+        connection_string=config.DATABASE_URL,
+        embedding_function=embeddings,
+    )
+
+    # Return the store as a retriever, configured to fetch the top 5 results
+    return store.as_retriever(search_kwargs={"k": 5})
+
+def search_global_db(query: str) -> List[Document]:
+    """
+    Searches the global knowledge base for chunks relevant to the query.
+    
+    Args:
+        query: The user's question.
+    
+    Returns:
+        A list of LangChain Document objects, including metadata.
+    """
+    print("> Searching knowledge base...")
+    retriever = get_retriever()
+    print(query)
+    # The invoke method performs the similarity search
+    return retriever.invoke(query)
+</file>
+
+<file path="main.py">
+# main.py
+
+import sys
+import os
+from typing import List, Optional
+import typer
+from dotenv import load_dotenv
+
+# Import functions from our modules
+from knowledge_base import search_global_db
+from ai_core import generate_response
+import project_manager as pm
+from orchestrator import Orchestrator
+from langchain_core.messages import HumanMessage, AIMessage
+
+# Create a Typer application instance
+app = typer.Typer()
+
+def run_chat_session(project_folder):
+    """Main REPL loop for an active project session, with corrected history management."""
+    orchestrator = Orchestrator(project_folder)
+    project_details = pm.load_project_details(project_folder)
+    project_name = project_details.get("name", project_folder)
+    
+    # History is a list of LangChain Message objects
+    chat_history = []
+
+    print(f"\n--- Starting session for project: '{project_name}' ---")
+    print("Type /help for a list of commands.")
+
+    while True:
+        try:
+            prompt = f"({project_name}) > "
+            user_input = input(prompt).strip()
+            
+            if user_input.lower() in ["/exit", "quit"]:
+                # Check for unsaved draft before exiting
+                if orchestrator.has_unsaved_draft():
+                    confirm = input("You have unsaved changes. Are you sure you want to exit? [y/n]: ").lower()
+                    if confirm != 'y':
+                        continue  # Go back to the loop
+                raise KeyboardInterrupt
+
+            if not user_input:
+                continue
+            
+            # Special handling for /create command with unsaved draft
+            if user_input.startswith("/create") and orchestrator.has_unsaved_draft():
+                confirm = input("You have an unsaved draft. Do you want to discard it and start a new one? [y/n]: ").lower()
+                if confirm != 'y':
+                    print("Create command cancelled.")
+                    continue
+            
+            # Add user message to history
+            chat_history.append(HumanMessage(content=user_input))
+
+            # Handle input and get response
+            response_generator = orchestrator.handle_input(user_input, chat_history)
+            
+            if isinstance(response_generator, str):
+                # It's a command response or drafting response
+                final_response = response_generator
+                print(f"\n> {final_response}\n")
+            else: 
+                # Streaming agent output
+                final_response = ""
+                print("\n", flush=True)
+                # The verbose=True in AgentExecutor prints the thoughts. We just capture the final output here.
+                for chunk in response_generator:
+                    if "output" in chunk:
+                        # This is the final answer chunk
+                        final_response += chunk["output"]
+                
+                # Print the final response after streaming is complete
+                if final_response:
+                    print(f"> {final_response}\n")
+            
+            # Add AI response to history
+            chat_history.append(AIMessage(content=final_response))
+
+            # Save history to file
+            history_dicts = [{"role": "user" if isinstance(m, HumanMessage) else "assistant", "content": m.content} for m in chat_history]
+            pm.save_conversation_history(project_folder, history_dicts)
+
+        except KeyboardInterrupt:
+            print("\nExiting session. Goodbye!")
+            # Save history one final time before exiting
+            history_dicts = [{"role": "user" if isinstance(m, HumanMessage) else "assistant", "content": m.content} for m in chat_history]
+            pm.save_conversation_history(project_folder, history_dicts)
+            sys.exit(0)
+        except Exception as e:
+            print(f"\nAn error occurred: {e}\n")
+            # Continue the loop on error
+
+def project_selection_menu():
+    """Handles the initial menu for creating or loading a project."""
+    while True:
+        choice = input("Load existing project or create new one? [load/create]: ").lower().strip()
+        if choice == "create":
+            project_name = input("Enter new project name: ").strip()
+            if project_name:
+                # Create the project and get the path
+                project_path = pm.create_project(project_name)
+                # Extract just the folder name from the full path
+                project_folder = os.path.basename(project_path)
+                run_chat_session(project_folder)
+                break
+            else:
+                print("Project name cannot be empty.")
+        elif choice == "load":
+            projects = pm.list_projects()
+            if not projects:
+                print("No projects found. Please create one first.")
+                continue
+            
+            print("\nAvailable projects:")
+            for i, p in enumerate(projects):
+                # Load project details to show the actual name
+                details = pm.load_project_details(p)
+                project_name = details.get("name", p)
+                print(f"  {i+1}. {project_name} (folder: {p})")
+            
+            try:
+                selection = int(input("Select a project by number: ").strip())
+                if 1 <= selection <= len(projects):
+                    project_folder = projects[selection-1]
+                    run_chat_session(project_folder)
+                    break
+                else:
+                    print("Invalid selection.")
+            except ValueError:
+                print("Please enter a valid number.")
+        else:
+            print("Invalid command. Please type 'load' or 'create'.")
+
+@app.command()
+def interactive():
+    """
+    Launch the interactive project-based research assistant (Phase 2).
+    """
+    # Ensure projects directory exists
+    pm.ensure_projects_dir_exists()
+    
+    # Start the application
+    print("=== PolGen Interactive Research Assistant ===")
+    print("Phase 2: Project-based Conversational Interface\n")
+    
+    project_selection_menu()
+
+@app.command()
+def ask(
+    # Typer uses function arguments to define CLI arguments.
+    # The 'Optional[List[str]]' allows us to capture all arguments.
+    question_parts: Optional[List[str]] = typer.Argument(
+        None, help="The question you want to ask PolGen."
+    ),
+    # The '--verbose' flag is defined here as a boolean option.
+    verbose: bool = typer.Option(
+        False, "--verbose", "-v", help="Enable verbose mode to show retrieved chunks."
+    )
+):
+    """
+    PolGen Phase 1: Single-shot Q&A mode.
+    
+    Ask a question and get an evidence-based answer from your knowledge base.
+    """
+    # Check if a question was provided
+    if not question_parts:
+        print("Usage: python main.py ask \"Your question here\"")
+        raise typer.Exit()
+
+    # Join all parts of the question into a single string
+    question = " ".join(question_parts)
+    print(f"Question: {question}")
+    print("> Searching knowledge base and generating response...")
+    
+    # 1. Search the knowledge base
+    retrieved_chunks = search_global_db(question)
+
+    # 2. Handle the case where no relevant chunks are found
+    if not retrieved_chunks:
+        print("\nI could not find any information related to your question in the knowledge base.")
+        raise typer.Exit()
+
+    # 3. If verbose mode is enabled, print the retrieved chunks
+    if verbose:
+        print("\n--- Retrieved Chunks (Verbose Mode) ---")
+        for i, chunk in enumerate(retrieved_chunks):
+            # We access the source file metadata here
+            source_file = chunk.metadata.get('source', 'Unknown source')
+            print(f"\n[Chunk {i+1} from: {source_file}]")
+            print(chunk.page_content)
+        print("\n-------------------------------------\n")
+
+    # 4. Generate the final response (Phase 1 mode - no conversation history)
+    answer = generate_response(question, retrieved_chunks)
+
+    # 5. Print the final answer
+    print("\n--- Answer ---")
+    print(answer)
+
+@app.callback(invoke_without_command=True)
+def main(ctx: typer.Context):
+    """
+    PolGen: An AI-powered policy research assistant.
+    
+    Use 'ask' for single-shot Q&A or 'interactive' for project-based sessions.
+    """
+    # If no command is provided, show help
+    if ctx.invoked_subcommand is None:
+        print("Usage: python main.py [COMMAND] [OPTIONS]")
+        print("\nCommands:")
+        print("  ask          Single-shot Q&A mode (Phase 1)")
+        print("  interactive  Interactive project-based mode (Phase 2)")
+        print("\nFor more help: python main.py --help")
+        raise typer.Exit()
+
+if __name__ == "__main__":
+    # Load environment variables from the .env file
+    load_dotenv()
+    # Run the Typer application
+    app()
+</file>
+
+<file path="orchestrator.py">
+import re
+from typing import List, Dict, Optional
+from langchain_openai import ChatOpenAI
+from langchain.prompts import MessagesPlaceholder
+from langchain_core.prompts import ChatPromptTemplate
+from langchain.agents import AgentExecutor, create_openai_tools_agent
+from langchain_core.messages import HumanMessage, AIMessage
+
+# Import the new tools module
+import agent_tools
+
+class Orchestrator:
+    def __init__(self, project_folder):
+        self.project_folder = project_folder
+        # Set the project folder for all tools
+        agent_tools.set_project_folder(project_folder)
+        # We now initialize an agent, not a chain
+        self.agent_executor = self._initialize_agent()
+        self.active_draft: Optional[Dict[str, str]] = None
+
+    def _initialize_agent(self):
+        """Initializes the OpenAI Tools Agent and its executor."""
+        llm = ChatOpenAI(temperature=0, model="gpt-4-turbo", streaming=True)
+        
+        # Get the tool list from our new module
+        tools = agent_tools.get_all_tools()
+        
+        # Create the agent's prompt
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", """You are PolGen, an AI-powered policy research assistant.
+You have access to a set of tools to help you answer questions.
+When a user mentions a file in their project, you should use your tools to interact with it.
+If a user's request is ambiguous (e.g., they say 'my brief' and multiple brief files exist), you MUST ask for clarification.
+If a tool returns an error, inform the user about the error and stop.
+Do not make up file names. Use the `list_project_files` tool to see which files are available.
+When using tools, think step by step about what you need to do."""),
+            MessagesPlaceholder(variable_name="chat_history"),
+            ("user", "{input}"),
+            MessagesPlaceholder(variable_name="agent_scratchpad"),
+        ])
+        
+        agent = create_openai_tools_agent(llm, tools, prompt)
+        
+        # The AgentExecutor runs the agent and its tools
+        # max_iterations is the safety rail
+        agent_executor = AgentExecutor(
+            agent=agent, 
+            tools=tools, 
+            verbose=True, # This will print the chain of thought
+            max_iterations=7, # Step limit
+            handle_parsing_errors=True # Gracefully handle errors
+        )
+        return agent_executor
+
+    def get_current_history_for_saving(self):
+        """Returns the current history in a format suitable for saving."""
+        # This will be managed by main.py now
+        return []
+
+    def handle_input(self, user_input, chat_history):
+        """Main entry point to process user input. Now takes history as an argument."""
+        # Commands are still handled separately and don't use the agent.
+        if user_input.startswith('/'):
+            # This part remains mostly the same
+            return self._handle_command(user_input)
+
+        # If in drafting mode, use the old drafting logic.
+        if self.active_draft:
+            return self._handle_drafting_query(user_input)
+
+        # If it's a regular chat message, invoke the agent
+        response_generator = self.agent_executor.stream({
+            "input": user_input,
+            "chat_history": chat_history
+        })
+        
+        return response_generator
+
+    def _handle_drafting_query(self, user_query):
+        """Handles a query when in drafting mode. Needs its own LLM instance."""
+        if not self.active_draft:
+            return "Error: No active draft found."
+            
+        llm = ChatOpenAI(temperature=0, model="gpt-4-turbo")
+        
+        drafting_prompt = (
+            f"You are in drafting mode for the document '{self.active_draft['filename']}'. "
+            "Your primary goal is to generate content for this document. "
+            "Wrap the content in <draft_content></draft_content> tags.\n\n"
+            f"User's instruction: {user_query}"
+        )
+        
+        # This is a direct LLM call now, not using a chain
+        response = llm.invoke(drafting_prompt)
+        raw_answer = str(response.content)
+
+        match = re.search(r'<draft_content>(.*?)</draft_content>', raw_answer, re.DOTALL)
+        if match:
+            draft_content = match.group(1).strip()
+            if self.active_draft.get('content'):
+                self.active_draft['content'] += f"\n\n{draft_content}"
+            else:
+                self.active_draft['content'] = draft_content
+            return re.sub(r'<draft_content>.*?</draft_content>', draft_content, raw_answer, flags=re.DOTALL).strip()
+        else:
+            return raw_answer
+    
+    def _handle_command(self, user_input: str) -> str:
+        """Parses and dispatches slash commands."""
+        parts = user_input.strip().split()
+        command = parts[0].lower()
+        args = parts[1:] if len(parts) > 1 else []
+
+        if command == "/create":
+            return self._handle_create_command(args)
+        elif command == "/save":
+            return self._handle_save_command()
+        elif command == "/list":
+            return self._handle_list_command()
+        elif command == "/help":
+            return self._handle_help_command()
+        else:
+            return f"Unknown command: '{command}'. Type /help for a list of commands."
+
+    def _handle_create_command(self, args: List[str]) -> str:
+        from project_manager import document_exists
+        
+        if not args:
+            return "Usage: /create <filename.md>"
+        
+        filename = args[0]
+        if not filename.endswith('.md'):
+            return "Error: Filename must end with .md"
+        
+        if document_exists(self.project_folder, filename):
+            return f"Error: '{filename}' already exists. Please choose a different name."
+        
+        if self.active_draft:
+            # Note: In the real implementation, this should be handled in main.py
+            # to properly get user input. For now, we'll return a message
+            return "Error: You have an unsaved draft. Please save it with /save or start a new session."
+
+        self.active_draft = {"filename": filename, "content": ""}
+        return f"OK, let's draft `{filename}`. How should we begin?"
+
+    def _handle_save_command(self) -> str:
+        from project_manager import save_document
+        
+        if not self.active_draft:
+            return "No active draft to save. Use /create <filename.md> to start one."
+        
+        filename = self.active_draft['filename']
+        content = self.active_draft.get('content', '').strip()
+        
+        if not content:
+            return "Cannot save an empty document. Please add some content first."
+        
+        save_document(self.project_folder, filename, content)
+        
+        self.active_draft = None  # Clear the draft
+        return f"Successfully saved `{filename}`."
+
+    def _handle_list_command(self) -> str:
+        from project_manager import list_documents
+        
+        docs = list_documents(self.project_folder)
+        if not docs:
+            return "No documents found in this project."
+        
+        response = "Documents in this project:\n"
+        response += "\n".join([f"- {doc}" for doc in docs])
+        return response
+
+    def _handle_help_command(self) -> str:
+        return """Available Commands:
+/create <filename.md>  - Start a new document draft
+/save                  - Save the current active draft to a file
+/list                  - List all .md documents in the project
+/help                  - Show this help message
+/exit or quit          - Exit the application"""
+
+    def has_unsaved_draft(self) -> bool:
+        """Check if there's an active draft with content."""
+        return self.active_draft is not None and bool(self.active_draft.get('content', '').strip())
+</file>
+
+<file path="polgen_cli.py">
+import questionary
+from rich.console import Console
+from rich.markdown import Markdown
+from pathlib import Path
+import time
+from dotenv import load_dotenv
+
+import engine
+import prompts
+
+# --- INITIAL SETUP ---
+load_dotenv()
+console = Console()
+
+
+def main():
+    """Main function to run the interactive CLI tool."""
+
+    # --- WELCOME AND PROJECT SETUP ---
+    console.print(Markdown("# Welcome to the PolGen Policy Co-Pilot!"))
+    policy_topic = questionary.text(
+        "What policy do you want to develop today?",
+        default="AI Safety and Regulation"
+    ).ask()
+
+    if not policy_topic:
+        console.print("[bold red]Policy topic cannot be empty. Exiting.[/bold red]")
+        return
+
+    # Sanitize topic to create a valid directory name
+    dir_name = "policy_" + "".join(c if c.isalnum() else "_" for c in policy_topic.lower())
+    project_path = Path(dir_name)
+    project_path.mkdir(exist_ok=True)
+    
+    console.print(f"\n[green]Great! A new project folder has been created at:[/green] [bold cyan]{project_path.resolve()}[/bold cyan]")
+
+    # --- PHASE 1: PROBLEM DEFINITION ---
+    console.print(Markdown("\n## --- PHASE 1: SCOPING THE POLICY ---"))
+    geography = questionary.select(
+        "Please specify the geography for this policy:",
+        choices=["National (US)", "State / Provincial", "International", "Local"]
+    ).ask()
+
+    success_metric = questionary.text(
+        "What is the primary success metric for this policy?",
+        default="Establish a clear regulatory framework for high-risk AI models within 2 years."
+    ).ask()
+
+    # --- PHASE 2: EVIDENCE GATHERING ---
+    console.print(Markdown("\n## --- PHASE 2: GATHERING & ANALYZING EVIDENCE ---"))
+    with console.status("[bold yellow]Analyzing curated data sources...[/bold yellow]", spinner="dots"):
+        retriever = engine.load_and_process_documents()
+        time.sleep(2) # Simulate work
+    console.print("[green]✓ Analysis of curated data complete.[/green]")
+
+    # --- GENERATE SUMMARIES ---
+    summary_topic = "Key technical frameworks, risks, and stakeholder positions on AI safety."
+    with console.status("[bold yellow]Generating technical summary...[/bold yellow]", spinner="dots"):
+        summary_text = engine.run_summary_chain(retriever, prompts.SUMMARY_PROMPT_TEMPLATE, summary_topic)
+        time.sleep(1)
+    
+    summary_file = project_path / "1_Technical_Summary.md"
+    summary_file.write_text(summary_text)
+    console.print(f"[green]✓ Technical summary saved to:[/green] [bold cyan]{summary_file.name}[/bold cyan]")
+    
+    # --- DISPLAY SUMMARY ---
+    display_summary = questionary.confirm("Would you like to display the summary here?").ask()
+    if display_summary:
+        console.print(Markdown("---"))
+        console.print(Markdown(summary_text))
+        console.print(Markdown("---"))
+
+    # --- PHASE 3 & 4: DRAFTING ---
+    console.print(Markdown("\n## --- PHASE 3: DRAFTING THE POLICY BRIEF ---"))
+    proceed_to_draft = questionary.confirm(
+        "Ready to draft an initial policy brief based on this summary?"
+    ).ask()
+
+    if proceed_to_draft:
+        with console.status("[bold yellow]Drafting policy brief... This may take a moment.[/bold yellow]", spinner="dots"):
+            draft_text = engine.run_drafting_chain(summary_text, prompts.DRAFTING_PROMPT_TEMPLATE)
+        
+        draft_file = project_path / "2_Policy_Brief_Draft_v1.md"
+        draft_file.write_text(draft_text)
+        console.print(f"[green]✓ Policy brief draft saved to:[/green] [bold cyan]{draft_file.name}[/bold cyan]")
+    
+    console.print(Markdown("\n[bold green]✨ All tasks complete! Your project files are ready for review. ✨[/bold green]"))
+
+
+if __name__ == "__main__":
+    main()
+</file>
+
+<file path="project_manager.py">
+import os
+import json
+import re
+
+PROJECTS_DIR = "projects"
+
+def ensure_projects_dir_exists():
+    """Creates the 'projects/' directory if it doesn't exist."""
+    os.makedirs(PROJECTS_DIR, exist_ok=True)
+
+def normalize_name(name):
+    """Converts a project name to a filesystem-safe folder name."""
+    name = name.lower()
+    name = re.sub(r'\s+', '-', name)
+    name = re.sub(r'[^a-z0-9-]', '', name)
+    return name
+
+def get_unique_folder_name(normalized_name):
+    """Finds a unique folder name by appending a number if necessary."""
+    path = os.path.join(PROJECTS_DIR, normalized_name)
+    if not os.path.exists(path):
+        return normalized_name
+    
+    counter = 1
+    while True:
+        new_name = f"{normalized_name}-{counter}"
+        new_path = os.path.join(PROJECTS_DIR, new_name)
+        if not os.path.exists(new_path):
+            return new_name
+        counter += 1
+
+def create_project(project_name):
+    """Creates the project structure on the filesystem and returns the project path."""
+    ensure_projects_dir_exists()
+    
+    normalized = normalize_name(project_name)
+    unique_folder_name = get_unique_folder_name(normalized)
+    
+    project_path = os.path.join(PROJECTS_DIR, unique_folder_name)
+    os.makedirs(project_path)
+    
+    # Create project.json
+    project_meta = {"name": project_name}
+    with open(os.path.join(project_path, "project.json"), "w") as f:
+        json.dump(project_meta, f, indent=4)
+        
+    # Create conversation_history.json
+    with open(os.path.join(project_path, "conversation_history.json"), "w") as f:
+        json.dump([], f)
+        
+    print(f"Project '{project_name}' created at: {project_path}")
+    return project_path
+
+def load_project_details(project_folder):
+    """Loads project metadata from its JSON file."""
+    path = os.path.join(PROJECTS_DIR, project_folder, "project.json")
+    with open(path, 'r') as f:
+        details = json.load(f)
+    return details
+
+def list_projects():
+    """Lists all existing projects by scanning the projects directory."""
+    ensure_projects_dir_exists()
+    return [d for d in os.listdir(PROJECTS_DIR) if os.path.isdir(os.path.join(PROJECTS_DIR, d))]
+
+def save_conversation_history(project_folder, history):
+    """Saves the conversation history to its JSON file."""
+    path = os.path.join(PROJECTS_DIR, project_folder, "conversation_history.json")
+    with open(path, "w") as f:
+        json.dump(history, f, indent=4)
+
+def save_document(project_folder, filename, content):
+    """Saves a document to a file in the project directory."""
+    path = os.path.join(PROJECTS_DIR, project_folder, filename)
+    with open(path, 'w') as f:
+        f.write(content)
+    print(f"Saved document: {filename}")
+
+def list_documents(project_folder):
+    """Lists all markdown (.md) documents in a project directory."""
+    project_path = os.path.join(PROJECTS_DIR, project_folder)
+    try:
+        return [f for f in os.listdir(project_path) if f.endswith('.md')]
+    except FileNotFoundError:
+        return []
+
+def document_exists(project_folder, filename):
+    """Checks if a document file already exists in the project."""
+    path = os.path.join(PROJECTS_DIR, project_folder, filename)
+    return os.path.exists(path)
+
+def read_document(project_folder, filename):
+    """Reads the full content of a specified document."""
+    path = os.path.join(PROJECTS_DIR, project_folder, filename)
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"File '{filename}' not found in project '{project_folder}'.")
+    with open(path, 'r') as f:
+        return f.read()
+</file>
+
+<file path="prompts.py">
+"""
+Prompt templates for the PolGen CLI application.
+"""
+
+SUMMARY_PROMPT_TEMPLATE = """
+You are a policy analyst preparing a technical summary on the following topic: {question}
+
+Based on the provided context documents, create a comprehensive summary that includes:
+
+1. **Key Frameworks and Standards**: Identify and describe the main technical frameworks, standards, or methodologies mentioned in the documents.
+
+2. **Risks and Challenges**: Highlight the primary risks, challenges, or concerns raised in the documents.
+
+3. **Stakeholder Positions**: Summarize the different perspectives and positions of various stakeholders (government, industry, civil society, etc.).
+
+4. **Best Practices and Recommendations**: Extract any best practices, recommendations, or proposed solutions.
+
+5. **International Perspectives**: If available, include relevant international models or approaches.
+
+Context Documents:
+{context}
+
+Please provide a well-structured summary in Markdown format with clear headings and bullet points where appropriate. The summary should be informative, balanced, and suitable for policy makers.
+
+Summary:
+"""
+
+DRAFTING_PROMPT_TEMPLATE = """
+You are a senior policy advisor tasked with drafting a policy brief based on the following technical summary:
+
+{summary}
+
+Create a professional policy brief that includes:
+
+# Policy Brief: AI Safety and Regulation Framework
+
+## Executive Summary
+[Provide a concise overview of the policy issue and proposed approach - 2-3 paragraphs]
+
+## Background and Context
+[Explain the current situation and why policy action is needed]
+
+## Policy Objectives
+[List 3-5 clear, measurable objectives]
+
+## Proposed Policy Framework
+[Detail the main components of the proposed policy, including:
+- Regulatory structure
+- Key provisions
+- Implementation timeline
+- Enforcement mechanisms]
+
+## Stakeholder Impact Analysis
+[Analyze how different groups will be affected:
+- Industry/Private Sector
+- Government Agencies
+- Civil Society/Public
+- International Partners]
+
+## Implementation Considerations
+[Address practical aspects:
+- Resource requirements
+- Potential challenges
+- Risk mitigation strategies]
+
+## Recommendations
+[Provide 3-5 specific, actionable recommendations]
+
+## Conclusion
+[Summarize key points and next steps]
+
+Please ensure the brief is:
+- Professional and authoritative in tone
+- Evidence-based (referencing the summary content)
+- Balanced and considers multiple perspectives
+- Action-oriented with clear recommendations
+- Formatted in clean Markdown
+
+Policy Brief:
+"""
+</file>
+
+<file path="query.py">
+# Test script to validate that ingest.py ingested the data correctly
+
+# query.py
+import os
+import sys
+import logging
+import re
+from typing import List, Tuple
+
+from sqlalchemy import create_engine, text
+from sqlalchemy.orm import sessionmaker, Session
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain.schema import Document
+from langchain.prompts import ChatPromptTemplate
+
+import config
+
+# Set up logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def get_db_session() -> Session:
+    """Creates and returns a new SQLAlchemy database session."""
+    engine = create_engine(config.DATABASE_URL)
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+    return SessionLocal()
+
+def vector_search(session: Session, query: str, top_k: int = 5) -> List[Tuple[str, str, float]]:
+    """
+    Performs vector similarity search to find the most relevant chunks.
+    Returns a list of (chunk_text, file_name, distance) tuples.
+    """
+    # Create embedding for the query
+    embeddings = OpenAIEmbeddings(model=config.EMBEDDING_MODEL)
+    query_embedding = embeddings.embed_query(query)
+    
+    # Convert embedding to string format for PostgreSQL
+    embedding_str = str(query_embedding)
+    
+    # Perform vector similarity search using pgvector
+    # Use a raw SQL string to avoid SQLAlchemy parameter substitution issues
+    sql_query = f"""
+        SELECT 
+            c.chunk_text,
+            d.file_name,
+            c.embedding <-> '{embedding_str}'::vector as distance
+        FROM chunks c
+        JOIN documents d ON c.document_id = d.id
+        ORDER BY c.embedding <-> '{embedding_str}'::vector
+        LIMIT {top_k}
+    """
+    
+    results = session.execute(text(sql_query)).fetchall()
+    
+    return [(row[0], row[1], row[2]) for row in results]
+
+def renumber_citations(answer: str, source_mapping: dict) -> Tuple[str, dict]:
+    """
+    Renumbers citations in the answer to start from 1 and returns updated answer and mapping.
+    Returns (updated_answer, cited_sources) where cited_sources maps new numbers to filenames.
+    """
+    # Extract cited numbers from the answer
+    cited_numbers = set()
+    for match in re.findall(r'\[(\d+(?:,\s*\d+)*)\]', answer):
+        for num in match.split(','):
+            cited_numbers.add(int(num.strip()))
+    
+    # Create reverse mapping: old number -> filename
+    num_to_file = {num: file for file, num in source_mapping.items()}
+    
+    # Create new numbering starting from 1
+    old_to_new = {}
+    cited_sources = {}
+    new_num = 1
+    
+    for old_num in sorted(cited_numbers):
+        if old_num in num_to_file:
+            old_to_new[old_num] = new_num
+            cited_sources[new_num] = num_to_file[old_num]
+            new_num += 1
+    
+    # Update the answer with new numbering
+    updated_answer = answer
+    # Process in reverse order to avoid conflicts (e.g., [10] before [1])
+    for old_num in sorted(cited_numbers, reverse=True):
+        if old_num in old_to_new:
+            # Use word boundaries to avoid replacing numbers inside other numbers
+            updated_answer = re.sub(
+                rf'\[{old_num}(?=\]|,)',
+                f'[{old_to_new[old_num]}',
+                updated_answer
+            )
+    
+    return updated_answer, cited_sources
+
+def generate_answer(query: str, context_chunks: List[Tuple[str, str, float]]) -> Tuple[str, dict]:
+    """
+    Uses an LLM to generate an answer based on the query and retrieved context.
+    Returns a tuple of (answer, source_mapping).
+    """
+    # Initialize the LLM
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.7)
+    
+    # Prepare the context from retrieved chunks and create source mapping
+    context_parts = []
+    source_mapping = {}  # Maps file names to their citation numbers
+    next_source_num = 1
+    
+    for i, (chunk_text, file_name, distance) in enumerate(context_chunks):
+        # Assign a consistent number to each unique source
+        if file_name not in source_mapping:
+            source_mapping[file_name] = next_source_num
+            next_source_num += 1
+        
+        source_num = source_mapping[file_name]
+        context_parts.append(f"[Source {source_num}: {file_name}]\n{chunk_text}\n")
+    
+    context = "\n---\n".join(context_parts)
+    
+    # Create the prompt with strict citation requirements
+    prompt_template = ChatPromptTemplate.from_messages([
+        ("system", """You are a helpful assistant that answers questions about housing policy based on the provided context.
+
+CRITICAL CITATION RULES:
+1. EVERY factual statement MUST include a citation in the format [1], [2], etc.
+2. Use the exact source number from the context (e.g., if information comes from Source 3, cite it as [3])
+3. Multiple citations are allowed for a single statement, e.g., [1,3]
+4. Do not make any claims without a citation
+5. If you cannot answer with proper citations, say so
+
+Your task is to:
+- Answer based ONLY on the provided context
+- Include a citation for EVERY fact, statistic, or claim
+- Be specific and accurate
+- Keep your answer concise but informative"""),
+        ("user", """Context from housing policy documents:
+
+{context}
+
+Question: {query}
+
+Remember: Every factual statement must have a citation [X]. Provide a clear, well-structured answer.""")
+    ])
+    
+    # Generate the answer
+    messages = prompt_template.format_messages(context=context, query=query)
+    response = llm.invoke(messages)
+    
+    return str(response.content), source_mapping
+
+def interactive_query():
+    """
+    Main interactive loop for querying the database.
+    """
+    print("\n=== Housing Policy Query System ===")
+    print("Type 'quit' or 'exit' to stop")
+    print("Type 'help' for sample questions\n")
+    
+    session = get_db_session()
+    
+    try:
+        while True:
+            # Get user input
+            query = input("\nYour question: ").strip()
+            
+            # Check for exit commands
+            if query.lower() in ['quit', 'exit', 'q']:
+                print("Goodbye!")
+                break
+            
+            # Show help
+            if query.lower() == 'help':
+                print("\nSample questions you can ask:")
+                print("- What are the main causes of housing affordability issues?")
+                print("- How does zoning impact housing supply?")
+                print("- What tenant protection policies are being discussed?")
+                print("- What is inclusionary zoning and how does it work?")
+                print("- What percentage of renters are cost-burdened?")
+                continue
+            
+            # Skip empty queries
+            if not query:
+                continue
+            
+            print("\nSearching for relevant information...")
+            
+            try:
+                # Perform vector search
+                results = vector_search(session, query, top_k=5)
+                
+                if not results:
+                    print("No relevant information found in the database.")
+                    continue
+                
+                print(f"Found {len(results)} relevant chunks. Generating answer...")
+                
+                # Generate answer
+                answer, source_mapping = generate_answer(query, results)
+                
+                # Renumber citations to start from 1
+                updated_answer, cited_sources = renumber_citations(answer, source_mapping)
+                
+                print("\n" + "="*60)
+                print("ANSWER:")
+                print("="*60)
+                print(updated_answer)
+                print("="*60)
+                
+                # Show cited references
+                if cited_sources:
+                    print("\nReferences:")
+                    for num in sorted(cited_sources.keys()):
+                        print(f"[{num}] {cited_sources[num]}")
+                
+            except Exception as e:
+                logging.error(f"Error processing query: {e}")
+                print(f"\nError: Unable to process your query. {str(e)}")
+    
+    finally:
+        session.close()
+
+def batch_query(questions_file: str):
+    """
+    Process a batch of questions from a file.
+    """
+    if not os.path.exists(questions_file):
+        print(f"Error: File '{questions_file}' not found.")
+        return
+    
+    with open(questions_file, 'r') as f:
+        questions = [line.strip() for line in f if line.strip() and not line.startswith('#')]
+    
+    if not questions:
+        print("No questions found in the file.")
+        return
+    
+    print(f"\nProcessing {len(questions)} questions from '{questions_file}'...")
+    session = get_db_session()
+    
+    try:
+        for i, query in enumerate(questions, 1):
+            print(f"\n{'='*60}")
+            print(f"Question {i}/{len(questions)}: {query}")
+            print('='*60)
+            
+            try:
+                # Perform vector search
+                results = vector_search(session, query, top_k=5)
+                
+                if not results:
+                    print("No relevant information found.")
+                    continue
+                
+                # Generate answer
+                answer, source_mapping = generate_answer(query, results)
+                
+                # Renumber citations to start from 1
+                updated_answer, cited_sources = renumber_citations(answer, source_mapping)
+                
+                print("\nAnswer:")
+                print(updated_answer)
+                
+                # Show cited references
+                if cited_sources:
+                    print("\nReferences:")
+                    for num in sorted(cited_sources.keys()):
+                        print(f"[{num}] {cited_sources[num]}")
+                
+            except Exception as e:
+                logging.error(f"Error processing question: {e}")
+                print(f"Error: {str(e)}")
+    
+    finally:
+        session.close()
+
+if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        # Batch mode - process questions from a file
+        batch_query(sys.argv[1])
+    else:
+        # Interactive mode
+        interactive_query()
+</file>
+
+<file path="README_ingestion.md">
+# Data Ingestion Pipeline
+
+This is the data ingestion pipeline for the PolGen CLI application. It processes documents from the `data/` directory and populates a PostgreSQL database with text chunks and their vector embeddings.
+
+## Prerequisites
+
+1. PostgreSQL database with pgvector extension
+2. Python 3.9+
+3. OpenAI API key
+
+## Setup
+
+1. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+2. Create a `.env` file with your configuration:
+```bash
+# Database Configuration
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_HOST=localhost
+DB_PORT=5432
+DB_NAME=polgen
+
+# OpenAI API Configuration
+OPENAI_API_KEY=your_openai_api_key_here
+```
+
+3. Create the database schema:
+```bash
+psql -d polgen -U postgres -f schema.sql
+```
+
+## Usage
+
+Run the ingestion script:
+```bash
+python ingest.py
+```
+
+The script will:
+1. Clear any existing data from the database
+2. Scan the `data/` directory for supported files (.txt, .pdf, .md)
+3. Extract text from each document
+4. Split text into chunks (1000 chars with 200 char overlap)
+5. Generate vector embeddings using OpenAI's text-embedding-3-small model
+6. Store everything in the PostgreSQL database
+
+## Supported File Types
+
+- `.txt` - Plain text files
+- `.pdf` - PDF documents (digital text only, not scanned)
+- `.md` - Markdown files
+
+## Notes
+
+- The script is idempotent - running it multiple times will always result in the same database state
+- Each run completely clears and repopulates the database
+- Progress is logged to the console
+- Large PDFs may take some time to process due to embedding generation
+</file>
+
+<file path="README_phase2.md">
+# PolGen Phase 2: Interactive Project Sessions
+
+## Overview
+
+Phase 2 transforms PolGen from a single-shot Q&A tool into a stateful, interactive research assistant that supports project-based work with persistent conversation history.
+
+## Features
+
+- **Project Management**: Create and load distinct research projects
+- **Interactive REPL**: Continuous chat interface with context retention
+- **Conversation Memory**: Maintains conversation history within each session
+- **Persistent Storage**: Automatically saves conversation history after each turn
+- **Graceful Exit**: Handles Ctrl+C and `/exit` commands properly
+
+## Usage
+
+### Starting the Application
+
+```bash
+python main.py
+```
+
+### Creating a New Project
+
+1. When prompted, type `create`
+2. Enter your project name (e.g., "Housing Affordability in Austin")
+3. The system will create a unique folder and start your session
+
+### Loading an Existing Project
+
+1. When prompted, type `load`
+2. Select your project from the numbered list
+3. Your session will resume (note: each session starts fresh, but history is preserved on disk)
+
+### During a Session
+
+- The prompt shows your current project: `(Project Name) > `
+- Type your questions naturally
+- The AI will search the knowledge base and respond with context
+- Type `/exit` or `quit` to end the session
+- Press Ctrl+C to exit gracefully
+
+## Project Structure
+
+```
+projects/
+└── housing-affordability-in-austin/
+    ├── project.json              # Project metadata
+    └── conversation_history.json # Saved conversation history
+```
+
+## Technical Details
+
+### File Structure
+
+- `main.py` - The main REPL interface
+- `project_manager.py` - Handles all project file operations
+- `orchestrator.py` - Manages conversations and AI interactions
+- `knowledge_base.py` - Interfaces with the vector database
+- `ai_core.py` - Generates AI responses
+
+### Token Management
+
+The system manages context windows by:
+- Reserving 3000 tokens for RAG search results
+- Reserving 4000 tokens for conversation history
+- Trimming oldest messages when history exceeds budget
+- Always prioritizing new RAG context over old conversation
+
+### Dependencies
+
+Install required packages:
+```bash
+pip install -r requirements.txt
+```
+
+Key dependencies:
+- `langchain` - For AI orchestration
+- `langchain-openai` - OpenAI integration
+- `pgvector` - Vector database support
+- `tiktoken` - Token counting
+- `python-dotenv` - Environment variable management
+
+## Environment Setup
+
+Create a `.env` file with:
+```
+OPENAI_API_KEY=your_api_key_here
+DATABASE_URL=postgresql://user:password@localhost/polgen_db
+```
+
+## Notes
+
+- Each new session starts with empty conversation memory
+- History is saved to disk for archival purposes
+- The AI cannot see previous session history (only current session)
+- No document editing features in this phase
+</file>
+
+<file path="README_phase4.md">
+# PolGen Phase 4: Intra-Project Awareness & Agentic Reasoning
+
+## Overview
+
+Phase 4 upgrades the PolGen AI from a simple conversational chain to a sophisticated, multi-step "Agent" that can reason about and use the documents within a user's project. The AI is now "aware" of the `.md` files created in the project and can autonomously interact with them.
+
+## Key Features
+
+### 1. **Agent Architecture**
+- Replaced the `ConversationalRetrievalChain` with a LangChain **OpenAI Tools Agent**
+- The agent can perform multi-step reasoning and tool usage
+- Real-time streaming of the agent's "chain of thought" process
+
+### 2. **Agent Tools**
+The agent has access to four powerful tools:
+
+- **`search_knowledge_base(query)`**: Searches the main PostgreSQL knowledge base
+- **`list_project_files()`**: Lists all `.md` files in the current project
+- **`summarize_document(filename)`**: Generates a concise summary of any project document
+- **`search_in_document(filename, query)`**: Performs semantic search within a specific document
+
+### 3. **Transparency & Trust**
+- Users can see the agent's reasoning process in real-time
+- Clear distinction between agent thoughts and actions
+- Example output:
+  ```
+  > [Agent] Thinking: I need to find a file related to 'problem statement'. I will list the files first.
+  > [Agent] Calling tool `list_project_files`...
+  > [Agent] Thinking: The file `problem_statement.md` exists. Now I will summarize it.
+  > [Agent] Calling tool `summarize_document` with input `problem_statement.md`...
+  ```
+
+### 4. **Safety Rails**
+- **Step Limit**: Maximum of 7 tool calls per query to prevent infinite loops
+- **Error Handling**: Graceful handling of tool failures with clear error messages
+- **Ambiguity Resolution**: Agent asks for clarification when requests are ambiguous
+
+## Usage Examples
+
+### Example 1: Summarizing a Document
+```
+User: Can you summarize my problem statement?
+Agent: [Uses list_project_files to find the file, then summarize_document to create summary]
+```
+
+### Example 2: Context-Aware Search
+```
+User: Using my problem statement, find three relevant policy solutions from the knowledge base
+Agent: [Reads problem_statement.md, extracts key concepts, searches knowledge base with context]
+```
+
+### Example 3: Document Search
+```
+User: What recommendations did I make in my policy brief?
+Agent: [Uses search_in_document to find specific content about recommendations]
+```
+
+## Technical Implementation
+
+### New Files
+- **`agent_tools.py`**: Defines all four tools with proper error handling and formatting
+
+### Modified Files
+- **`orchestrator.py`**: Replaced chain with agent executor, manages tool initialization
+- **`main.py`**: Updated to handle streaming agent output and proper history management
+- **`project_manager.py`**: Added `read_document()` function for tool usage
+
+### Key Dependencies
+- `langchain`: Core agent functionality
+- `langchain-openai`: OpenAI integration
+- `faiss-cpu`: In-memory vector search for document search tool
+
+## Architecture Changes
+
+### Before (Phase 3)
+```
+User Input → Orchestrator → ConversationalRetrievalChain → Response
+```
+
+### After (Phase 4)
+```
+User Input → Orchestrator → Agent → Tool Selection → Tool Execution → Response
+                              ↑                           ↓
+                              ←─── Reasoning Loop ────────←
+```
+
+## Important Notes
+
+1. **Commands vs Agent**: The `/create`, `/save`, and other commands still bypass the agent for direct execution
+2. **Drafting Mode**: When in drafting mode, the traditional LLM is used instead of the agent
+3. **Project Context**: Each agent session is bound to a specific project folder
+4. **No Writing Tools**: The agent can only read and search, not modify files
+
+## Future Enhancements
+
+While out of scope for Phase 4, potential future improvements include:
+- Tools for editing existing documents
+- Automatic file selection based on query context
+- Complex data analysis capabilities
+- Cross-project awareness
+</file>
+
+<file path="README_query.md">
+# Housing Policy Query System
+
+A vector search-powered Q&A system for housing policy documents.
+
+## Features
+
+- **Vector Search**: Uses pgvector to find the most relevant document chunks
+- **LLM-Powered Answers**: Generates comprehensive answers using GPT-4
+- **Source Attribution**: Shows which documents were used to answer each question
+- **Interactive & Batch Modes**: Query interactively or process multiple questions
+
+## Usage
+
+### Interactive Mode
+
+Run the script without arguments for an interactive session:
+
+```bash
+python query.py
+```
+
+Commands:
+- Type your question and press Enter
+- Type `help` to see sample questions
+- Type `quit` or `exit` to stop
+
+### Batch Mode
+
+Process multiple questions from a file:
+
+```bash
+python query.py sample_questions.txt
+```
+
+## How It Works
+
+1. **Query Embedding**: Your question is converted to a vector using OpenAI embeddings
+2. **Vector Search**: The system finds the 5 most similar text chunks in the database
+3. **Context Assembly**: Retrieved chunks are formatted with source information
+4. **Answer Generation**: GPT-4 generates an answer based only on the retrieved context
+5. **Source Display**: The system shows which documents contributed to the answer
+
+## Sample Questions
+
+See `sample_questions.txt` for examples. Some good starter questions:
+
+- What percentage of renters are cost-burdened?
+- How does zoning impact housing supply?
+- What is inclusionary zoning?
+- What are worst-case housing needs?
+- What tenant protections are being discussed?
+
+## Configuration
+
+The system uses the same configuration as the ingestion pipeline:
+- Database connection from `.env`
+- OpenAI API key from `.env`
+- Embedding model: text-embedding-3-small
+- LLM model: gpt-4o-mini
+
+## Tips
+
+- Be specific in your questions for better results
+- The system only answers based on the ingested documents
+- If information isn't available, the system will say so
+- Check the sources to verify the context of answers
+</file>
+
+<file path="README.md">
+# PolGen CLI - Interactive Policy Generation Tool
+
+A command-line interface tool that guides users through the initial phases of creating public policy documents using AI assistance.
+
+## Features
+
+- **Interactive CLI**: Guides you through policy definition and scoping
+- **AI-Powered Analysis**: Analyzes curated data sources to generate insights
+- **Document Generation**: Creates professional policy summaries and briefs
+- **Beautiful Terminal UI**: Uses rich formatting for an enhanced experience
+
+## Prerequisites
+
+- Python 3.8 or higher
+- OpenAI API key
+
+## Installation
+
+1. Clone this repository:
+```bash
+git clone <repository-url>
+cd polgen-cli
+```
+
+2. Install dependencies:
+```bash
+pip install -r requirements.txt
+```
+
+3. Set up your OpenAI API key:
+```bash
+cp env.example .env
+# Edit .env and add your OpenAI API key
+```
+
+## Usage
+
+Run the CLI tool:
+```bash
+python polgen_cli.py
+```
+
+The tool will guide you through:
+1. **Policy Definition**: Define your policy topic and scope
+2. **Evidence Gathering**: Analyze curated data sources
+3. **Document Generation**: Create summaries and policy briefs
+
+Generated documents will be saved in a project-specific directory.
+
+## Project Structure
+
+```
+polgen-cli/
+├── polgen_cli.py      # Main CLI application
+├── engine.py          # Document processing and LLM logic
+├── prompts.py         # Prompt templates
+├── data/              # Curated data sources
+├── requirements.txt   # Python dependencies
+└── README.md          # This file
+```
+
+## Generated Output
+
+The tool creates a new directory for each policy project containing:
+- `1_Technical_Summary.md` - Analysis of relevant frameworks and stakeholder positions
+- `2_Policy_Brief_Draft_v1.md` - Draft policy brief with recommendations
+
+## License
+
+This is a proof-of-concept application for demonstration purposes.
+</file>
+
+<file path="requirements.txt">
+PyMuPDF
+SQLAlchemy
+langchain
+langchain-community
+langchain-openai
+openai
+pgvector
+pgvector 
+psycopg2-binary
+python-dotenv
+typer
+unstructured[md]
+
+# Token counting for conversation management
+tiktoken
+
+# In-memory vector search for document search
+faiss-cpu
+</file>
+
+<file path="sample_questions.txt">
+# Sample Questions for Housing Policy Query System
+# Lines starting with # are ignored
+
+What are the main causes of housing affordability issues in the United States?
+
+How does zoning impact housing supply and affordability?
+
+What percentage of renters are cost-burdened and what does that mean?
+
+What tenant protection policies are being introduced in state legislatures?
+
+What is inclusionary zoning and how does it work?
+
+What are the public's views on policies to enable more housing development?
+
+How does the Housing Affordability Index (HAI) work and what does it measure?
+
+What are "worst-case housing needs" and who is most affected by them?
+
+What role does Section 106 funding play in affordable housing development?
+
+How has Minneapolis changed its zoning code to address housing issues?
+
+What are the key components of smart growth policies related to housing?
+
+What percentage of Americans find it difficult to find affordable housing in their area?
+
+How do housing market perceptions affect homebuying intentions?
+
+What are the main arguments for and against inclusionary zoning policies?
+
+What federal programs exist to address housing affordability?
+
+How do housing costs vary between urban and rural areas?
+
+What are the long-term trends in housing affordability over the past decade?
+
+What innovative housing policies have shown success in increasing affordability?
+
+How does the housing crisis impact different demographic groups differently?
+
+What role do local governments play in addressing housing affordability?
+</file>
+
+<file path="schema.sql">
+-- schema.sql
+--
+-- This script sets up the database schema for the PolGen application's
+-- Phase 1 local data backend. It should be run once against the target
+-- PostgreSQL database before the data ingestion script is executed.
+--
+-- Command to run:
+-- psql -d <database_name> -U <user_name> -f schema.sql
+
+-- Step 1: Ensure the pgvector extension is available.
+-- This extension provides the 'vector' data type and similarity search functions.
+CREATE EXTENSION IF NOT EXISTS vector;
+
+
+-- Step 2: Define the 'documents' table.
+-- This table stores metadata about each source document we ingest.
+-- We use 'DROP TABLE ... CASCADE' to ensure a clean slate if the script is
+-- re-run, removing this table and any objects that depend on it (like the 'chunks' table).
+DROP TABLE IF EXISTS documents CASCADE;
+
+CREATE TABLE documents (
+    -- A unique identifier for each document, generated automatically.
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- The name of the file as it appears in the 'data/' folder.
+    -- e.g., 'doc1_zoning_code.pdf'. This is useful for traceability.
+    file_name TEXT NOT NULL,
+
+    -- The type of document, derived from its file extension.
+    -- e.g., 'pdf', 'txt'. This helps us know how it was processed.
+    document_type TEXT NOT NULL,
+
+    -- A short, human-readable name of the source organization.
+    -- This field is currently PLANNED for future use but can be left null for now.
+    -- e.g., 'HUD', 'Mercatus Center'.
+    source_name TEXT,
+
+    -- A longer title of the document, if available.
+    -- PLANNED for future use, can be null.
+    document_title TEXT,
+
+    -- The timestamp when this record was first created in our system.
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Add comments to the table and columns for clarity.
+COMMENT ON TABLE documents IS 'Stores metadata for each source document ingested from the local data folder.';
+COMMENT ON COLUMN documents.id IS 'Primary key, unique identifier for a document.';
+COMMENT ON COLUMN documents.file_name IS 'Original file name from the data/ directory.';
+COMMENT ON COLUMN documents.document_type IS 'File extension of the source document (e.g., pdf, txt).';
+
+
+-- Step 3: Define the 'chunks' table.
+-- This table stores the actual text content broken down into smaller pieces,
+-- along with their corresponding vector embeddings.
+DROP TABLE IF EXISTS chunks;
+
+CREATE TABLE chunks (
+    -- A unique identifier for each individual text chunk.
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
+    -- A foreign key that links this chunk back to its parent document in the 'documents' table.
+    -- 'ON DELETE CASCADE' means if a document is deleted, all its associated chunks are also deleted.
+    document_id UUID NOT NULL REFERENCES documents(id) ON DELETE CASCADE,
+
+    -- The actual text content of this chunk.
+    chunk_text TEXT NOT NULL,
+
+    -- The order of this chunk within the parent document (e.g., 0, 1, 2, ...).
+    -- This is useful if we ever need to reconstruct the original document's flow.
+    chunk_index INTEGER NOT NULL,
+
+    -- The vector embedding for this chunk of text.
+    -- The dimension (1536) is specific to OpenAI's 'text-embedding-3-small' model.
+    -- If we change the model, we may need to change this dimension.
+    embedding vector(1536),
+
+    -- The timestamp when this chunk record was created.
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Add comments to the table and columns.
+COMMENT ON TABLE chunks IS 'Stores processed text chunks and their vector embeddings from source documents.';
+COMMENT ON COLUMN chunks.document_id IS 'Foreign key linking to the parent document.';
+COMMENT ON COLUMN chunks.chunk_text IS 'The actual text content of the processed chunk.';
+COMMENT ON COLUMN chunks.chunk_index IS 'The sequential order of the chunk within the document.';
+COMMENT ON COLUMN chunks.embedding IS 'The vector embedding generated from chunk_text.';
+
+
+-- Step 4: Create indexes for performance.
+-- Indexes are crucial for speeding up database queries.
+
+-- Create an index on the 'document_id' in the 'chunks' table.
+-- This will make it much faster to find all chunks belonging to a specific document.
+CREATE INDEX idx_chunks_document_id ON chunks(document_id);
+
+-- Create a vector index on the 'embedding' column.
+-- This is THE most important step for performance. It enables fast approximate
+-- nearest neighbor (ANN) searches, which is how we find relevant chunks.
+-- Without this, vector searches on large tables would be extremely slow (full table scan).
+-- We use IVFFlat, a common and effective index type for vector similarity search.
+-- 'vector_l2_ops' specifies we are using Euclidean L2 distance for similarity.
+CREATE INDEX idx_chunks_embedding ON chunks USING ivfflat (embedding vector_l2_ops) WITH (lists = 100);
+
+-- The 'lists' parameter is a tuning knob. '100' is a reasonable default for up to
+-- 1 million vectors. For more vectors, this number should be increased (e.g., lists = N / 1000 where N is the number of rows).
+
+-- Script finished. The database is now ready for the ingestion script.
+</file>
+
+</files>

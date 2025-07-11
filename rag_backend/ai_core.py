@@ -1,4 +1,5 @@
 # ai_core.py
+# Main brain for the policy generation tool - takes a user query and searches our document database with RAG to construct an answer.
 
 from typing import List, Optional
 from langchain_core.documents import Document

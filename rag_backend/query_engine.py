@@ -1,3 +1,6 @@
+# Main brain for the '/search_bills' endpoint. Takes a query, finds relevant
+# bills, processes them to generate LLM summaries and relevance scores.
+
 import os
 import json
 import psycopg2
@@ -76,6 +79,9 @@ def _extract_persona_facets(persona: str) -> List[str]:
         # We need to gracefully extract the list, assuming it might be under a key.
         content = response.choices[0].message.content
         print(content)
+        if content is None:
+            logging.error("LLM returned None content")
+            return []
         data = json.loads(content)
         # Find the list within the JSON object
         for value in data.values():
@@ -115,6 +121,31 @@ def _search_for_facet(facet_embedding: List[float], conn) -> List[Tuple[int, flo
     results = []
     with conn.cursor() as cur:
         cur.execute(query, (embedding_str, CANDIDATE_BILL_COUNT_PER_FACET))
+        for row in cur.fetchall():
+            results.append((row[0], row[1], row[2])) # bill_id, similarity, chunk_text
+    return results
+
+def _search_for_topic(query_embedding: List[float], conn) -> List[Tuple[int, float, str]]:
+    """
+    Performs a vector search in the database for a topic query embedding against summary_embeddings.
+    Returns a list of (bill_table_id, similarity_score, chunk_text).
+    """
+    query = """
+    SELECT
+        bill_table_id,
+        1 - (embedding <=> %s) AS similarity,
+        chunk_text
+    FROM
+        public.summary_embeddings
+    ORDER BY
+        similarity DESC
+    LIMIT %s;
+    """
+    embedding_str = str(query_embedding)
+    results = []
+    with conn.cursor() as cur:
+        # Fetch more candidates for initial topic search to allow LLM more choice
+        cur.execute(query, (embedding_str, CANDIDATE_BILL_COUNT_PER_FACET * 2)) 
         for row in cur.fetchall():
             results.append((row[0], row[1], row[2])) # bill_id, similarity, chunk_text
     return results
@@ -198,6 +229,9 @@ def _synthesize_final_results(persona: str, candidates: List[Dict[str, Any]]) ->
         )
         content = response.choices[0].message.content
         # As before, extract the list from the returned JSON object
+        if content is None:
+            logging.error("LLM returned None content")
+            return []
         data = json.loads(content)
         llm_results = []
         for value in data.values():
@@ -221,94 +255,194 @@ def _synthesize_final_results(persona: str, candidates: List[Dict[str, Any]]) ->
         logging.error(f"LLM synthesis failed or returned malformed data: {e}")
         return []
 
+def _synthesize_topic_results(query: str, candidates: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """
+    Uses an LLM to generate the final, user-facing summary and relevance score for each candidate bill
+    based on a generic topic query.
+    """
+    if not candidates:
+        return []
+
+    candidate_prompts = []
+    for i, cand in enumerate(candidates):
+        candidate_prompts.append(
+            f"""
+            Candidate {i+1}:
+            - Bill ID: {cand['bill_id']}
+            - Bill Title: {cand['details']['title']}
+            - Bill Summary: {cand['details']['what_it_does']}
+            - Most Relevant Snippet Found: "{cand['top_chunk_text']}"
+            """
+        )
+
+    system_prompt = """
+    You are a helpful and concise US policy analyst. Your task is to analyze a user's specific policy or issue query and a list of potentially relevant congressional bills.
+    For each bill, you will generate a single, compelling sentence explaining its relevance to the user's query and a relevance score.
+    The final output MUST be a JSON array of objects. Each object must have two keys: "summary_point" (string) and "relevance_score" (integer 0-100).
+    The relevance score should be based on how directly and significantly the bill addresses or relates to the provided query.
+    """
+    user_prompt = f"""
+    User Query: "{query}"
+
+    Based on this query, I have found the following candidate bills. Please analyze each one and generate the required JSON output.
+    Return ONLY the JSON array, with one object for each candidate bill. Do not include the bill_id in your output.
+
+    Candidates:
+    {"".join(candidate_prompts)}
+    """
+
+    try:
+        response = openai_client.chat.completions.create(
+            model=LLM_MODEL,
+            messages=[
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt}
+            ],
+            temperature=0.2,
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content
+        if content is None:
+            logging.error("LLM returned None content for topic synthesis")
+            return []
+        data = json.loads(content)
+        llm_results = []
+        for value in data.values():
+            if isinstance(value, list):
+                llm_results = value
+                break
+
+        final_results = []
+        for i, res in enumerate(llm_results):
+            if i < len(candidates):
+                if 'summary_point' in res and 'relevance_score' in res:
+                    final_results.append({
+                        "bill_id": candidates[i]['bill_id'],
+                        "summary_point": res['summary_point'],
+                        "relevance_score": res['relevance_score']
+                    })
+        return final_results
+    except (json.JSONDecodeError, IndexError, KeyError) as e:
+        logging.error(f"LLM synthesis for topic query failed or returned malformed data: {e}. Response: {response.choices[0].message.content if 'response' in locals() else 'N/A'}")
+        return []
+
 
 # --- Main Orchestration Function ---
 
-def answer_persona_query(persona: str) -> List[Dict[str, Any]]:
+def intelligent_bill_search(query: str) -> List[Dict[str, Any]]:
     """
-    The main function to find relevant bills for a given persona.
-
-    This function orchestrates a multi-step process:
-    1. Deconstructs the persona into searchable "facets" using an LLM.
-    2. For each facet, performs a vector search to find relevant bill text chunks.
-    3. Aggregates and ranks the candidate bills based on similarity and number of matching facets.
-    4. Fetches details for the top-ranked bills.
-    5. Uses an LLM in a single batch call to synthesize a final, user-friendly summary and relevance score.
-    6. Returns a list of bills, sorted by relevance.
+    Intelligently searches for relevant bills based on whether the query is a persona or a generic topic.
     """
-    # 1. Extract facets from persona
-    logging.info(f"Step 1: Extracting facets for persona...")
-    facets = _extract_persona_facets(persona)
-    if not facets:
-        logging.warning("No usable facets extracted from persona. Returning empty list.")
-        return []
-    logging.info(f"Found facets: {facets}")
+    logging.info(f"Received query: '{query}'")
 
-    # 2. Embed all facets and perform parallel searches
     conn = _get_db_connection()
     try:
-        facet_embeddings = _embed_texts(facets)
-        all_search_results = {} # {bill_id: {'max_similarity': float, 'facets': set(), 'chunks': list}}
+        # Attempt to extract persona facets first
+        facets = _extract_persona_facets(query)
 
-        logging.info("Step 2: Performing vector search for each facet...")
-        for i, facet in enumerate(facets):
-            facet_embedding = facet_embeddings[i]
-            search_results = _search_for_facet(facet_embedding, conn)
+        if facets:
+            logging.info(f"Query identified as PERSONA. Facets: {facets}")
+            # Persona path: re-using logic from original answer_persona_query
+            facet_embeddings = _embed_texts(facets)
+            all_search_results = {} # {bill_id: {'max_similarity': float, 'facets': set(), 'chunks': list}}
 
-            # 3. Aggregate results
+            logging.info("Performing vector search for each facet...")
+            for i, facet in enumerate(facets):
+                facet_embedding = facet_embeddings[i]
+                search_results = _search_for_facet(facet_embedding, conn)
+
+                for bill_id, similarity, chunk_text in search_results:
+                    if bill_id not in all_search_results:
+                        all_search_results[bill_id] = {
+                            "max_similarity": 0.0,
+                            "matched_facets": set(),
+                            "top_chunk_text": ""
+                        }
+
+                    if similarity > all_search_results[bill_id]["max_similarity"]:
+                        all_search_results[bill_id]["max_similarity"] = similarity
+                        all_search_results[bill_id]["top_chunk_text"] = chunk_text
+                    
+                    all_search_results[bill_id]["matched_facets"].add(facet)
+
+            if not all_search_results:
+                logging.info("No bills found matching any facets.")
+                return []
+
+            # Score is based on max similarity plus a bonus for each matching facet
+            ranked_candidates = sorted(
+                all_search_results.items(),
+                key=lambda item: item[1]['max_similarity'] + (len(item[1]['matched_facets']) * 0.1),
+                reverse=True
+            )
+            
+            top_candidate_ids = {item[0] for item in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]}
+            bill_details = _get_bill_details(top_candidate_ids, conn)
+            
+            candidates_for_synthesis = []
+            for bill_id, data in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]:
+                if bill_id in bill_details:
+                    candidates_for_synthesis.append({
+                        "bill_id": bill_id,
+                        "details": bill_details[bill_id],
+                        **data
+                    })
+
+            logging.info("Synthesizing final results for persona with LLM...")
+            final_results = _synthesize_final_results(query, candidates_for_synthesis)
+            final_results.sort(key=lambda x: x['relevance_score'], reverse=True)
+            
+            logging.info(f"Successfully generated {len(final_results)} persona results. Returning top {MAX_FINAL_RESULTS}.")
+            return final_results[:MAX_FINAL_RESULTS]
+
+        else:
+            logging.info(f"Query identified as TOPIC: {query}")
+            # Topic path
+            query_embedding = _embed_texts([query])[0]
+
+            logging.info("Performing vector search for topic...")
+            search_results = _search_for_topic(query_embedding, conn)
+
+            all_search_results = {} # {bill_id: {'max_similarity': float, 'top_chunk_text': str}}
             for bill_id, similarity, chunk_text in search_results:
                 if bill_id not in all_search_results:
                     all_search_results[bill_id] = {
                         "max_similarity": 0.0,
-                        "matched_facets": set(),
                         "top_chunk_text": ""
                     }
-
-                # Update max similarity and top chunk text
                 if similarity > all_search_results[bill_id]["max_similarity"]:
                     all_search_results[bill_id]["max_similarity"] = similarity
                     all_search_results[bill_id]["top_chunk_text"] = chunk_text
-                
-                all_search_results[bill_id]["matched_facets"].add(facet)
+            
+            if not all_search_results:
+                logging.info("No bills found matching the topic query.")
+                return []
 
-        if not all_search_results:
-            logging.info("No bills found matching any facets.")
-            return []
+            # Rank candidates simply by max_similarity
+            ranked_candidates = sorted(
+                all_search_results.items(),
+                key=lambda item: item[1]['max_similarity'],
+                reverse=True
+            )
 
-        # 4. Rank candidates
-        # Score is based on max similarity plus a bonus for each matching facet
-        ranked_candidates = sorted(
-            all_search_results.items(),
-            key=lambda item: item[1]['max_similarity'] + (len(item[1]['matched_facets']) * 0.1),
-            reverse=True
-        )
-        
-        # Prepare top candidates for final synthesis
-        top_candidate_ids = {item[0] for item in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]}
-        logging.info(f"Step 3 & 4: Aggregated and ranked {len(top_candidate_ids)} candidate bills.")
+            top_candidate_ids = {item[0] for item in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]}
+            bill_details = _get_bill_details(top_candidate_ids, conn)
+            
+            candidates_for_synthesis = []
+            for bill_id, data in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]:
+                if bill_id in bill_details:
+                    candidates_for_synthesis.append({
+                        "bill_id": bill_id,
+                        "details": bill_details[bill_id],
+                        **data
+                    })
 
-        # 5. Fetch details for top candidates
-        bill_details = _get_bill_details(top_candidate_ids, conn)
-        
-        candidates_for_synthesis = []
-        for bill_id, data in ranked_candidates[:TOP_CANDIDATE_BILLS_FOR_SYNTHESIS]:
-            if bill_id in bill_details:
-                candidates_for_synthesis.append({
-                    "bill_id": bill_id,
-                    "details": bill_details[bill_id],
-                    **data
-                })
-
-        # 6. Final LLM synthesis
-        logging.info("Step 5: Synthesizing final results with LLM...")
-        final_results = _synthesize_final_results(persona, candidates_for_synthesis)
-
-        # 7. Sort and truncate final results
-        final_results.sort(key=lambda x: x['relevance_score'], reverse=True)
-        
-        logging.info(f"Successfully generated {len(final_results)} results. Returning top {MAX_FINAL_RESULTS}.")
-        return final_results[:MAX_FINAL_RESULTS]
-
+            logging.info("Synthesizing final results for topic with LLM...")
+            final_results = _synthesize_topic_results(query, candidates_for_synthesis)
+            final_results.sort(key=lambda x: x['relevance_score'], reverse=True)
+            
+            logging.info(f"Successfully generated {len(final_results)} topic results. Returning top {MAX_FINAL_RESULTS}.")
+            return final_results[:MAX_FINAL_RESULTS]
     finally:
         if conn:
             conn.close()
@@ -317,6 +451,14 @@ def answer_persona_query(persona: str) -> List[Dict[str, Any]]:
 if __name__ == '__main__':
     test_persona = "I'm a disabled military veteran who runs a small software business in rural Washington. I'm also a parent and concerned about government spending."
     print(f"--- Searching for persona: ---\n{test_persona}\n")
-    results = answer_persona_query(test_persona)
-    print("--- Results: ---")
-    print(json.dumps(results, indent=2))
+    results_persona = intelligent_bill_search(test_persona)
+    print("--- Persona Results: ---")
+    print(json.dumps(results_persona, indent=2))
+
+    print("\n" + "="*50 + "\n")
+
+    test_topic = "healthcare reform"
+    print(f"--- Searching for topic: ---\n{test_topic}\n")
+    results_topic = intelligent_bill_search(test_topic)
+    print("--- Topic Results: ---")
+    print(json.dumps(results_topic, indent=2))
