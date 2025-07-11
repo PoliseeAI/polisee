@@ -1,4 +1,5 @@
 # knowledge_base.py
+# API for making RAG queries to the document embedding DB.
 
 from typing import List
 from langchain_community.vectorstores.pgvector import PGVector

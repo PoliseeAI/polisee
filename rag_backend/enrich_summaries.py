@@ -1,5 +1,8 @@
+# Script to populate the 'summary_embeddings' table. Retrieves all summaries
+# from 'ai_bill_summaries' that don't already have an embedding, and generates
+# their embeddings.
+
 import os
-import json
 import psycopg2
 import psycopg2.extras
 from openai import OpenAI

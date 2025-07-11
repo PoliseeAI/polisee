@@ -1,6 +1,0 @@
-services:
-  - type: web
-    name: bill-search
-    env: python
-    buildCommand: pip install -r requirements.txt
-    startCommand: python server.py
