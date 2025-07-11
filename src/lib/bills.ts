@@ -1,6 +1,7 @@
 // Bills service with database integration
 import { supabase } from '@/lib/supabase'
 import { Tables } from '@/types/database'
+import { BillFilters } from '@/types/bills-filter'
 
 export type Bill = Tables<'bills'>
 export type BillSummary = Tables<'bill_summaries'>
@@ -195,6 +196,232 @@ export async function getBillWithAISummary(billId: string): Promise<BillWithAISu
   } catch (error) {
     console.error('Error in getBillWithAISummary:', error)
     return null
+  }
+}
+
+// New function to get bills with comprehensive filters
+export async function getBillsWithFilters(filters: BillFilters): Promise<BillWithDetails[]> {
+  try {
+    let query = supabase
+      .from('bills')
+      .select(`
+        *,
+        bill_summaries(*),
+        bill_subjects(*)
+      `)
+      .eq('is_active', true)
+
+    // Text search filters
+    if (filters.searchTerm) {
+      const searchTerm = `%${filters.searchTerm}%`
+      switch (filters.searchType) {
+        case 'title':
+          query = query.ilike('title', searchTerm)
+          break
+        case 'fullText':
+          query = query.ilike('text', searchTerm)
+          break
+        case 'billNumber':
+          query = query.or(`bill_id.ilike.${searchTerm},number.eq.${parseInt(filters.searchTerm) || 0}`)
+          break
+        default: // 'all'
+          query = query.or(`title.ilike.${searchTerm},policy_area.ilike.${searchTerm},sponsor_name.ilike.${searchTerm},text.ilike.${searchTerm}`)
+      }
+    }
+
+    // Date range filters
+    if (filters.introducedDateFrom) {
+      query = query.gte('introduced_date', filters.introducedDateFrom)
+    }
+    if (filters.introducedDateTo) {
+      query = query.lte('introduced_date', filters.introducedDateTo)
+    }
+    if (filters.lastActionDateFrom) {
+      query = query.gte('latest_action_date', filters.lastActionDateFrom)
+    }
+    if (filters.lastActionDateTo) {
+      query = query.lte('latest_action_date', filters.lastActionDateTo)
+    }
+
+    // Bill type filters
+    if (filters.billTypes && filters.billTypes.length > 0) {
+      query = query.in('type', filters.billTypes)
+    }
+
+    // Congress filter
+    if (filters.congress && filters.congress.length > 0) {
+      query = query.in('congress', filters.congress)
+    }
+
+    // Chamber filter
+    if (filters.chamber && filters.chamber.length > 0) {
+      const chamberTypes = filters.chamber.flatMap(chamber => {
+        if (chamber === 'House') return ['HR', 'HJRES', 'HCONRES', 'HRES']
+        if (chamber === 'Senate') return ['S', 'SJRES', 'SCONRES', 'SRES']
+        return []
+      })
+      if (chamberTypes.length > 0) {
+        query = query.in('type', chamberTypes)
+      }
+    }
+
+    // Sponsor filters
+    if (filters.sponsorParty && filters.sponsorParty.length > 0) {
+      query = query.in('sponsor_party', filters.sponsorParty)
+    }
+    if (filters.sponsorState && filters.sponsorState.length > 0) {
+      query = query.in('sponsor_state', filters.sponsorState)
+    }
+    if (filters.sponsorName) {
+      query = query.ilike('sponsor_name', `%${filters.sponsorName}%`)
+    }
+
+    // Policy area filter
+    if (filters.policyAreas && filters.policyAreas.length > 0) {
+      const hasUncategorized = filters.policyAreas.includes('Uncategorized')
+      if (hasUncategorized && filters.policyAreas.length === 1) {
+        query = query.is('policy_area', null)
+      } else if (hasUncategorized) {
+        const categorizedAreas = filters.policyAreas.filter(area => area !== 'Uncategorized')
+        query = query.or(`policy_area.in.(${categorizedAreas.map(a => `"${a}"`).join(',')}),policy_area.is.null`)
+      } else {
+        query = query.in('policy_area', filters.policyAreas)
+      }
+    }
+
+    // Sorting
+    const sortBy = filters.sortBy || 'introducedDate'
+    const sortOrder = filters.sortOrder || 'desc'
+    const ascending = sortOrder === 'asc'
+
+    switch (sortBy) {
+      case 'introducedDate':
+        query = query.order('introduced_date', { ascending, nullsFirst: false })
+        break
+      case 'lastActionDate':
+        query = query.order('latest_action_date', { ascending, nullsFirst: false })
+        break
+      case 'title':
+        query = query.order('title', { ascending })
+        break
+      // 'relevance' would need full-text search capabilities
+    }
+
+    // Execute query
+    const { data: billsWithContent, error: billsError } = await query
+
+    if (billsError) {
+      console.error('Error fetching bills with filters:', billsError)
+      throw billsError
+    }
+
+    // Filter by subjects (done in-memory since subjects are in a related table)
+    let processedBills = (billsWithContent || []).map(bill => ({
+      ...bill,
+      bill_summaries: Array.isArray(bill.bill_summaries) ? bill.bill_summaries : [],
+      bill_subjects: Array.isArray(bill.bill_subjects) ? bill.bill_subjects : []
+    }))
+
+    if (filters.subjects && filters.subjects.length > 0) {
+      processedBills = processedBills.filter(bill => 
+        bill.bill_subjects.some(subject => 
+          filters.subjects!.includes(subject.subject_name)
+        )
+      )
+    }
+
+    // Filter by status (based on latest action text patterns)
+    if (filters.status && filters.status.length > 0) {
+      processedBills = processedBills.filter(bill => {
+        if (!bill.latest_action) return false
+        const action = bill.latest_action.toLowerCase()
+        
+        return filters.status!.some(status => {
+          switch (status) {
+            case 'introduced':
+              return action.includes('introduced')
+            case 'committee':
+              return action.includes('committee') || action.includes('subcommittee')
+            case 'passed_house':
+              return action.includes('passed house') || action.includes('passed the house')
+            case 'passed_senate':
+              return action.includes('passed senate') || action.includes('passed the senate')
+            case 'passed_both':
+              return action.includes('passed both')
+            case 'enacted':
+              return action.includes('became law') || action.includes('signed by president') || action.includes('enacted')
+            case 'vetoed':
+              return action.includes('vetoed')
+            default:
+              return false
+          }
+        })
+      })
+    }
+
+    console.log(`Successfully fetched ${processedBills.length} bills with filters`)
+    return processedBills
+  } catch (error) {
+    console.error('Error in getBillsWithFilters:', error)
+    return []
+  }
+}
+
+// Get unique values for filter options
+export async function getBillFilterOptions() {
+  try {
+    const { data: bills, error } = await supabase
+      .from('bills')
+      .select(`
+        policy_area,
+        congress,
+        bill_subjects(subject_name)
+      `)
+      .eq('is_active', true)
+
+    if (error) {
+      console.error('Error fetching filter options:', error)
+      return {
+        policyAreas: [],
+        subjects: [],
+        congresses: []
+      }
+    }
+
+    // Extract unique values - filter out null values and ensure proper typing
+    const policyAreas = [...new Set(
+      bills?.map(b => b.policy_area)
+        .filter((area): area is string => area !== null && area !== undefined) || []
+    )]
+      .sort()
+      .concat(['Uncategorized']) // Add option for bills without policy area
+
+    const subjects = [...new Set(
+      bills?.flatMap(b => 
+        Array.isArray(b.bill_subjects) 
+          ? b.bill_subjects.map(s => s.subject_name).filter((name): name is string => name !== null && name !== undefined)
+          : []
+      ) || []
+    )].sort()
+
+    const congresses = [...new Set(
+      bills?.map(b => b.congress)
+        .filter((congress): congress is number => congress !== null && congress !== undefined) || []
+    )]
+      .sort((a, b) => b - a) // Sort in descending order
+
+    return {
+      policyAreas,
+      subjects,
+      congresses
+    }
+  } catch (error) {
+    console.error('Error in getBillFilterOptions:', error)
+    return {
+      policyAreas: [],
+      subjects: [],
+      congresses: []
+    }
   }
 }
 

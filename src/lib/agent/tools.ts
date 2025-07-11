@@ -7,6 +7,7 @@ import { TextChunk } from '../text-chunker'
  * This function now accepts an optional webContext array.
  */
 export async function fetchAnalysisFromApi(
+  billId: string,
   billTitle: string,
   persona: PersonaRow,
   textChunks: TextChunk[],
@@ -21,9 +22,10 @@ export async function fetchAnalysisFromApi(
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      textChunks,
+      billId,
       billTitle,
       persona,
+      textChunks,
       webContext, // Pass the context to the API
     }),
   });

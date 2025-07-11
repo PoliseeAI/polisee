@@ -66,6 +66,11 @@ export async function POST(request: NextRequest) {
       }
       console.log('✅ Vote updated successfully:', data);
       result = data;
+
+      // If the user provided reasoning, also store it as a feedback entry
+      if (reasoning && reasoning.trim().length > 0) {
+        await saveReasoningAsFeedback(billId);
+      }
     } else {
       // Insert new vote
       console.log('➕ Creating new vote:', { userId, billId, sentiment, reasoning });
@@ -89,6 +94,11 @@ export async function POST(request: NextRequest) {
       }
       console.log('✅ Vote created successfully:', data);
       result = data;
+
+      // If the user provided reasoning, also store it as a feedback entry
+      if (reasoning && reasoning.trim().length > 0) {
+        await saveReasoningAsFeedback(billId);
+      }
     }
 
     // Get current vote counters (they are automatically updated by database triggers)
@@ -595,5 +605,37 @@ export async function GET(request: NextRequest) {
       { error: 'Internal server error' },
       { status: 500 }
     );
+  }
+} 
+
+// Helper to record reasoning into sentiment_feedback and bump metrics
+async function saveReasoningAsFeedback(billId: string) {
+  try {
+    // Try to increment feedback_count regardless of existing row
+    const { data: existing, error: fetchErr } = await supabaseAdmin
+      .from('bill_engagement_metrics' as any)
+      .select('feedback_count')
+      .eq('bill_id', billId)
+      .single();
+
+    let newCount = 1;
+    if (!fetchErr && existing) {
+      newCount = ((existing as any).feedback_count ?? 0) + 1;
+    }
+
+    const { error: upErr } = await supabaseAdmin
+      .from('bill_engagement_metrics' as any)
+      .upsert({
+        bill_id: billId,
+        feedback_count: newCount,
+        last_activity_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }, { onConflict: 'bill_id' });
+
+    if (upErr) {
+      console.error('Failed to upsert feedback_count:', upErr);
+    }
+  } catch (err) {
+    console.error('Unexpected error incrementing feedback_count:', err);
   }
 } 

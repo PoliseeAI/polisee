@@ -83,7 +83,7 @@ export class ClientAnalysisAgent {
         : 'Sending bill text to AI for analysis...';
       this.onStatusUpdate({ step: 4, message: statusMessage, isComplete: false });
       
-      const result = await fetchAnalysisFromApi(this.bill.title || 'Untitled Bill', this.persona, textChunks, webContext);
+      const result = await fetchAnalysisFromApi(this.bill.bill_id, this.bill.title || 'Untitled Bill', this.persona, textChunks, webContext);
 
       // Step 5: Format and complete
       this.onStatusUpdate({ step: 5, message: 'Formatting final report...', isComplete: false });
