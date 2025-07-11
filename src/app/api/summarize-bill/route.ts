@@ -142,6 +142,14 @@ export async function POST(request: NextRequest) {
         console.error('Error saving summary to database:', saveError)
         // Continue and return the summary even if saving fails
       }
+
+      // After saving the summary, trigger an update of the bill engagement metrics
+      // @ts-ignore - RPC function not in generated types
+      const { error: metricError } = await supabase.rpc('update_bill_engagement_metrics', { p_bill_id: billId })
+      if (metricError) {
+        console.error('Error updating engagement metrics:', metricError)
+        // Do not block the response on this failure
+      }
       
       return NextResponse.json({
         ...summaryResult,

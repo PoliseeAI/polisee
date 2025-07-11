@@ -1,5 +1,6 @@
 // src/app/api/analyze-bill/route.ts
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabaseAdmin } from '@/lib/supabase-admin'
 import { PersonaRow } from '@/lib/supabase'
 import { TextChunk } from '@/lib/text-chunker'
 
@@ -80,7 +81,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // UPDATED: Accept 'webContext' from the request body
-    const { textChunks, billTitle, persona, webContext } = await request.json();
+    const { billId, textChunks, billTitle, persona, webContext } = await request.json();
 
     if (!textChunks || textChunks.length === 0 || !billTitle || !persona) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -121,6 +122,49 @@ export async function POST(request: NextRequest) {
     const finalResult: AIAnalysisResponse = await callOpenAI(reducePrompt);
 
     console.log(`Analysis complete. Final report has ${finalResult.impacts.length} impacts.`);
+
+    // Increment analysis_requests metric for this bill if billId provided
+    if (billId) {
+      try {
+        const supabase = getSupabaseAdmin();
+        // Prefer dedicated RPC if exists
+        // @ts-ignore - RPC function not in generated types
+        let { error: incrError } = await supabase.rpc('increment_analysis_requests', { p_bill_id: billId });
+        if (incrError) {
+          console.warn('increment_analysis_requests RPC failed, falling back to full metric update:', incrError);
+          // @ts-ignore - RPC function not in generated types
+          const { error: updError } = await supabase.rpc('update_bill_engagement_metrics', { p_bill_id: billId });
+          if (updError) {
+            console.error('update_bill_engagement_metrics RPC failed:', updError);
+            // Final fallback: increment the column directly
+            try {
+              // @ts-ignore - dynamic column selection
+              const { data, error: fetchErr } = await supabase
+                .from('bill_engagement_metrics')
+                .select('analysis_requests')
+                .eq('bill_id', billId)
+                .single();
+              if (!fetchErr) {
+                const current = (data as any)?.analysis_requests ?? 0;
+                // @ts-ignore - dynamic update
+                const { error: directErr } = await supabase
+                  .from('bill_engagement_metrics')
+                  .update({ analysis_requests: current + 1, last_activity_at: new Date().toISOString() })
+                  .eq('bill_id', billId);
+                if (directErr) {
+                  console.error('Direct update of analysis_requests failed:', directErr);
+                }
+              }
+            } catch (directCatchErr) {
+              console.error('Direct increment fallback threw:', directCatchErr);
+            }
+          }
+        }
+      } catch (metricErr) {
+        console.error('Error updating analysis metrics:', metricErr);
+      }
+    }
+ 
     return NextResponse.json(finalResult);
 
   } catch (error: any) {
