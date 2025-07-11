@@ -70,6 +70,53 @@ const analyzeBillsTool: PolicyAgentTool = {
   }
 }
 
+// Tool to search the bill knowledge base using RAG
+const searchBillKnowledgeBaseTool: PolicyAgentTool = {
+  name: 'search_bill_knowledge_base',
+  description: 'Search the comprehensive bill knowledge base using RAG to find detailed information about legislation, policy implications, and related content',
+  execute: async (question: string) => {
+    try {
+      const response = await fetch('https://bill-search.fly.dev/ask', {
+        method: 'POST',
+        headers: { 
+          'accept': 'application/json',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer b9cc27096a884ca0937b15a364f48ff4'
+        },
+        body: JSON.stringify({ 
+          question: question,
+          include_sources: true 
+        })
+      })
+      
+      if (!response.ok) {
+        throw new Error('Bill knowledge base search failed')
+      }
+      
+      const data = await response.json()
+      
+      // Format the response to include answer and sources
+      const formattedResults = []
+      
+      if (data.answer) {
+        formattedResults.push(`Answer: ${data.answer}`)
+      }
+      
+      if (data.sources && data.sources.length > 0) {
+        formattedResults.push('\nSources:')
+        data.sources.forEach((source: any, index: number) => {
+          formattedResults.push(`${index + 1}. ${source.title || source.url || 'Unknown source'}`)
+        })
+      }
+      
+      return formattedResults.join('\n') || 'No relevant information found.'
+    } catch (error) {
+      console.error('Bill knowledge base search error:', error)
+      return 'Unable to search the bill knowledge base at this time.'
+    }
+  }
+}
+
 // Tool to update the policy document
 const updateDocumentTool: PolicyAgentTool = {
   name: 'update_document',
@@ -116,6 +163,7 @@ export class PolicyFormationAgent {
   private tools: PolicyAgentTool[] = [
     webSearchTool,
     analyzeBillsTool,
+    searchBillKnowledgeBaseTool,
     updateDocumentTool,
     updateSectionTool
   ]
@@ -132,6 +180,7 @@ export class PolicyFormationAgent {
       // Gather context from various sources
       let researchContext = ''
       let billContext = ''
+      let knowledgeBaseContext = ''
       
       if (intent.needsResearch) {
         toolsUsed.push('web_search')
@@ -145,6 +194,12 @@ export class PolicyFormationAgent {
         billContext = billResults.slice(0, 3).join('\n')
       }
       
+      if (intent.needsBillKnowledgeBase) {
+        toolsUsed.push('search_bill_knowledge_base')
+        const query = intent.knowledgeBaseQuery || intent.searchQuery || message
+        knowledgeBaseContext = await searchBillKnowledgeBaseTool.execute(query)
+      }
+      
       // Generate AI response with all gathered context
       const aiResponse = await this.generateResponse(
         message,
@@ -153,7 +208,8 @@ export class PolicyFormationAgent {
         intent,
         toolsUsed,
         researchContext,
-        billContext
+        billContext,
+        knowledgeBaseContext
       )
       
       // Update document if needed
@@ -195,6 +251,7 @@ export class PolicyFormationAgent {
       return {
         needsResearch: lowerMessage.includes('research') || lowerMessage.includes('find') || lowerMessage.includes('search'),
         needsBillAnalysis: lowerMessage.includes('existing') || lowerMessage.includes('similar') || lowerMessage.includes('bills'),
+        needsBillKnowledgeBase: lowerMessage.includes('housing') || lowerMessage.includes('policy') || lowerMessage.includes('legislation') || lowerMessage.includes('impact'),
         searchQuery: message,
         topic: this.extractTopic(message),
         action: this.determineAction(message)
@@ -212,7 +269,9 @@ ${history.slice(-3).map(m => `${m.role}: ${m.content}`).join('\n')}
 Return a JSON object with:
 - needsResearch: boolean (true if user wants web research)
 - needsBillAnalysis: boolean (true if user wants to analyze existing bills)
+- needsBillKnowledgeBase: boolean (true if user wants detailed legislative/policy information from the knowledge base)
 - searchQuery: string (query for web search if needed)
+- knowledgeBaseQuery: string (query for bill knowledge base if needed)
 - topic: string (main policy topic)
 - action: string (one of: create, add, research, analyze, chat)
 - shouldUpdateDocument: boolean (true if document should be modified)`
@@ -271,7 +330,8 @@ Return a JSON object with:
     intent: any,
     toolsUsed: string[],
     researchContext: string = '',
-    billContext: string = ''
+    billContext: string = '',
+    knowledgeBaseContext: string = ''
   ): Promise<any> {
     if (!OPENAI_API_KEY) {
       // Fallback response without AI
@@ -318,6 +378,7 @@ Intent analysis:
 
 ${researchContext ? `Web research results:\n${researchContext}\n` : ''}
 ${billContext ? `Related bills analysis:\n${billContext}\n` : ''}
+${knowledgeBaseContext ? `Bill knowledge base search results:\n${knowledgeBaseContext}\n` : ''}
 
 Based on this context, provide:
 1. A helpful response message to the user
@@ -362,7 +423,7 @@ Return as JSON with structure:
     } catch (error) {
       console.error('Response generation error:', error)
       // Fallback to simple response
-      return this.generateResponse(message, history, document, intent, toolsUsed, '', '')
+      return this.generateResponse(message, history, document, intent, toolsUsed, '', '', '')
     }
   }
 } 
