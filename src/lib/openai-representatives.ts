@@ -14,21 +14,35 @@ export interface AnalyzedLocation {
 }
 
 export interface EnhancedRepresentative extends Omit<Representative, 'created_at' | 'updated_at' | 'in_office'> {
-  photo_url?: string;
-  years_served: number;
-  current_term_start: string;
-  current_term_end: string;
-  biography?: string;
+  // Formatting fields
+  displayName?: string;
+  shortTitle?: string;
+  // Override fields to match database schema (null instead of undefined)
+  created_at: string | null;
+  updated_at: string | null;
+  in_office: boolean | null;
+  term_end: string | null;
+  term_start: string | null;
+  next_election: string | null;
+  // Additional fields from mock data
   committees?: string[];
+  recent_votes?: {
+    bill_id: string;
+    vote: 'Yea' | 'Nay' | 'Present' | 'Not Voting';
+    date: string;
+  }[];
+  contact_info?: {
+    office_address?: string;
+    office_phone?: string;
+  };
+  // Fields not in base Representative type
+  years_served?: number;
+  current_term_start?: string;
+  current_term_end?: string;
+  biography?: string;
   summary?: string;
-  next_election?: string;
   term_status?: string;
   term_end_date?: string;
-  created_at?: string;
-  updated_at?: string;
-  in_office?: boolean;
-  term_start?: string;
-  term_end?: string;
 }
 
 /**
@@ -243,7 +257,7 @@ Return a JSON array with this exact structure:
     "phone": "202-224-5852",
     "email": null,
     "website": "https://bennet.senate.gov",
-    "photo_url": null,
+    "image_url": null,
     "years_served": 15,
     "current_term_start": "2021-01-03",
     "current_term_end": "2027-01-03",
@@ -474,7 +488,7 @@ async function fetchRepresentativesFromAPI(state: string, district?: string): Pr
           twitter: member.twitter_account,
           youtube: member.youtube_account,
           image_url: null,
-          photo_url: undefined,
+          
           years_served: new Date().getFullYear() - new Date(member.seniority_date).getFullYear(),
           current_term_start: member.date_of_birth, // This would need proper mapping
           current_term_end: member.date_of_birth, // This would need proper mapping
@@ -521,7 +535,6 @@ async function fetchRepresentativesFromAPI(state: string, district?: string): Pr
             twitter: member.twitter_account,
             youtube: member.youtube_account,
             image_url: null,
-            photo_url: undefined,
             years_served: new Date().getFullYear() - new Date(member.seniority_date).getFullYear(),
             current_term_start: member.date_of_birth,
             current_term_end: member.date_of_birth,
@@ -576,7 +589,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 22,
            current_term_start: '2021-01-03',
            current_term_end: '2027-01-03',
@@ -609,7 +622,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 11,
            current_term_start: '2019-01-03',
            current_term_end: '2025-01-03',
@@ -642,7 +655,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 29,
            current_term_start: '2023-01-03',
            current_term_end: '2025-01-03',
@@ -675,7 +688,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 5,
            current_term_start: '2023-01-03',
            current_term_end: '2025-01-03',
@@ -708,7 +721,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 19,
            current_term_start: '2023-01-03',
            current_term_end: '2025-01-03',
@@ -743,7 +756,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
           twitter: null,
           youtube: null,
           image_url: null,
-          photo_url: undefined,
+          
           years_served: 22,
           current_term_start: '2021-01-03',
           current_term_end: '2027-01-03',
@@ -776,7 +789,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
           twitter: null,
           youtube: null,
           image_url: null,
-          photo_url: undefined,
+          
           years_served: 11,
           current_term_start: '2019-01-03',
           current_term_end: '2025-01-03',
@@ -809,7 +822,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
           twitter: null,
           youtube: null,
           image_url: null,
-          photo_url: undefined,
+          
           years_served: 28,
           current_term_start: '2023-01-03',
           current_term_end: '2025-01-03',
@@ -846,7 +859,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 14,
            current_term_start: '2023-01-03',
            current_term_end: '2029-01-03',
@@ -879,7 +892,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 1,
            current_term_start: '2025-01-03',
            current_term_end: '2031-01-03',
@@ -912,7 +925,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 1,
            current_term_start: '2023-01-03',
            current_term_end: '2025-01-03',
@@ -949,7 +962,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 1,
            current_term_start: '2025-01-03',
            current_term_end: '2031-01-03',
@@ -982,7 +995,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 4,
            current_term_start: '2021-01-20',
            current_term_end: '2027-01-03',
@@ -1017,7 +1030,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 18,
            current_term_start: '2019-01-03',
            current_term_end: '2025-01-03',
@@ -1050,7 +1063,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 2,
            current_term_start: '2023-01-03',
            current_term_end: '2029-01-03',
@@ -1083,7 +1096,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 11,
            current_term_start: '2023-01-03',
            current_term_end: '2025-01-03',
@@ -1120,7 +1133,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 14,
            current_term_start: '2023-01-03',
            current_term_end: '2029-01-03',
@@ -1153,7 +1166,7 @@ const getCitySpecificFallbackRepresentatives = (analyzedLocation: AnalyzedLocati
            twitter: null,
            youtube: null,
            image_url: null,
-           photo_url: undefined,
+           
            years_served: 6,
            current_term_start: '2019-01-03',
            current_term_end: '2025-01-03',
@@ -1214,7 +1227,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 15,
         current_term_start: '2023-01-03',
         current_term_end: '2029-01-03',
@@ -1247,7 +1260,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 4,
         current_term_start: '2021-01-03',
         current_term_end: '2027-01-03',
@@ -1282,7 +1295,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 1,
         current_term_start: '2025-01-03',
         current_term_end: '2031-01-03',
@@ -1315,7 +1328,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 4,
         current_term_start: '2021-01-20',
         current_term_end: '2027-01-03',
@@ -1350,7 +1363,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 14,
         current_term_start: '2023-01-03',
         current_term_end: '2029-01-03',
@@ -1383,7 +1396,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 6,
         current_term_start: '2019-01-03',
         current_term_end: '2025-01-03',
@@ -1418,7 +1431,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 22,
         current_term_start: '2021-01-03',
         current_term_end: '2027-01-03',
@@ -1451,7 +1464,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 11,
         current_term_start: '2019-01-03',
         current_term_end: '2025-01-03',
@@ -1486,7 +1499,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 14,
         current_term_start: '2023-01-03',
         current_term_end: '2029-01-03',
@@ -1519,7 +1532,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 1,
         current_term_start: '2025-01-03',
         current_term_end: '2031-01-03',
@@ -1554,7 +1567,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 25,
         current_term_start: '2023-01-03',
         current_term_end: '2029-01-03',
@@ -1587,7 +1600,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
         twitter: null,
         youtube: null,
         image_url: null,
-        photo_url: undefined,
+        
         years_served: 15,
         current_term_start: '2019-01-03',
         current_term_end: '2025-01-03',
@@ -1622,7 +1635,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
          twitter: null,
          youtube: null,
          image_url: null,
-         photo_url: undefined,
+         
          years_served: 18,
          current_term_start: '2019-01-03',
          current_term_end: '2025-01-03',
@@ -1655,7 +1668,7 @@ const getFallbackRepresentatives = (analyzedLocation: AnalyzedLocation): Enhance
          twitter: null,
          youtube: null,
          image_url: null,
-         photo_url: undefined,
+         
          years_served: 2,
          current_term_start: '2023-01-03',
          current_term_end: '2029-01-03',

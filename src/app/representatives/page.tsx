@@ -28,7 +28,6 @@ interface EnhancedRepresentative {
   twitter: string | null;
   youtube: string | null;
   image_url: string | null;
-  photo_url?: string;
   years_served: number;
   current_term_start: string;
   current_term_end: string;
@@ -210,10 +209,10 @@ export default function Representatives() {
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-4">
                       {/* Photo */}
-                      {rep.photo_url && (
+                      {rep.image_url && (
                         <div className="flex-shrink-0">
                           <img
-                            src={rep.photo_url}
+                            src={rep.image_url}
                             alt={`${rep.first_name} ${rep.last_name}`}
                             className="w-20 h-20 rounded-lg object-cover border-2 border-gray-200"
                             onError={(e) => {

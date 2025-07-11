@@ -995,10 +995,10 @@ export default function RepresentativeContact({
                   <CardHeader className="pb-3">
                     <div className="flex items-start gap-4">
                       {/* Photo for AI-enhanced representatives */}
-                      {isEnhanced && (rep as EnhancedRepresentative).photo_url && (
+                      {isEnhanced && (rep as EnhancedRepresentative).image_url && (
                         <div className="flex-shrink-0">
                           <img
-                            src={(rep as EnhancedRepresentative).photo_url}
+                            src={(rep as EnhancedRepresentative).image_url || undefined}
                             alt={`${rep.first_name} ${rep.last_name}`}
                             className="w-16 h-16 rounded-lg object-cover border-2 border-gray-200"
                             onError={(e) => {
@@ -1084,7 +1084,7 @@ export default function RepresentativeContact({
                           
                           {(rep as EnhancedRepresentative).current_term_start && (rep as EnhancedRepresentative).current_term_end && (
                             <div>
-                              <strong>Current Term:</strong> {new Date((rep as EnhancedRepresentative).current_term_start).getFullYear()} - {new Date((rep as EnhancedRepresentative).current_term_end).getFullYear()}
+                              <strong>Current Term:</strong> {new Date((rep as EnhancedRepresentative).current_term_start!).getFullYear()} - {new Date((rep as EnhancedRepresentative).current_term_end!).getFullYear()}
                             </div>
                           )}
                         </div>
