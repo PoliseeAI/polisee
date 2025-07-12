@@ -21,6 +21,7 @@ import { useAuthContext } from '@/lib/auth'
 import { userPreferencesUtils, UserPreferencesRow } from '@/lib/supabase'
 import { personaUtils } from '@/lib/supabase'
 import { toast } from 'sonner'
+import { validatePassword } from '@/lib/password-validation'
 
 interface ProfileData {
   firstName: string
@@ -191,8 +192,10 @@ export default function Settings() {
       return
     }
     
-    if (newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters long')
+    // Use the same password validation as signup
+    const validation = validatePassword(newPassword)
+    if (!validation.isValid) {
+      toast.error(validation.errors[0])
       return
     }
     
