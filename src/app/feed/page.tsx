@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { 
   User, MessageCircle, Users, ThumbsUp, ThumbsDown, Sparkles, Calendar, MapPin, 
-  Search, TrendingUp, Eye, EyeOff, Filter, Clock, AlertTriangle, FileText
+  Search, TrendingUp, Eye, EyeOff, Filter, Clock, AlertTriangle, FileText, RefreshCw
 } from 'lucide-react'
 import Link from 'next/link'
 import { AuthGuard } from '@/components/auth'
@@ -233,10 +233,11 @@ export default function EnhancedFeedPage() {
   }
 
   // Load under-the-radar bills
-  const loadUnderRadarBills = async () => {
+  const loadUnderRadarBills = async (refresh = false) => {
     setRadarLoading(true)
     try {
-      const response = await fetch('/api/feed/under-radar-bills')
+      const url = refresh ? '/api/feed/under-radar-bills?refresh=true' : '/api/feed/under-radar-bills'
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setUnderRadarBills(data.bills || [])
@@ -257,6 +258,11 @@ export default function EnhancedFeedPage() {
     } finally {
       setRadarLoading(false)
     }
+  }
+
+  // Handle refresh for under-radar bills
+  const handleRefreshUnderRadarBills = () => {
+    loadUnderRadarBills(true)
   }
 
   // Handle message signing
@@ -936,13 +942,27 @@ export default function EnhancedFeedPage() {
             <TabsContent value="radar" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5" />
-                    Under-the-Radar Bills
-                  </CardTitle>
-                  <p className="text-sm text-gray-600">
-                    Important legislation with significant impact but low public attention
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <AlertTriangle className="h-5 w-5" />
+                        Under-the-Radar Bills
+                      </CardTitle>
+                      <p className="text-sm text-gray-600">
+                        Important legislation with significant impact but low public attention
+                      </p>
+                    </div>
+                    <Button
+                      onClick={handleRefreshUnderRadarBills}
+                      variant="outline"
+                      size="sm"
+                      disabled={radarLoading}
+                      className="flex items-center gap-2"
+                    >
+                      <RefreshCw className={`h-4 w-4 ${radarLoading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {radarLoading ? (
