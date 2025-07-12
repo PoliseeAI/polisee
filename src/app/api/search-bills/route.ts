@@ -1,20 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { supabase } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
     console.log('=== Search Bills API Called ===')
-    const { persona, query, hasStoredPersona } = await request.json()
-    console.log('Received data:', { 
-      persona: persona?.substring(0, 100) + '...', 
-      query, 
-      hasStoredPersona 
-    })
+    const { query } = await request.json()
+    console.log('Received query:', query)
 
     // Validate required fields
-    if (!persona) {
-      console.log('Error: Missing persona field')
+    if (!query) {
+      console.log('Error: Missing query field')
       return NextResponse.json(
-        { error: 'Missing required field: persona' },
+        { error: 'Missing required field: query' },
         { status: 400 }
       )
     }
@@ -28,10 +25,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        persona: persona,
-        // Optional: pass additional metadata
-        query: query,
-        has_stored_persona: hasStoredPersona
+        query: query  // The external API expects "query"
       })
     })
 
@@ -54,6 +48,39 @@ export async function POST(request: NextRequest) {
     const results = await response.json()
     console.log('External API results:', results)
     console.log('Number of results:', results?.length || 0)
+    
+    // Transform the results to include the proper bill_id
+    if (results && results.length > 0) {
+      // Extract the primary key IDs from the results
+      const primaryKeyIds = results.map((result: any) => result.bill_id)
+      
+      // Look up the formatted bill_ids from the database
+      const { data: billsData, error } = await supabase
+        .from('bills')
+        .select('id, bill_id')
+        .in('id', primaryKeyIds)
+      
+      if (error) {
+        console.error('Error looking up bill IDs:', error)
+        // Return original results if lookup fails
+        return NextResponse.json(results)
+      }
+      
+      // Create a mapping from primary key ID to formatted bill_id
+      const idMapping = new Map()
+      billsData?.forEach((bill: any) => {
+        idMapping.set(bill.id, bill.bill_id)
+      })
+      
+      // Transform the results to use the formatted bill_id
+      const transformedResults = results.map((result: any) => ({
+        ...result,
+        bill_id: idMapping.get(result.bill_id) || result.bill_id // Use formatted ID or fall back to original
+      }))
+      
+      console.log('Transformed results with proper bill_ids:', transformedResults)
+      return NextResponse.json(transformedResults)
+    }
     
     return NextResponse.json(results)
 

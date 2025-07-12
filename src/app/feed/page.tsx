@@ -14,11 +14,12 @@ import {
 import Link from 'next/link'
 import { AuthGuard } from '@/components/auth'
 import { useAuthContext } from '@/lib/auth'
-import { personaUtils, supabase, PersonaRow } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 
 interface BillSearchResult {
   summary_point: string
-  bill_id: number
+  bill_id: string
+  relevance_score: number
 }
 
 interface FeedMessage {
@@ -60,36 +61,6 @@ interface UnderRadarBill {
   importance_score: number
 }
 
-// Helper function to create comprehensive persona string
-function createComprehensivePersonaString(persona: PersonaRow): string {
-  const parts = [
-    // Basic demographics
-    `I am a ${persona.age}-year-old ${persona.occupation} living in ${persona.location}`,
-    
-    // Income and dependents
-    `with an income in the ${persona.income_bracket} bracket`,
-    persona.dependents > 0 ? `and ${persona.dependents} dependents` : 'with no dependents',
-    
-    // Education
-    persona.has_higher_education ? 'with higher education' : 'without higher education',
-    
-    // Health and benefits
-    `I ${persona.has_health_insurance ? 'have' : 'do not have'} health insurance`,
-    persona.has_medicare ? 'I receive Medicare benefits' : 'I do not receive Medicare',
-    persona.has_social_security ? 'I receive Social Security benefits' : 'I do not receive Social Security',
-    
-    // Business information
-    persona.business_type ? `I operate a ${persona.business_type} business` : 'I do not operate a business',
-    persona.employee_count ? `with ${persona.employee_count} employees` : null,
-    
-    // School district
-    persona.school_district ? `in the ${persona.school_district} school district` : null
-  ]
-  
-  // Filter out null values and join with appropriate punctuation
-  return parts.filter(Boolean).join(', ') + '.'
-}
-
 export default function EnhancedFeedPage() {
   // Search State
   const [searchQuery, setSearchQuery] = useState('')
@@ -111,7 +82,6 @@ export default function EnhancedFeedPage() {
   
   // User and Persona State
   const { user } = useAuthContext()
-  const [userPersona, setUserPersona] = useState<PersonaRow | null>(null)
   
   // Signature Modal State
   const [showSigningModal, setShowSigningModal] = useState<FeedMessage | null>(null)
@@ -124,43 +94,19 @@ export default function EnhancedFeedPage() {
   // State for user votes
   const [userVotes, setUserVotes] = useState<any[]>([])
 
-  // Load user persona for personalized search
-  useEffect(() => {
-    const loadUserPersona = async () => {
-      if (user) {
-        const persona = await personaUtils.getPersona(user.id)
-        setUserPersona(persona)
-      }
-    }
-    loadUserPersona()
-  }, [user])
-
-  // Updated Bill Search Function - Option 2: Combine persona + query
+  // Generic Bill Search Function
   const searchBills = async () => {
     if (!searchQuery.trim()) return
     
     setSearchLoading(true)
     try {
-      // Create comprehensive persona string if user has one
-      let combinedPersona = searchQuery.trim()
-      
-      if (userPersona) {
-        const fullPersonaString = createComprehensivePersonaString(userPersona)
-        combinedPersona = `${fullPersonaString} I am interested in: ${searchQuery.trim()}`
-        console.log('Combined persona + query:', combinedPersona)
-      } else {
-        console.log('Using search query only (no stored persona):', combinedPersona)
-      }
-
       const response = await fetch('/api/search-bills', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          persona: combinedPersona,
-          query: searchQuery.trim(),
-          hasStoredPersona: !!userPersona
+          query: searchQuery.trim()
         })
       })
       
@@ -476,18 +422,15 @@ export default function EnhancedFeedPage() {
             <TabsContent value="search" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Search Bills by Persona or Issue</CardTitle>
+                  <CardTitle>Search Bills by Issue</CardTitle>
                   <p className="text-sm text-gray-600">
-                    Describe yourself or an issue you care about to find relevant legislation
+                    Search for bills by describing any issue, topic, or persona you care about
                   </p>
                 </CardHeader>
                 <CardContent>
                   <div className="flex gap-4">
                     <Input
-                      placeholder={userPersona 
-                        ? `E.g., "${userPersona.occupation} in ${userPersona.location} concerned about healthcare"` 
-                        : "E.g., 'teacher in Colorado concerned about education funding'"
-                      }
+                      placeholder="E.g., 'healthcare costs', 'small business taxes', 'teacher in Colorado concerned about education funding'"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && searchBills()}
@@ -517,6 +460,16 @@ export default function EnhancedFeedPage() {
                             <p className="text-gray-800 mb-2">{result.summary_point}</p>
                             <div className="flex items-center gap-2 text-sm text-gray-600">
                               <Badge variant="outline">Bill ID: {result.bill_id}</Badge>
+                              <Badge 
+                                variant="secondary" 
+                                className={`${
+                                  result.relevance_score >= 80 ? 'bg-green-100 text-green-800' :
+                                  result.relevance_score >= 60 ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}
+                              >
+                                {result.relevance_score}% relevant
+                              </Badge>
                             </div>
                           </div>
                           <Button size="sm" asChild>
