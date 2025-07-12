@@ -14,8 +14,7 @@ import {
   Bell, 
   Shield, 
   Download, 
-  Loader2,
-  FileText
+  Loader2
 } from 'lucide-react'
 import { AuthGuard } from '@/components/auth'
 import { useAuthContext } from '@/lib/auth'
@@ -41,17 +40,6 @@ interface PrivacySettings {
   analytics: boolean
 }
 
-interface PDFSettings {
-  defaultZoom: number
-  defaultPage: string
-  showSectionNavigation: boolean
-  highlightSourceReferences: boolean
-  showSearchBar: boolean
-  rememberPosition: boolean
-  mobileOptimized: boolean
-  hideControlsOnMobile: boolean
-}
-
 export default function Settings() {
   const { user, updateProfile, updatePassword } = useAuthContext()
   
@@ -71,16 +59,6 @@ export default function Settings() {
   const [privacySettings, setPrivacySettings] = useState<PrivacySettings>({
     dataRetention: true,
     analytics: false
-  })
-  const [pdfSettings, setPdfSettings] = useState<PDFSettings>({
-    defaultZoom: 1.0,
-    defaultPage: 'first',
-    showSectionNavigation: true,
-    highlightSourceReferences: true,
-    showSearchBar: true,
-    rememberPosition: true,
-    mobileOptimized: true,
-    hideControlsOnMobile: false
   })
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
@@ -117,16 +95,6 @@ export default function Settings() {
             ...prev,
             email: user.email || ''
           }))
-        }
-
-        // Load PDF settings from localStorage
-        try {
-          const savedPdfSettings = localStorage.getItem(`pdf_settings_${user.id}`)
-          if (savedPdfSettings) {
-            setPdfSettings(JSON.parse(savedPdfSettings))
-          }
-        } catch (error) {
-          console.error('Error loading PDF settings:', error)
         }
       } catch (error) {
         console.error('Error loading preferences:', error)
@@ -209,25 +177,7 @@ export default function Settings() {
     }
   }
 
-  // Save PDF settings
-  const handlePdfSettingChange = async (setting: keyof PDFSettings, value: any) => {
-    if (!user) return
-    
-    const newSettings = { ...pdfSettings, [setting]: value }
-    setPdfSettings(newSettings)
-    
-    try {
-      // Store PDF settings in localStorage for now
-      // In a real app, you might want to store these in user preferences
-      localStorage.setItem(`pdf_settings_${user.id}`, JSON.stringify(newSettings))
-      toast.success('PDF viewer settings updated')
-    } catch (error) {
-      console.error('Error updating PDF settings:', error)
-      toast.error('Failed to update PDF settings')
-      // Revert on error
-      setPdfSettings(pdfSettings)
-    }
-  }
+
 
   // Change password
   const handleChangePassword = async () => {
@@ -421,127 +371,7 @@ export default function Settings() {
           </CardContent>
         </Card>
 
-        {/* PDF Viewer Settings */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center">
-              <FileText className="h-5 w-5 mr-2" />
-              PDF Viewer Preferences
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="defaultZoom">Default Zoom Level</Label>
-                <select 
-                  id="defaultZoom"
-                  className="w-full mt-1 block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  value={pdfSettings.defaultZoom}
-                  onChange={(e) => handlePdfSettingChange('defaultZoom', parseFloat(e.target.value))}
-                >
-                  <option value={0.5}>50%</option>
-                  <option value={0.75}>75%</option>
-                  <option value={1.0}>100%</option>
-                  <option value={1.25}>125%</option>
-                  <option value={1.5}>150%</option>
-                  <option value={2.0}>200%</option>
-                </select>
-              </div>
-              <div>
-                <Label htmlFor="defaultPage">Always Start at Page</Label>
-                <select 
-                  id="defaultPage"
-                  className="w-full mt-1 block rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  value={pdfSettings.defaultPage}
-                  onChange={(e) => handlePdfSettingChange('defaultPage', e.target.value)}
-                >
-                  <option value="first">First Page</option>
-                  <option value="last">Last Viewed Page</option>
-                  <option value="source">Source Reference Page</option>
-                </select>
-              </div>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="showSectionNav">Show Section Navigation</Label>
-                  <p className="text-sm text-gray-600">Display bill section navigation sidebar</p>
-                </div>
-                <Switch 
-                  id="showSectionNav"
-                  checked={pdfSettings.showSectionNavigation}
-                  onCheckedChange={(value) => handlePdfSettingChange('showSectionNavigation', value)}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="highlightSources">Highlight Source References</Label>
-                  <p className="text-sm text-gray-600">Automatically highlight relevant bill sections</p>
-                </div>
-                <Switch 
-                  id="highlightSources"
-                  checked={pdfSettings.highlightSourceReferences}
-                  onCheckedChange={(value) => handlePdfSettingChange('highlightSourceReferences', value)}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="showSearch">Show Search Bar</Label>
-                  <p className="text-sm text-gray-600">Display search functionality in PDF viewer</p>
-                </div>
-                <Switch 
-                  id="showSearch"
-                  checked={pdfSettings.showSearchBar}
-                  onCheckedChange={(value) => handlePdfSettingChange('showSearchBar', value)}
-                />
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="rememberPosition">Remember Reading Position</Label>
-                  <p className="text-sm text-gray-600">Resume reading from where you left off</p>
-                </div>
-                <Switch 
-                  id="rememberPosition"
-                  checked={pdfSettings.rememberPosition}
-                  onCheckedChange={(value) => handlePdfSettingChange('rememberPosition', value)}
-                />
-              </div>
-            </div>
-            
-            <div className="pt-4 border-t">
-              <h4 className="font-medium text-gray-900 mb-3">Mobile Settings</h4>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="mobileOptimized">Mobile Optimized View</Label>
-                    <p className="text-sm text-gray-600">Optimize PDF layout for mobile devices</p>
-                  </div>
-                  <Switch 
-                    id="mobileOptimized"
-                    checked={pdfSettings.mobileOptimized}
-                    onCheckedChange={(value) => handlePdfSettingChange('mobileOptimized', value)}
-                  />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label htmlFor="hideControlsOnMobile">Auto-hide Controls</Label>
-                    <p className="text-sm text-gray-600">Hide controls when not in use on mobile</p>
-                  </div>
-                  <Switch 
-                    id="hideControlsOnMobile"
-                    checked={pdfSettings.hideControlsOnMobile}
-                    onCheckedChange={(value) => handlePdfSettingChange('hideControlsOnMobile', value)}
-                  />
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+
 
         {/* Notification Settings */}
         <Card>
