@@ -10,9 +10,12 @@ import {
   Download, 
   Edit3,
   Check,
-  X
+  X,
+  Eye,
+  Edit
 } from 'lucide-react'
 import { PolicyDocument } from '@/app/propose/page'
+import ReactMarkdown from 'react-markdown'
 
 interface PolicyDocumentEditorProps {
   document: PolicyDocument
@@ -70,6 +73,7 @@ export function PolicyDocumentEditor({
 }: PolicyDocumentEditorProps) {
   const [isEditingTitle, setIsEditingTitle] = useState(false)
   const [tempTitle, setTempTitle] = useState(document.title)
+  const [isPreviewMode, setIsPreviewMode] = useState(false)
 
   useEffect(() => {
     setTempTitle(document.title)
@@ -165,6 +169,25 @@ export function PolicyDocumentEditor({
             )}
           </div>
           <div className="flex items-center gap-2">
+            {!isReadOnly && (
+              <Button
+                size="sm"
+                variant={isPreviewMode ? "default" : "outline"}
+                onClick={() => setIsPreviewMode(!isPreviewMode)}
+              >
+                {isPreviewMode ? (
+                  <>
+                    <Edit className="h-4 w-4 mr-1" />
+                    Edit
+                  </>
+                ) : (
+                  <>
+                    <Eye className="h-4 w-4 mr-1" />
+                    Preview
+                  </>
+                )}
+              </Button>
+            )}
             <Button
               size="sm"
               variant="outline"
@@ -181,13 +204,36 @@ export function PolicyDocumentEditor({
       </CardHeader>
 
       <CardContent className="flex-1 overflow-y-auto p-4">
-        <Textarea
-          value={document.content}
-          onChange={(e) => handleContentChange(e.target.value)}
-          placeholder="Start writing your policy proposal..."
-          className="w-full h-full min-h-[500px] resize-none font-mono text-sm"
-          disabled={isReadOnly}
-        />
+        {isPreviewMode ? (
+          <div className="prose prose-sm max-w-none h-full overflow-y-auto">
+            <ReactMarkdown 
+              components={{
+                h1: ({ children }) => <h1 className="text-2xl font-bold mb-4 text-gray-900">{children}</h1>,
+                h2: ({ children }) => <h2 className="text-xl font-semibold mb-3 mt-6 text-gray-800 border-b pb-2">{children}</h2>,
+                h3: ({ children }) => <h3 className="text-lg font-medium mb-2 mt-4 text-gray-700">{children}</h3>,
+                p: ({ children }) => <p className="mb-3 text-gray-600 leading-relaxed">{children}</p>,
+                ul: ({ children }) => <ul className="mb-3 ml-4 space-y-1">{children}</ul>,
+                ol: ({ children }) => <ol className="mb-3 ml-4 space-y-1">{children}</ol>,
+                li: ({ children }) => <li className="text-gray-600 list-disc">{children}</li>,
+                strong: ({ children }) => <strong className="font-semibold text-gray-800">{children}</strong>,
+                em: ({ children }) => <em className="italic text-gray-700">{children}</em>,
+                blockquote: ({ children }) => <blockquote className="border-l-4 border-blue-200 pl-4 italic text-gray-600 my-4">{children}</blockquote>,
+                code: ({ children }) => <code className="bg-gray-100 px-2 py-1 rounded text-sm font-mono text-gray-800">{children}</code>,
+                pre: ({ children }) => <pre className="bg-gray-100 p-4 rounded-lg overflow-x-auto text-sm font-mono text-gray-800 mb-4">{children}</pre>,
+              }}
+            >
+              {document.content || 'No content to preview. Switch to edit mode to start writing.'}
+            </ReactMarkdown>
+          </div>
+        ) : (
+          <Textarea
+            value={document.content}
+            onChange={(e) => handleContentChange(e.target.value)}
+            placeholder="Start writing your policy proposal..."
+            className="w-full h-full min-h-[500px] resize-none font-mono text-sm"
+            disabled={isReadOnly}
+          />
+        )}
       </CardContent>
     </div>
   )
