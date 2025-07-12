@@ -3,19 +3,19 @@ import { Github, Twitter, Mail } from 'lucide-react'
 
 const footerLinks = {
   product: [
-    { name: 'Features', href: '/features' },
-    { name: 'Pricing', href: '/pricing' },
-    { name: 'API', href: '/api' },
+    { name: 'Bills', href: '/bills' },
+    { name: 'Feed', href: '/feed' },
+    { name: 'Analysis', href: '/analyze' },
   ],
   company: [
     { name: 'About', href: '/about' },
-    { name: 'Blog', href: '/blog' },
-    { name: 'Careers', href: '/careers' },
+    { name: 'Representatives', href: '/representatives' },
+    { name: 'Propose', href: '/propose' },
   ],
   support: [
-    { name: 'Help Center', href: '/help' },
-    { name: 'Contact', href: '/contact' },
-    { name: 'Status', href: '/status' },
+    { name: 'Settings', href: '/settings' },
+    { name: 'Contact', href: 'mailto:support@poliseeai.com' },
+    { name: 'Help', href: '/help' },
   ],
   legal: [
     { name: 'Privacy', href: '/privacy' },
@@ -43,19 +43,23 @@ export function Footer() {
             </p>
             <div className="mt-6 flex space-x-4">
               <Link
-                href="#"
+                href="https://github.com/PoliseeAI/polisee"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-500 transition-colors"
               >
                 <Github className="h-5 w-5" />
               </Link>
               <Link
-                href="#"
+                href="https://twitter.com/PoliseeAI"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="text-gray-400 hover:text-gray-500 transition-colors"
               >
                 <Twitter className="h-5 w-5" />
               </Link>
               <Link
-                href="#"
+                href="mailto:contact@poliseeai.com"
                 className="text-gray-400 hover:text-gray-500 transition-colors"
               >
                 <Mail className="h-5 w-5" />

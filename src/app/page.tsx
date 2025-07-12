@@ -289,7 +289,7 @@ export default function Home() {
             </div>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button variant="outline" size="lg" asChild>
-                <Link href="https://github.com/yourusername/polisee" target="_blank" rel="noopener noreferrer">
+                <Link href="https://github.com/PoliseeAI/polisee" target="_blank" rel="noopener noreferrer">
                   <Github className="mr-2 h-5 w-5" />
                   View on GitHub
                 </Link>
