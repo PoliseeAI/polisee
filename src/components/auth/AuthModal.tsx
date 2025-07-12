@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { authUtils } from '@/lib/auth'
-import { AlertCircle, Loader2, Eye, EyeOff } from 'lucide-react'
+import { AlertCircle, Loader2, Eye, EyeOff, Shield } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
+import { validatePassword, getPasswordStrengthColor, getPasswordStrengthText } from '@/lib/password-validation'
 
 interface AuthModalProps {
   children: React.ReactNode
@@ -32,6 +33,7 @@ export function AuthModal({ children, defaultMode = 'signin' }: AuthModalProps) 
     confirmPassword?: string
     general?: string
   }>({})
+  const [passwordValidation, setPasswordValidation] = useState(validatePassword(''))
   const router = useRouter()
 
   const validateForm = () => {
@@ -47,8 +49,11 @@ export function AuthModal({ children, defaultMode = 'signin' }: AuthModalProps) 
     // Password validation
     if (!formData.password) {
       newErrors.password = 'Password is required'
-    } else if (formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
+    } else {
+      const validation = validatePassword(formData.password)
+      if (!validation.isValid) {
+        newErrors.password = validation.errors[0] // Show the first error
+      }
     }
     
     // Confirm password validation for signup
@@ -113,12 +118,14 @@ export function AuthModal({ children, defaultMode = 'signin' }: AuthModalProps) 
     setMode(newMode)
     setErrors({})
     setFormData({ email: '', password: '', confirmPassword: '' })
+    setPasswordValidation(validatePassword(''))
   }
 
   const resetForm = () => {
     setFormData({ email: '', password: '', confirmPassword: '' })
     setErrors({})
     setMode(defaultMode)
+    setPasswordValidation(validatePassword(''))
   }
 
   return (
@@ -178,7 +185,11 @@ export function AuthModal({ children, defaultMode = 'signin' }: AuthModalProps) 
                     type={showPassword ? 'text' : 'password'}
                     placeholder="Enter your password"
                     value={formData.password}
-                    onChange={(e) => setFormData(prev => ({ ...prev, password: e.target.value }))}
+                    onChange={(e) => {
+                      const newPassword = e.target.value
+                      setFormData(prev => ({ ...prev, password: newPassword }))
+                      setPasswordValidation(validatePassword(newPassword))
+                    }}
                     className={errors.password ? 'border-red-500' : ''}
                   />
                   <Button
@@ -195,11 +206,38 @@ export function AuthModal({ children, defaultMode = 'signin' }: AuthModalProps) 
                     )}
                   </Button>
                 </div>
+                
+                {/* Password Strength Indicator */}
+                {mode === 'signup' && formData.password && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <Shield className="h-4 w-4" />
+                    <span className="text-gray-600">Password strength:</span>
+                    <span className={getPasswordStrengthColor(passwordValidation.strength)}>
+                      {getPasswordStrengthText(passwordValidation.strength)}
+                    </span>
+                  </div>
+                )}
+                
                 {errors.password && (
                   <p className="text-sm text-red-600 flex items-center gap-1">
                     <AlertCircle className="h-4 w-4" />
                     {errors.password}
                   </p>
+                )}
+                
+                {/* Show additional password errors for signup */}
+                {mode === 'signup' && formData.password && passwordValidation.errors.length > 1 && (
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                    <p className="text-sm font-medium text-yellow-800 mb-1">Password requirements:</p>
+                    <ul className="text-sm text-yellow-700 space-y-1">
+                      {passwordValidation.errors.map((error, index) => (
+                        <li key={index} className="flex items-center gap-1">
+                          <AlertCircle className="h-3 w-3" />
+                          {error}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
 
