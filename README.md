@@ -10,7 +10,7 @@
 
 <h3>Transform complex legislative bills into personalized, verifiable impact reports for citizens</h3>
 
-[Demo](https://polisee.demo.com) • [Documentation](https://docs.polisee.com) • [Report Bug](https://github.com/yourusername/polisee/issues) • [Request Feature](https://github.com/yourusername/polisee/issues)
+[Demo](https://poliseeai.com) • [Documentation](https://docs.poliseeai.com) • [Report Bug](https://github.com/PoliseeAI/polisee/issues) • [Request Feature](https://github.com/PoliseeAI/polisee/issues)
 
 </div>
 
@@ -98,7 +98,7 @@ Polisee provides:
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/polisee.git
+   git clone https://github.com/PoliseeAI/polisee.git
    cd polisee
    ```
 
@@ -136,7 +136,7 @@ Polisee provides:
 
    # Email Configuration (Optional)
    RESEND_API_KEY=your-resend-api-key
-   RESEND_FROM_EMAIL=noreply@yourdomain.com
+   RESEND_FROM_EMAIL=noreply@poliseeai.com
 
    # Application Configuration
    NEXT_PUBLIC_APP_URL=http://localhost:3000
@@ -317,7 +317,7 @@ We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.
 
 ### Reporting Security Issues
 
-Please report security vulnerabilities to security@polisee.com
+Please report security vulnerabilities to security@poliseeai.com
 
 ## 📄 License
 
@@ -327,9 +327,9 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 Project Maintainers:
 - **PoliseeAI Team** - [@poliseeai](https://twitter.com/poliseeai)
-- **Email** - contact@polisee.com
+- **Email** - contact@poliseeai.com
 
-Project Link: [https://github.com/yourusername/polisee](https://github.com/yourusername/polisee)
+Project Link: [https://github.com/PoliseeAI/polisee](https://github.com/PoliseeAI/polisee)
 
 ## 🙏 Acknowledgments
 
